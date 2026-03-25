@@ -11,8 +11,8 @@ describe('Footer Component', () => {
 
   it('renders accurate navigation links mapping', () => {
     render(<Footer />);
-    expect(screen.getByRole('link', { name: /Insurance Policies/i })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Buy/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /About/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Blog/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Terms and Conditions/i })).toBeInTheDocument();
     const marketplaceLinks = screen.getAllByRole('link', { name: /Marketplace/i });
     expect(marketplaceLinks.length).toBe(1);
