@@ -9,12 +9,15 @@
     "lint": "eslint",
     "test": "vitest",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "generate:types": "openapi-typescript ./openapi.json -o ./src/types/schema.d.ts"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
     "@tanstack/react-query": "^5.90.21",
     "@tanstack/react-query-devtools": "^5.91.3",
+    "axios": "^1.13.6",
+    "axios-retry": "^4.5.0",
     "clsx": "^2.1.1",
     "framer-motion": "^12.34.3",
     "lucide-react": "^0.575.0",
@@ -37,6 +40,8 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "jsdom": "^28.1.0",
+    "msw": "^2.12.14",
+    "openapi-typescript": "^7.13.0",
     "sharp": "^0.34.5",
     "tailwindcss": "^4",
     "typescript": "^5",

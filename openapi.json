@@ -1,0 +1,240 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "GigSecure",
+    "description": "Digital insurance platform for Africa's gig economy",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": ["Health"],
+        "summary": "Health Check",
+        "operationId": "health_check_health_get",
+        "responses": { "200": { "description": "Successful Response", "content": { "application/json": { "schema": {} } } } }
+      }
+    },
+    "/api/v1/auth/waitlist/signup": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Waitlist Signup",
+        "operationId": "waitlist_signup_api_v1_auth_waitlist_signup_post",
+        "requestBody": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/WaitlistSignupRequest" } } }, "required": true },
+        "responses": {
+          "200": { "description": "Successful Response", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/WaitlistSignupResponse" } } } },
+          "422": { "description": "Validation Error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/HTTPValidationError" } } } }
+        }
+      }
+    },
+    "/api/v1/auth/register": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Register",
+        "operationId": "register_api_v1_auth_register_post",
+        "requestBody": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RegisterRequest" } } }, "required": true },
+        "responses": {
+          "201": { "description": "Successful Response", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TokenResponse" } } } },
+          "422": { "description": "Validation Error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/HTTPValidationError" } } } }
+        }
+      }
+    },
+    "/api/v1/auth/verify-email": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Verify Email",
+        "operationId": "verify_email_api_v1_auth_verify_email_post",
+        "requestBody": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/VerifyEmailRequest" } } }, "required": true },
+        "responses": {
+          "200": { "description": "Successful Response", "content": { "application/json": { "schema": {} } } },
+          "422": { "description": "Validation Error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/HTTPValidationError" } } } }
+        }
+      }
+    },
+    "/api/v1/auth/activate": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Activate Account",
+        "operationId": "activate_account_api_v1_auth_activate_post",
+        "requestBody": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ActivateAccountRequest" } } }, "required": true },
+        "responses": {
+          "200": { "description": "Successful Response", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TokenResponse" } } } },
+          "422": { "description": "Validation Error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/HTTPValidationError" } } } }
+        }
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Login",
+        "operationId": "login_api_v1_auth_login_post",
+        "requestBody": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LoginRequest" } } }, "required": true },
+        "responses": {
+          "200": { "description": "Successful Response", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TokenResponse" } } } },
+          "422": { "description": "Validation Error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/HTTPValidationError" } } } }
+        }
+      }
+    },
+    "/api/v1/auth/refresh": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Refresh Token",
+        "operationId": "refresh_token_api_v1_auth_refresh_post",
+        "requestBody": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RefreshTokenRequest" } } }, "required": true },
+        "responses": {
+          "200": { "description": "Successful Response", "content": { "application/json": { "schema": {} } } },
+          "422": { "description": "Validation Error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/HTTPValidationError" } } } }
+        }
+      }
+    },
+    "/api/v1/auth/forgot-password": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Forgot Password",
+        "operationId": "forgot_password_api_v1_auth_forgot_password_post",
+        "requestBody": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ForgotPasswordRequest" } } }, "required": true },
+        "responses": { "200": { "description": "Successful Response" }, "422": { "description": "Validation Error" } }
+      }
+    },
+    "/api/v1/auth/reset-password": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Reset Password",
+        "operationId": "reset_password_api_v1_auth_reset_password_post",
+        "requestBody": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ResetPasswordRequest" } } }, "required": true },
+        "responses": { "200": { "description": "Successful Response" }, "422": { "description": "Validation Error" } }
+      }
+    },
+    "/api/v1/auth/change-password": {
+      "put": {
+        "tags": ["Authentication"],
+        "summary": "Change Password",
+        "operationId": "change_password_api_v1_auth_change_password_put",
+        "requestBody": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ChangePasswordRequest" } } }, "required": true },
+        "responses": { "200": { "description": "Successful Response" } },
+        "security": [{ "HTTPBearer": [] }]
+      }
+    },
+    "/api/v1/users/me": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Get Current User",
+        "operationId": "get_current_user_api_v1_users_me_get",
+        "responses": { "200": { "description": "Successful Response", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UserWithProfileResponse" } } } } },
+        "security": [{ "HTTPBearer": [] }]
+      },
+      "put": {
+        "tags": ["Users"],
+        "summary": "Update Profile",
+        "operationId": "update_profile_api_v1_users_me_put",
+        "requestBody": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UpdateProfileRequest" } } }, "required": true },
+        "responses": { "200": { "description": "Successful Response", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UserWithProfileResponse" } } } } },
+        "security": [{ "HTTPBearer": [] }]
+      }
+    },
+    "/api/v1/risk/questions": { "get": { "tags": ["Risk Assessment"], "summary": "Get Assessment Questions", "operationId": "get_assessment_questions", "responses": { "200": { "description": "Successful Response" } }, "security": [{ "HTTPBearer": [] }] } },
+    "/api/v1/risk/assessment": {
+      "get": { "tags": ["Risk Assessment"], "summary": "Get Latest Assessment", "operationId": "get_latest_assessment", "responses": { "200": { "description": "Successful Response" } }, "security": [{ "HTTPBearer": [] }] },
+      "post": { "tags": ["Risk Assessment"], "summary": "Submit Assessment", "operationId": "submit_assessment", "responses": { "200": { "description": "Successful Response" } }, "security": [{ "HTTPBearer": [] }] }
+    },
+    "/api/v1/risk/history": { "get": { "tags": ["Risk Assessment"], "summary": "Get Assessment History", "operationId": "get_assessment_history", "responses": { "200": { "description": "Successful Response" } }, "security": [{ "HTTPBearer": [] }] } },
+    "/api/v1/risk/recommendations": { "get": { "tags": ["Risk Assessment"], "summary": "Get Recommendations", "operationId": "get_recommendations", "responses": { "200": { "description": "Successful Response" } }, "security": [{ "HTTPBearer": [] }] } },
+    "/api/v1/products/": { "get": { "tags": ["Marketplace"], "summary": "List Products", "operationId": "list_products", "responses": { "200": { "description": "Successful Response" } } } },
+    "/api/v1/products/featured": { "get": { "tags": ["Marketplace"], "summary": "Get Featured Products", "operationId": "get_featured_products", "responses": { "200": { "description": "Successful Response" } } } },
+    "/api/v1/products/{product_id}": { "get": { "tags": ["Marketplace"], "summary": "Get Product", "operationId": "get_product", "parameters": [{ "name": "product_id", "in": "path", "required": true, "schema": { "type": "string" } }], "responses": { "200": { "description": "Successful Response" } } } },
+    "/api/v1/policies/": {
+      "get": { "tags": ["Policies"], "summary": "List Policies", "operationId": "list_policies", "responses": { "200": { "description": "Successful Response" } } },
+      "post": { "tags": ["Policies"], "summary": "Create Policy", "operationId": "create_policy", "responses": { "200": { "description": "Successful Response" } } }
+    },
+    "/api/v1/policies/{policy_id}": { "get": { "tags": ["Policies"], "summary": "Get Policy", "operationId": "get_policy", "parameters": [{ "name": "policy_id", "in": "path", "required": true, "schema": { "type": "string" } }], "responses": { "200": { "description": "Successful Response" } } } },
+    "/api/v1/claims/": {
+      "get": { "tags": ["Claims"], "summary": "List Claims", "operationId": "list_claims", "responses": { "200": { "description": "Successful Response" } } },
+      "post": { "tags": ["Claims"], "summary": "Submit Claim", "operationId": "submit_claim", "responses": { "200": { "description": "Successful Response" } } }
+    },
+    "/api/v1/claims/{claim_id}": { "get": { "tags": ["Claims"], "summary": "Get Claim", "operationId": "get_claim", "parameters": [{ "name": "claim_id", "in": "path", "required": true, "schema": { "type": "string" } }], "responses": { "200": { "description": "Successful Response" } } } },
+    "/api/v1/payments/initialize": { "post": { "tags": ["Payments"], "summary": "Initialize Payment", "operationId": "initialize_payment", "responses": { "200": { "description": "Successful Response" } } } },
+    "/api/v1/payments/{payment_id}": { "get": { "tags": ["Payments"], "summary": "Get Payment", "operationId": "get_payment", "parameters": [{ "name": "payment_id", "in": "path", "required": true, "schema": { "type": "string" } }], "responses": { "200": { "description": "Successful Response" } } } },
+    "/api/v1/payments/history": { "get": { "tags": ["Payments"], "summary": "Get Payment History", "operationId": "get_payment_history", "responses": { "200": { "description": "Successful Response" } } } }
+  },
+  "components": {
+    "schemas": {
+      "ActivateAccountRequest": { "properties": { "token": { "type": "string", "title": "Token" }, "password": { "type": "string", "title": "Password" } }, "type": "object", "required": ["token", "password"], "title": "ActivateAccountRequest" },
+      "ChangePasswordRequest": { "properties": { "old_password": { "type": "string" }, "new_password": { "type": "string" } }, "type": "object", "required": ["old_password", "new_password"], "title": "ChangePasswordRequest" },
+      "ForgotPasswordRequest": { "properties": { "email": { "type": "string", "format": "email" } }, "type": "object", "required": ["email"], "title": "ForgotPasswordRequest" },
+      "HTTPValidationError": { "properties": { "detail": { "items": { "$ref": "#/components/schemas/ValidationError" }, "type": "array" } }, "type": "object", "title": "HTTPValidationError" },
+      "LoginRequest": { "properties": { "email": { "type": "string" }, "password": { "type": "string" } }, "type": "object", "required": ["email", "password"], "title": "LoginRequest" },
+      "RefreshTokenRequest": { "properties": { "refresh_token": { "type": "string" } }, "type": "object", "required": ["refresh_token"], "title": "RefreshTokenRequest" },
+      "RegisterRequest": { "properties": { "email": { "type": "string", "format": "email" }, "password": { "type": "string" }, "first_name": { "type": "string" }, "last_name": { "anyOf": [{ "type": "string" }, { "type": "null" }] } }, "type": "object", "required": ["email", "password", "first_name"], "title": "RegisterRequest" },
+      "ResendActivationRequest": { "properties": { "email": { "type": "string", "format": "email" } }, "type": "object", "required": ["email"], "title": "ResendActivationRequest" },
+      "ResetPasswordRequest": { "properties": { "token": { "type": "string" }, "new_password": { "type": "string" } }, "type": "object", "required": ["token", "new_password"], "title": "ResetPasswordRequest" },
+      "TokenResponse": { "properties": { "access_token": { "type": "string" }, "refresh_token": { "type": "string" }, "token_type": { "type": "string", "default": "bearer" } }, "type": "object", "required": ["access_token", "refresh_token"], "title": "TokenResponse" },
+      "UpdateProfileRequest": {
+        "properties": {
+          "first_name": { "anyOf": [{ "type": "string" }, { "type": "null" }] },
+          "last_name": { "anyOf": [{ "type": "string" }, { "type": "null" }] },
+          "phone_number": { "anyOf": [{ "type": "string" }, { "type": "null" }] },
+          "date_of_birth": { "anyOf": [{ "type": "string", "format": "date" }, { "type": "null" }] },
+          "gender": { "anyOf": [{ "type": "string" }, { "type": "null" }] },
+          "address_line_1": { "anyOf": [{ "type": "string" }, { "type": "null" }] },
+          "address_line_2": { "anyOf": [{ "type": "string" }, { "type": "null" }] },
+          "city": { "anyOf": [{ "type": "string" }, { "type": "null" }] },
+          "state": { "anyOf": [{ "type": "string" }, { "type": "null" }] },
+          "country": { "anyOf": [{ "type": "string" }, { "type": "null" }] },
+          "postal_code": { "anyOf": [{ "type": "string" }, { "type": "null" }] },
+          "occupation": { "anyOf": [{ "type": "string" }, { "type": "null" }] },
+          "gig_platform": { "anyOf": [{ "type": "string" }, { "type": "null" }] },
+          "average_monthly_income": { "anyOf": [{ "type": "number" }, { "type": "null" }] },
+          "years_of_experience": { "anyOf": [{ "type": "integer" }, { "type": "null" }] },
+          "profile_picture_url": { "anyOf": [{ "type": "string" }, { "type": "null" }] }
+        },
+        "type": "object",
+        "title": "UpdateProfileRequest"
+      },
+      "UserProfileResponse": {
+        "properties": {
+          "date_of_birth": { "anyOf": [{ "type": "string", "format": "date" }, { "type": "null" }] },
+          "gender": { "anyOf": [{ "type": "string" }, { "type": "null" }] },
+          "address_line_1": { "anyOf": [{ "type": "string" }, { "type": "null" }] },
+          "address_line_2": { "anyOf": [{ "type": "string" }, { "type": "null" }] },
+          "city": { "anyOf": [{ "type": "string" }, { "type": "null" }] },
+          "state": { "anyOf": [{ "type": "string" }, { "type": "null" }] },
+          "country": { "anyOf": [{ "type": "string" }, { "type": "null" }] },
+          "postal_code": { "anyOf": [{ "type": "string" }, { "type": "null" }] },
+          "occupation": { "anyOf": [{ "type": "string" }, { "type": "null" }] },
+          "gig_platform": { "anyOf": [{ "type": "string" }, { "type": "null" }] },
+          "average_monthly_income": { "anyOf": [{ "type": "number" }, { "type": "null" }] },
+          "years_of_experience": { "anyOf": [{ "type": "integer" }, { "type": "null" }] },
+          "profile_picture_url": { "anyOf": [{ "type": "string" }, { "type": "null" }] }
+        },
+        "type": "object",
+        "title": "UserProfileResponse"
+      },
+      "UserResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "email": { "type": "string" },
+          "phone_number": { "anyOf": [{ "type": "string" }, { "type": "null" }] },
+          "first_name": { "type": "string" },
+          "last_name": { "anyOf": [{ "type": "string" }, { "type": "null" }] },
+          "status": { "type": "string" },
+          "email_verified": { "type": "boolean" },
+          "last_login_at": { "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }] },
+          "created_at": { "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }] }
+        },
+        "type": "object",
+        "required": ["id", "email", "first_name", "status", "email_verified"],
+        "title": "UserResponse"
+      },
+      "UserWithProfileResponse": {
+        "properties": { "user": { "$ref": "#/components/schemas/UserResponse" }, "profile": { "anyOf": [{ "$ref": "#/components/schemas/UserProfileResponse" }, { "type": "null" }] } },
+        "type": "object",
+        "required": ["user"],
+        "title": "UserWithProfileResponse"
+      },
+      "ValidationError": { "properties": { "loc": { "items": { "anyOf": [{ "type": "string" }, { "type": "integer" }] }, "type": "array" }, "msg": { "type": "string" }, "type": { "type": "string" } }, "type": "object", "required": ["loc", "msg", "type"], "title": "ValidationError" },
+      "VerifyEmailRequest": { "properties": { "token": { "type": "string" } }, "type": "object", "required": ["token"], "title": "VerifyEmailRequest" },
+      "WaitlistSignupRequest": { "properties": { "email": { "type": "string", "format": "email" }, "first_name": { "type": "string" }, "last_name": { "anyOf": [{ "type": "string" }, { "type": "null" }] } }, "type": "object", "required": ["email", "first_name"], "title": "WaitlistSignupRequest" },
+      "WaitlistSignupResponse": { "properties": { "message": { "type": "string" }, "user_id": { "type": "string" }, "access_token": { "type": "string" }, "token_type": { "type": "string", "default": "bearer" } }, "type": "object", "required": ["message", "user_id", "access_token"], "title": "WaitlistSignupResponse" }
+    },
+    "securitySchemes": { "HTTPBearer": { "type": "http", "scheme": "bearer" } }
+  }
+}
