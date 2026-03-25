@@ -1,3 +1,4 @@
+/// <reference types="vitest/globals" />
 import { server } from './server';
 
 /** Call this in vitest.setup.ts */

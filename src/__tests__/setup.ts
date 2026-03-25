@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom';
 import { vi } from 'vitest';
+import { setupMSW } from '@/mocks/index';
 
 class IntersectionObserverMock {
   observe = vi.fn();
@@ -9,3 +10,7 @@ class IntersectionObserverMock {
 }
 
 vi.stubGlobal('IntersectionObserver', IntersectionObserverMock);
+
+// Start MSW for all tests
+setupMSW();
+

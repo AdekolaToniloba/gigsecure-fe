@@ -37,7 +37,7 @@ export const riskService = {
 
   async getHistory(signal?: AbortSignal): Promise<RiskAssessmentResponse[]> {
     const { data } = await apiClient.get(ENDPOINTS.RISK.HISTORY, { signal });
-    return parseOrThrow(riskQuestionsResponseSchema.array().or(riskAssessmentResponseSchema.array()), data, 'riskService.getHistory');
+    return parseOrThrow(riskAssessmentResponseSchema.array(), data, 'riskService.getHistory');
   },
 
   async getRecommendations(signal?: AbortSignal): Promise<RiskRecommendation[]> {
