@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { motion, Variants } from 'framer-motion';
 import { ArrowUpRight } from 'lucide-react';
+import JoinWaitlistButton from '../ui/JoinWaitlistButton';
 
 const staggerContainer: Variants = {
   hidden: { opacity: 0 },
@@ -57,15 +58,15 @@ export default function Hero() {
 
             {/* CTA Buttons */}
             <motion.div variants={fadeUpVariant} className="flex flex-col sm:flex-row items-center gap-4 shrink-0">
-              <Link href="/waitlist" className="w-full sm:w-auto">
-                <motion.button
+              <div className="w-full sm:w-auto">
+                <motion.div
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="flex h-[50px] w-full items-center justify-center rounded-[5px] bg-[#FFE419] px-6 font-body text-base font-semibold tracking-tight text-[#004E4C] shadow-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-accent/50 cursor-pointer"
+                  className="flex w-full  px-6 font-body   cursor-pointer"
                 >
-                  Join Our Waitlist
-                </motion.button>
-              </Link>
+                  <JoinWaitlistButton />
+                </motion.div>
+              </div>
               <Link href="/get-covered" className="w-full sm:w-auto">
                 <motion.button
                   whileHover={{ scale: 1.05, backgroundColor: 'rgba(255,255,255,0.2)' }}
