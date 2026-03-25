@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { motion } from 'framer-motion';
+import JoinWaitlistButton from '@/components/ui/JoinWaitlistButton';
 
 const BENEFITS = [
   "Early access to insurance comparisons",
@@ -83,28 +84,16 @@ export default function BuiltForPeople() {
               ))}
             </div>
 
-            {/* Email Input & Button Row */}
+            {/* Join Waitlist Row */}
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: 0.5 }}
-              className="flex flex-col sm:flex-row items-center gap-[7px] w-full"
+              className="flex w-full max-w-[420px]"
             >
-              <input 
-                type="email" 
-                placeholder="Your email address"
-                className="w-full sm:w-[371px] h-[66px] px-6 font-body text-[16px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#00676E] transition-all"
-                style={{
-                  backgroundColor: '#EEEEF5CC',
-                  border: '1px solid #004E4C96',
-                  borderRadius: '10px'
-                }}
-              />
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="w-full sm:w-[221px] h-[66px] flex items-center justify-center font-body font-normal transition-colors hover:bg-[#EBD001] cursor-pointer"
+              <JoinWaitlistButton 
+                className="w-full h-[66px] flex items-center justify-center font-body font-bold transition-colors hover:bg-[#EBD001] cursor-pointer"
                 style={{
                   backgroundColor: '#FFE419',
                   border: '1px solid #004E4C',
@@ -114,8 +103,8 @@ export default function BuiltForPeople() {
                   lineHeight: '28px'
                 }}
               >
-                You are early
-              </motion.button>
+                Join GigSecure
+              </JoinWaitlistButton>
             </motion.div>
           </div>
 

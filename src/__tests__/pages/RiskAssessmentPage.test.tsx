@@ -54,6 +54,5 @@ describe('RiskAssessmentPage Component Integrations', () => {
     
     // BuiltForPeople
     expect(screen.getByRole('heading', { name: /GigSecure is built for people/i })).toBeInTheDocument();
-    expect(screen.getByPlaceholderText(/Email Address/i)).toBeInTheDocument();
   });
 });

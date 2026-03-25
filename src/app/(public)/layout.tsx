@@ -1,5 +1,6 @@
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
+import WaitlistModal from '@/components/ui/WaitlistModal';
 
 export default function PublicLayout({
   children,
@@ -11,6 +12,7 @@ export default function PublicLayout({
         {children}
       </main>
       <Footer />
+      <WaitlistModal />
     </div>
   );
 }

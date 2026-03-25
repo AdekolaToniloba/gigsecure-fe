@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { motion } from 'framer-motion';
+import JoinWaitlistButton from '@/components/ui/JoinWaitlistButton';
 
 export default function CTA() {
   return (
@@ -58,14 +59,7 @@ export default function CTA() {
                 </div>
 
                 {/* Waitlist Button */}
-                <motion.button 
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="flex h-12 items-center justify-center rounded-[4px] bg-[#FFE419] px-8 font-body text-base font-bold tracking-tight text-[#00676E] shadow-sm transition-colors hover:bg-[#FFE419]/90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-offset-2 focus-visible:ring-accent/50 cursor-pointer"
-                  aria-label="Join Our Waitlist"
-                >
-                  Join Our Waitlist
-                </motion.button>
+                <JoinWaitlistButton />
               </div>
             </div>
 
