@@ -22,6 +22,15 @@ function parseOrThrow<T>(schema: { parse: (data: unknown) => T }, data: unknown,
   }
 }
 
+async function safeJson(res: Response) {
+  const text = await res.text();
+  try {
+    return text ? JSON.parse(text) : {};
+  } catch {
+    return { message: text || res.statusText };
+  }
+}
+
 /** All auth calls go through BFF routes — never directly to the backend */
 export const authService = {
   async login(payload: LoginRequest, signal?: AbortSignal) {
@@ -34,7 +43,7 @@ export const authService = {
       body: JSON.stringify(payload),
       signal,
     });
-    const data = await res.json();
+    const data = await safeJson(res);
     if (!res.ok) throw data;
     return parseOrThrow(tokenResponseSchema, data, 'authService.login');
   },
@@ -49,7 +58,7 @@ export const authService = {
       body: JSON.stringify(payload),
       signal,
     });
-    const data = await res.json();
+    const data = await safeJson(res);
     if (!res.ok) throw data;
     return parseOrThrow(tokenResponseSchema, data, 'authService.register');
   },
@@ -64,7 +73,7 @@ export const authService = {
       body: JSON.stringify(payload),
       signal,
     });
-    const data = await res.json();
+    const data = await safeJson(res);
     if (!res.ok) throw data;
     return parseOrThrow(waitlistSignupResponseSchema, data, 'authService.waitlistSignup');
   },
