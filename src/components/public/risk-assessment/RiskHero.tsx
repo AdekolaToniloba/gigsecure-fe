@@ -3,8 +3,11 @@
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { ChartPieIcon, ChartBarSquareIcon } from '@heroicons/react/24/solid';
+import { useRouter } from 'next/navigation';
+import { assetUrl, ASSETS } from '@/lib/assets';
 
 export default function RiskHero() {
+  const router = useRouter();
   return (
     <section className="bg-[#004E4C] pt-32 pb-24 md:pt-40 md:pb-32 w-full relative overflow-hidden">
       <div className="mx-auto w-full max-w-7xl px-6 lg:px-8 relative z-10">
@@ -26,6 +29,7 @@ export default function RiskHero() {
             
             <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center mb-16">
               <button 
+                onClick={() => router.push('/waitlist')}
                 className="flex items-center justify-center rounded-[5px] bg-[#FFE419] px-6 py-3 font-body text-[16px] font-bold text-[#004E4C] transition-colors hover:bg-[#FFE419]/90 shadow-sm focus:outline-none cursor-pointer"
               >
                 Take the Assessment
@@ -65,7 +69,7 @@ export default function RiskHero() {
             {/* Decorative cross marks top right */}
             <div className="absolute -top-2 -right-12 z-20 w-12 h-12">
                <Image
-                 src="/assets/images/Group_57.webp"
+                 src={assetUrl(ASSETS.group57)}
                  alt="Decorative Cross"
                  fill
                  className="object-contain"
@@ -77,7 +81,7 @@ export default function RiskHero() {
                  style={{ width: '100%', maxWidth: '543px', height: '473px', borderRadius: '17.5px' }}
             >
               <Image
-                src="/assets/images/risk-assessment/Rectangle_119.webp"
+                src={assetUrl(ASSETS.riskAssessment.rectangle119)}
                 alt="Man smiling while looking at laptop and holding a card"
                 fill
                 className="object-cover"

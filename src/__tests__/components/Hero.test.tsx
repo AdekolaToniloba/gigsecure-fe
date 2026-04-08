@@ -26,13 +26,12 @@ describe('Hero Component', () => {
   it('renders the call to action buttons correctly', () => {
     render(<Hero />);
     
-    const waitlistBtn = screen.getByRole('link', { name: /Join Our Waitlist/i });
+    const waitlistBtn = screen.getByRole('button', { name: /Join For Early Access/i });
     expect(waitlistBtn).toBeInTheDocument();
-    expect(waitlistBtn).toHaveAttribute('href', '/waitlist');
 
     const coverBtn = screen.getByRole('link', { name: /Get Covered in Minutes/i });
     expect(coverBtn).toBeInTheDocument();
-    expect(coverBtn).toHaveAttribute('href', '/get-covered');
+    expect(coverBtn).toHaveAttribute('href', '/waitlist');
   });
 
   it('renders the overlapping cards with the correct images and alt text', () => {

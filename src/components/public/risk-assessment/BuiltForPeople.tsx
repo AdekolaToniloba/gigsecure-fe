@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import JoinWaitlistButton from '@/components/ui/JoinWaitlistButton';
+import { assetUrl, ASSETS } from '@/lib/assets';
 
 const BENEFITS = [
   "Early access to insurance comparisons",
@@ -78,7 +79,7 @@ export default function BuiltForPeople() {
                     className="relative flex-shrink-0" 
                     style={{ width: '23.25px', height: '23.49px', transform: 'rotate(-8.36deg)' }}
                   >
-                    <Image src="/assets/images/Group_57.webp" alt="cross icon" fill className="object-contain " />
+                    <Image src={assetUrl(ASSETS.group57)} alt="cross icon" fill className="object-contain " />
                   </div>
                 </motion.div>
               ))}
@@ -118,7 +119,7 @@ export default function BuiltForPeople() {
             style={{ maxWidth: '661px', height: '470px', borderRadius: '14px', overflow: 'hidden' }}
           >
             <Image
-              src="/assets/images/risk-assessment/Rectangle_125.webp"
+              src={assetUrl(ASSETS.riskAssessment.rectangle125)}
               alt="Man smiling in a red beanie using a laptop"
               fill
               className="object-cover"

@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import JoinWaitlistButton from '@/components/ui/JoinWaitlistButton';
+import { assetUrl, ASSETS } from '@/lib/assets';
 
 export default function CTA() {
   return (
@@ -31,7 +32,7 @@ export default function CTA() {
                 <div className="flex -space-x-4">
                   <div className="w-12 h-12 rounded-full border-2 border-white overflow-hidden relative shadow-sm">
                     <Image 
-                      src="/assets/images/ff066588c527ccd21434dec0d44a32b6f4062ba6.webp"
+                      src={assetUrl(ASSETS.ff066588c527ccd21434dec0d44a32b6f4062ba6)}
                       alt="User avatar 1"
                       fill
                       className="object-cover"
@@ -40,7 +41,7 @@ export default function CTA() {
                   </div>
                   <div className="w-12 h-12 rounded-full border-2 border-white overflow-hidden relative shadow-sm">
                     <Image 
-                      src="/assets/images/413aa6d39706739b55c3d3547197c15e8942316d.webp"
+                      src={assetUrl(ASSETS.img413aa6d39706739b55c3d3547197c15e8942316d)}
                       alt="User avatar 2"
                       fill
                       className="object-cover"
@@ -49,7 +50,7 @@ export default function CTA() {
                   </div>
                   <div className="w-12 h-12 rounded-full border-2 border-white overflow-hidden relative shadow-sm bg-[#52B788]">
                     <Image 
-                      src="/assets/images/77b7b280d62e8e9a4f26c135f20e276995476f53.webp"
+                      src={assetUrl(ASSETS.img77b7b280d62e8e9a4f26c135f20e276995476f53)}
                       alt="User avatar 3"
                       fill
                       className="object-cover"
@@ -87,7 +88,7 @@ export default function CTA() {
               {/* The Subject Image locked dynamically to bottom right bounds internally */}
               <div className="relative w-[85%] h-[85%] sm:w-[320px] sm:h-[320px] lg:w-[400px] lg:h-[400px] rounded-[2rem] overflow-hidden mt-auto mr-12 lg:mr-16 mb-8 shadow-md z-10">
                 <Image
-                  src="/assets/images/413aa6d39706739b55c3d3547197c15e8942316d.webp"
+                  src={assetUrl(ASSETS.img413aa6d39706739b55c3d3547197c15e8942316d)}
                   alt="Delivery rider active in the CTA layout"
                   fill
                   className="object-cover object-top"

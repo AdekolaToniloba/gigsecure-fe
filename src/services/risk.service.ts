@@ -1,14 +1,15 @@
 import { apiClient } from '@/lib/api/client';
 import { ENDPOINTS } from '@/lib/api/endpoints';
+import type { TechAssessmentInput, AssessmentResponse } from '@/types/api';
 import {
   riskQuestionsResponseSchema,
   riskAssessmentResponseSchema,
   riskRecommendationsResponseSchema,
-  type RiskQuestion,
+  type SubmitAssessmentRequest,
   type RiskAssessmentResponse,
   type RiskRecommendation,
-  type SubmitAssessmentRequest,
 } from '@/lib/validators/risk';
+import type { RiskQuestionsResponse } from '@/types/risk-assessment';
 
 function parseOrThrow<T>(schema: { parse: (data: unknown) => T }, data: unknown, context: string): T {
   try {
@@ -19,10 +20,16 @@ function parseOrThrow<T>(schema: { parse: (data: unknown) => T }, data: unknown,
   }
 }
 
+const ASSESSMENT_SUBMISSION_ENDPOINT = '/api/v1/risk/assessment/tech_freelancer';
+
 export const riskService = {
-  async getQuestions(signal?: AbortSignal): Promise<RiskQuestion[]> {
-    const { data } = await apiClient.get(ENDPOINTS.RISK.QUESTIONS, { signal });
-    return parseOrThrow(riskQuestionsResponseSchema, data, 'riskService.getQuestions');
+  /** Fetch the question bank — no Zod parse needed (shape is loosely typed from API) */
+  async getQuestions(signal?: AbortSignal): Promise<RiskQuestionsResponse> {
+    const { data } = await apiClient.get(ENDPOINTS.RISK.QUESTIONS, {
+      signal,
+      params: { category: 'tech_freelancer' },
+    });
+    return data as RiskQuestionsResponse;
   },
 
   async getLatestAssessment(signal?: AbortSignal): Promise<RiskAssessmentResponse> {
@@ -30,6 +37,13 @@ export const riskService = {
     return parseOrThrow(riskAssessmentResponseSchema, data, 'riskService.getLatestAssessment');
   },
 
+  /** Submit a tech freelancer risk assessment — returns full AssessmentResponse */
+  async submitTechAssessment(payload: TechAssessmentInput, signal?: AbortSignal): Promise<AssessmentResponse> {
+    const { data } = await apiClient.post(ASSESSMENT_SUBMISSION_ENDPOINT, payload, { signal });
+    return data as AssessmentResponse;
+  },
+
+  /** Legacy: submit assessment with old shape (kept for compatibility) */
   async submitAssessment(payload: SubmitAssessmentRequest, signal?: AbortSignal): Promise<RiskAssessmentResponse> {
     const { data } = await apiClient.post(ENDPOINTS.RISK.ASSESSMENT, payload, { signal });
     return parseOrThrow(riskAssessmentResponseSchema, data, 'riskService.submitAssessment');

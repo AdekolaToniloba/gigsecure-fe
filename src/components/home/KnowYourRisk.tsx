@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { motion } from 'framer-motion';
+import { assetUrl, ASSETS } from '@/lib/assets';
 
 export default function KnowYourRisk() {
   return (
@@ -67,7 +68,7 @@ export default function KnowYourRisk() {
             {/* The Image Overlay Wrapper (Slight downward offset, central) */}
             <div className="relative w-[92%] h-[92%] mx-auto mt-6 sm:mt-8 z-10 rounded-3xl overflow-hidden shadow-2xl">
               <Image
-                src="/assets/images/ff066588c527ccd21434dec0d44a32b6f4062ba6.webp"
+                src={assetUrl(ASSETS.ff066588c527ccd21434dec0d44a32b6f4062ba6)}
                 alt="Smiling professional in the Know Your Risk section"
                 fill
                 className="object-cover"

@@ -19,7 +19,8 @@ describe('CTA Component', () => {
 
   it('renders the Waitlist button', () => {
     render(<CTA />);
-    const button = screen.getByRole('button', { name: /Join Our Waitlist/i });
+    // Testing the button presence
+    const button = screen.getByRole('button', { name: /join for early access/i });
     expect(button).toBeInTheDocument();
   });
 
