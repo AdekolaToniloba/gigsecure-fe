@@ -26,12 +26,14 @@ export function useRegister() {
 }
 
 export function useWaitlistSignup() {
-  const { setAccessToken } = useAuthStore();
+  const { setAccessToken, setUserMeta } = useAuthStore();
 
   return useMutation({
     mutationFn: (payload: WaitlistSignupRequest) => authService.waitlistSignup(payload),
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
       setAccessToken(data.access_token);
+      // Store name from form variables (API response may not return them)
+      setUserMeta(variables.first_name, variables.last_name ?? null);
     },
   });
 }
@@ -84,5 +86,7 @@ export function useAuthState() {
     isAuthenticated: s.isAuthenticated,
     user: s.user,
     accessToken: s.accessToken,
+    firstName: s.firstName,
+    lastName: s.lastName,
   }));
 }

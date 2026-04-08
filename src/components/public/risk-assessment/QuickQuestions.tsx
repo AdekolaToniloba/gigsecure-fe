@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { motion } from 'framer-motion';
+import { assetUrl, ASSETS } from '@/lib/assets';
 
 const STEPS = [
   "Answer a few simple questions about your work, income, risks, and safety net",
@@ -26,7 +27,7 @@ export default function QuickQuestions() {
           {/* Background Image */}
           <div className="absolute inset-0 z-0">
             <Image
-              src="/assets/images/risk-assessment/Rectangle_98.webp"
+              src={assetUrl(ASSETS.riskAssessment.rectangle98)}
               alt="Woman smiling while holding smartphone"
               fill
               className="object-cover object-right sm:object-center"

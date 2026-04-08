@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
+import { assetUrl, ASSETS } from '@/lib/assets';
 
 const FOOTER_LINKS = [
   { label: 'About', href: '/about' },
@@ -34,7 +35,7 @@ export default function Footer() {
         }}
       >
         <div style={{ width: '100%', height: '100%', transform: 'rotate(48.36deg)' }}>
-          <Image src="/assets/images/Group_57.webp" alt="" fill className="object-cover opacity-50" />
+          <Image src={assetUrl(ASSETS.group57)} alt="" fill className="object-cover opacity-50" />
         </div>
       </motion.div>
 
@@ -46,7 +47,7 @@ export default function Footer() {
           <Link href="/" className="inline-block cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[#FFE419] rounded-sm">
             <motion.div whileHover={{ scale: 1.05 }} className="relative" style={{ width: '195px', height: '35px' }}>
               <Image 
-                src="/logo.png" 
+                src={assetUrl(ASSETS.logo)} 
                 alt="GigSecure Logo" 
                 fill 
                 className="object-contain object-left"

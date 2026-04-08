@@ -14,8 +14,8 @@ export const registerRequestSchema = z.object({
 });
 
 export const waitlistSignupRequestSchema = z.object({
-  email: z.string().email(),
-  first_name: z.string().min(1),
+  email: z.string().email('Invalid email format'),
+  first_name: z.string().min(1, 'First name is required'),
   last_name: z.string().nullable().optional(),
 });
 

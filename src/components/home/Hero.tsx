@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { motion, Variants } from 'framer-motion';
 import { ArrowUpRight } from 'lucide-react';
 import JoinWaitlistButton from '../ui/JoinWaitlistButton';
+import { assetUrl, ASSETS } from '@/lib/assets';
 
 const staggerContainer: Variants = {
   hidden: { opacity: 0 },
@@ -67,7 +68,7 @@ export default function Hero() {
                   <JoinWaitlistButton />
                 </motion.div>
               </div>
-              <Link href="/get-covered" className="w-full sm:w-auto">
+              <Link href="/waitlist" className="w-full sm:w-auto">
                 <motion.button
                   whileHover={{ scale: 1.05, backgroundColor: 'rgba(255,255,255,0.2)' }}
                   whileTap={{ scale: 0.95 }}
@@ -120,7 +121,7 @@ export default function Hero() {
                 className="w-full h-full relative"
               >
                 <Image
-                  src="/assets/images/a409bd93db42a474a79d789c5121daaf7783679d.webp"
+                  src={assetUrl(ASSETS.a409bd93db42a474a79d789c5121daaf7783679d)}
                   alt="Delivery rider handing a package to a customer"
                   fill
                   className="object-cover object-top transition-transform duration-700 group-hover:scale-105"
@@ -163,7 +164,7 @@ export default function Hero() {
                 className="w-full h-full relative"
               >
                 <Image
-                  src="/assets/images/77b7b280d62e8e9a4f26c135f20e276995476f53.webp"
+                  src={assetUrl(ASSETS.img77b7b280d62e8e9a4f26c135f20e276995476f53)}
                   alt="Freelancer working happily on a laptop"
                   fill
                   className="object-cover transition-transform duration-700 group-hover:scale-105"

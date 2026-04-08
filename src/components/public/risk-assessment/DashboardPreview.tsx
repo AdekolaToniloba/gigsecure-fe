@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { ChartPieIcon } from '@heroicons/react/24/solid';
+import { assetUrl, ASSETS } from '@/lib/assets';
 
 const PILLS = [
   "Income Stability",
@@ -49,7 +50,7 @@ export default function DashboardPreview() {
                 style={{ height: '449px', borderRadius: '21px' }}
               >
                 <Image
-                  src="/assets/images/risk-assessment/Rectangle_117.webp"
+                  src={assetUrl(ASSETS.riskAssessment.rectangle117)}
                   alt="Smiling professional showing successful personalized risk dashboard integration"
                   fill
                   className="object-cover"

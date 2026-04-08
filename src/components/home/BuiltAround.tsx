@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Play } from 'lucide-react';
+import { assetUrl, ASSETS } from '@/lib/assets';
 
 export default function BuiltAround() {
   return (
@@ -74,7 +75,7 @@ export default function BuiltAround() {
             {/* The Image Overlay Wrapper (Slight downward offset, central) */}
             <div className="relative w-[92%] h-[92%] mx-auto mt-6 sm:mt-8 z-10 rounded-3xl overflow-hidden shadow-2xl">
               <Image
-                src="/assets/images/a6240d543a2fedd60dfd5beb2da99377a37a0c93.webp"
+                src={assetUrl(ASSETS.a6240d543a2fedd60dfd5beb2da99377a37a0c93)}
                 alt="Freelancer with earmuffs working on a laptop in a workshop"
                 fill
                 className="object-cover"

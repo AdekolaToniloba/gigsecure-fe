@@ -29,10 +29,34 @@ export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const hasRefreshCookie = req.cookies.has(COOKIE_NAME);
 
-  // Static assets, API routes, Next.js internals — pass through
+  // Static assets, Next.js internals — pass through
+  // Note: /api/ is allowed above so our /api/staging-auth route is accessible!
   if (isAlwaysAccessible(pathname)) {
     return applySecurityHeaders(NextResponse.next());
   }
+
+  const host = req.headers.get('host') || '';
+
+  // === STAGING SUBDOMAIN PROTECTION ===
+  if (host === 'staging.gigsecure.co' || host.startsWith('staging.')) {
+    const isStagingAuth = req.cookies.has('gs_staging_auth');
+
+    if (pathname === '/staging-login') {
+      if (isStagingAuth) {
+        const url = req.nextUrl.clone();
+        url.pathname = '/';
+        return applySecurityHeaders(NextResponse.redirect(url));
+      }
+      return applySecurityHeaders(NextResponse.next());
+    }
+
+    if (!isStagingAuth) {
+      const url = req.nextUrl.clone();
+      url.pathname = '/staging-login';
+      return applySecurityHeaders(NextResponse.redirect(url));
+    }
+  }
+  // ====================================
 
   // If logged in and trying to access public-only pages → redirect to dashboard
   if (PUBLIC_ONLY_PATHS.some((p) => pathname === p || pathname.startsWith(p + '/'))) {

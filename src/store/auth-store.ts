@@ -1,12 +1,14 @@
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import type { components } from '@/types/schema';
 
 type UserResponse = components['schemas']['UserResponse'];
 
 // ─── State ────────────────────────────────────────────────────────
 interface AuthState {
-  /** In-memory only. Intentionally lost on page refresh — silent refresh restores it. */
   accessToken: string | null;
+  firstName: string | null;
+  lastName: string | null;
   user: UserResponse | null;
   isAuthenticated: boolean;
 }
@@ -15,25 +17,52 @@ interface AuthState {
 interface AuthActions {
   setAccessToken: (token: string) => void;
   setUser: (user: UserResponse) => void;
+  setUserMeta: (firstName: string, lastName: string | null) => void;
   clearAuth: () => void;
 }
 
 type AuthStore = AuthState & AuthActions;
 
 // ─── Store ────────────────────────────────────────────────────────
-// NOTE: No persist middleware — access token must live in memory only.
-export const useAuthStore = create<AuthStore>((set) => ({
-  // State
-  accessToken: null,
-  user: null,
-  isAuthenticated: false,
+// Token is persisted to localStorage so the wizard flow survives page refresh.
+export const useAuthStore = create<AuthStore>()(
+  persist(
+    (set) => ({
+      // State
+      accessToken: null,
+      firstName: null,
+      lastName: null,
+      user: null,
+      isAuthenticated: false,
 
-  // Actions
-  setAccessToken: (token) =>
-    set({ accessToken: token, isAuthenticated: true }),
+      // Actions
+      setAccessToken: (token) =>
+        set({ accessToken: token, isAuthenticated: true }),
 
-  setUser: (user) => set({ user }),
+      setUser: (user) => set({ user }),
 
-  clearAuth: () =>
-    set({ accessToken: null, user: null, isAuthenticated: false }),
-}));
+      setUserMeta: (firstName, lastName) => set({ firstName, lastName }),
+
+      clearAuth: () =>
+        set({
+          accessToken: null,
+          firstName: null,
+          lastName: null,
+          user: null,
+          isAuthenticated: false,
+        }),
+    }),
+    {
+      name: 'gigsecure-auth',
+      storage: createJSONStorage(() =>
+        typeof window !== 'undefined' ? localStorage : localStorage
+      ),
+      partialize: (state) => ({
+        accessToken: state.accessToken,
+        firstName: state.firstName,
+        lastName: state.lastName,
+        isAuthenticated: state.isAuthenticated,
+      }),
+    }
+  )
+);

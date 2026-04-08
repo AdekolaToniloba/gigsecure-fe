@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { useState } from 'react';
 import { motion, Variants } from 'framer-motion';
+import { assetUrl, ASSETS } from '@/lib/assets';
 
 const STEPS = [
   {
@@ -91,7 +92,7 @@ export default function HowItWorks() {
               />
               
               <Image
-                src="/assets/images/e24691b767ceaed733586e12832b4d03537422cc.webp"
+                src={assetUrl(ASSETS.e24691b767ceaed733586e12832b4d03537422cc)}
                 alt="Delivery rider looking at package and phone"
                 fill
                 className="object-cover rounded-3xl cursor-pointer transition-transform hover:scale-105"
