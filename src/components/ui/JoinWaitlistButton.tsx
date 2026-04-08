@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { motion, HTMLMotionProps } from 'framer-motion';
-import { useUIStore } from '@/store/ui-store';
+import { useRouter } from 'next/navigation';
 
 interface JoinWaitlistButtonProps extends Omit<HTMLMotionProps<'button'>, 'onClick'> {
   children?: React.ReactNode;
@@ -13,11 +13,13 @@ export default function JoinWaitlistButton({
   className = '',
   ...props
 }: JoinWaitlistButtonProps) {
-  const { openModal } = useUIStore();
+  const router = useRouter();
 
   return (
     <motion.button
-      onClick={() => openModal('waitlist')}
+      onClick={() => {
+        router.push('/waitlist');
+      }}
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
       // Use the injected className if provided, otherwise fallback to the default styling

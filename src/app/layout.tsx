@@ -6,6 +6,8 @@ import { Inter } from 'next/font/google';
 //   build time and will throw if the files are missing.
 import './globals.css';
 import Providers from '@/providers';
+import { GoogleAnalytics } from '@next/third-parties/google';
+import { env } from '@/lib/env';
 
 // ─── Inter — body font ─────────────────────────────────────────────
 const inter = Inter({
@@ -32,6 +34,9 @@ export const metadata: Metadata = {
     template: '%s | GigSecure',
   },
   description: 'Secure gig management platform.',
+  verification: {
+    google: 'Kx0-11hltt7ro_cSPdS61qlvbbeEL3TkaRbaBrY_ZVo',
+  },
 };
 
 export default function RootLayout({
@@ -40,11 +45,14 @@ export default function RootLayout({
   return (
     // When Apercu Pro is active, add apercu.variable to the className:
     // <html lang="en" className={`${apercu.variable} ${inter.variable}`}>
-    <html lang="en" className={inter.variable}>
-      <body className="font-body bg-background antialiased">
+    <html lang="en" className={inter.variable} suppressHydrationWarning>
+      <body className="font-body bg-background antialiased" suppressHydrationWarning>
         <Providers>
           {children}
         </Providers>
+        {env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (
+          <GoogleAnalytics gaId={env.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
+        )}
       </body>
     </html>
   );
