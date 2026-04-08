@@ -2,6 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { APP_NAME } from '@/lib/constants';
 import WizardCancelButton from './_components/WizardCancelButton';
+import { assetUrl, ASSETS } from '@/lib/assets';
 
 export default function WizardLayout({
   children,
@@ -18,7 +19,7 @@ export default function WizardLayout({
           aria-label={`${APP_NAME} home`}
         >
           <Image
-            src="/logo.png"
+            src={assetUrl(ASSETS.logo)}
             alt={APP_NAME}
             width={140}
             height={36}

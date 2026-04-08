@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { assetUrl, ASSETS } from '@/lib/assets';
 
 export default function StagingLoginPage() {
   const [password, setPassword] = useState('');
@@ -42,7 +43,7 @@ export default function StagingLoginPage() {
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center mb-6">
           <Image
-            src="/logo.png"
+            src={assetUrl(ASSETS.logo)}
             alt="GigSecure"
             width={160}
             height={40}

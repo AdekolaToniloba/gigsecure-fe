@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { motion } from 'framer-motion';
+import { assetUrl, ASSETS } from '@/lib/assets';
 
 const CARDS = [
   {
@@ -108,7 +109,7 @@ export default function Fragile() {
             {/* Fallback yellow background if image doesn't fill */}
             <div className="absolute inset-0 bg-[#FFE419] z-0" />
             <Image
-              src="/assets/images/risk-assessment/Rectangle_129.webp"
+              src={assetUrl(ASSETS.riskAssessment.rectangle129)}
               alt="Woman smiling widely in front of yellow background"
               fill
               className="object-cover object-top z-10"

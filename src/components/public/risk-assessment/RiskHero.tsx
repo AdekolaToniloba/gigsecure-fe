@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { ChartPieIcon, ChartBarSquareIcon } from '@heroicons/react/24/solid';
 import { useRouter } from 'next/navigation';
+import { assetUrl, ASSETS } from '@/lib/assets';
 
 export default function RiskHero() {
   const router = useRouter();
@@ -68,7 +69,7 @@ export default function RiskHero() {
             {/* Decorative cross marks top right */}
             <div className="absolute -top-2 -right-12 z-20 w-12 h-12">
                <Image
-                 src="/assets/images/Group_57.webp"
+                 src={assetUrl(ASSETS.group57)}
                  alt="Decorative Cross"
                  fill
                  className="object-contain"
@@ -80,7 +81,7 @@ export default function RiskHero() {
                  style={{ width: '100%', maxWidth: '543px', height: '473px', borderRadius: '17.5px' }}
             >
               <Image
-                src="/assets/images/risk-assessment/Rectangle_119.webp"
+                src={assetUrl(ASSETS.riskAssessment.rectangle119)}
                 alt="Man smiling while looking at laptop and holding a card"
                 fill
                 className="object-cover"

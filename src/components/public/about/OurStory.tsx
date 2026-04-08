@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { motion } from 'framer-motion';
+import { assetUrl, ASSETS } from '@/lib/assets';
 
 const PILLS = [
   "What happens if income slows?",
@@ -40,7 +41,7 @@ export default function OurStory() {
             className="w-full relative h-[300px] sm:h-[400px] md:h-[350px] lg:h-[450px] rounded-[32px] overflow-hidden shadow-sm"
           >
             <Image
-              src="/assets/images/about/Rectangle_149.webp"
+              src={assetUrl(ASSETS.about.rectangle149)}
               alt="Gig worker in orange shirt focusing on laptop"
               fill
               className="object-cover"
@@ -58,7 +59,7 @@ export default function OurStory() {
           >
             <div className="w-full relative h-[300px] sm:h-[400px] md:h-[350px] lg:h-[400px] rounded-[32px] overflow-hidden shadow-sm">
               <Image
-                src="/assets/images/about/2148920603_1.webp"
+                src={assetUrl(ASSETS.about.img21489206031)}
                 alt="Independent worker sitting outside laughing"
                 fill
                 className="object-cover object-top"

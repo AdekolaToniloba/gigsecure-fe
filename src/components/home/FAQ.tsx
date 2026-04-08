@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Minus } from 'lucide-react';
+import { assetUrl, ASSETS } from '@/lib/assets';
 
 const FAQ_DATA = [
   {
@@ -71,7 +72,7 @@ export default function FAQ() {
               
               <div className="relative w-full h-full overflow-hidden rounded-3xl shadow-xl z-10">
                 <Image
-                  src="/assets/images/7aaf320626defa49daffc84b4be9093d38323454.webp"
+                  src={assetUrl(ASSETS.img7aaf320626defa49daffc84b4be9093d38323454)}
                   alt="Delivery rider handing a package to a customer"
                   fill
                   className="object-cover"

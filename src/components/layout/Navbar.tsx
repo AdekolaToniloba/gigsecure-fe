@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X } from 'lucide-react';
 import { APP_NAME, ROUTES } from '@/lib/constants';
+import { assetUrl, ASSETS } from '@/lib/assets';
 
 const NAV_LINKS = [
   { name: 'About', href: '/about' },
@@ -61,7 +62,7 @@ export default function Navbar() {
             whileTap={{ scale: 0.95 }}
           >
             <Image
-              src="/logo.png"
+              src={assetUrl(ASSETS.logo)}
               alt={APP_NAME}
               width={160}
               height={40}

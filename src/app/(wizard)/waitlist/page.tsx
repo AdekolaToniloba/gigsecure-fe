@@ -10,6 +10,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useWaitlistSignup } from '@/hooks/auth/useAuth';
 import { waitlistSignupRequestSchema, type WaitlistSignupRequest } from '@/lib/validators/auth';
+import { assetUrl, ASSETS } from '@/lib/assets';
 
 const BENEFITS = [
   "Be first to compare and activate coverage plans",
@@ -56,7 +57,7 @@ export default function WaitlistPage() {
         {/* Logo */}
         <Link href="/" className="relative z-10 mb-12">
           <Image
-            src="/logo.png"
+            src={assetUrl(ASSETS.logo)}
             alt="GigSecure"
             width={160}
             height={40}

@@ -18,6 +18,7 @@ class IntersectionObserverMock {
 
 vi.stubGlobal('IntersectionObserver', IntersectionObserverMock);
 vi.stubEnv('NEXT_PUBLIC_API_BASE_URL', 'http://localhost:8000');
+vi.stubEnv('NEXT_PUBLIC_APP_URL', 'http://localhost:3000');
 
 // ResizeObserver mock (needed by Framer Motion AnimatePresence)
 global.ResizeObserver = class ResizeObserver {

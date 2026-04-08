@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { motion } from 'framer-motion';
+import { assetUrl, ASSETS } from '@/lib/assets';
 
 export default function NotGeneric() {
   return (
@@ -42,7 +43,7 @@ export default function NotGeneric() {
                 style={{ width: '100%', maxWidth: '322px', height: '309px', borderRadius: '14px' }}
               >
                 <Image
-                  src="/assets/images/risk-assessment/Rectangle_100.webp"
+                  src={assetUrl(ASSETS.riskAssessment.rectangle100)}
                   alt="Smiling woman standing in brick room"
                   fill
                   className="object-cover"
@@ -61,7 +62,7 @@ export default function NotGeneric() {
                   transform: 'rotate(-15.36deg)'
                 }}
               >
-                  <Image src="/assets/images/Group_57.webp" alt="cross" fill className="object-contain" />
+                  <Image src={assetUrl(ASSETS.group57)} alt="cross" fill className="object-contain" />
               </div>
 
               {/* Left Image Pill */}
@@ -100,7 +101,7 @@ export default function NotGeneric() {
                 className="relative shadow-none"
                 style={{ width: '100%', maxWidth: '322px', height: '290px' }}
               >
-                 <Image src="/assets/images/risk-assessment/Rectangle_92.webp" alt="Woman at laptop" fill className="object-cover shadow-sm" sizes="(max-width: 768px) 100vw, 322px" />
+                 <Image src={assetUrl(ASSETS.riskAssessment.rectangle92)} alt="Woman at laptop" fill className="object-cover shadow-sm" sizes="(max-width: 768px) 100vw, 322px" />
                  <div 
                    className="absolute bg-[#EEF1FC]/95 backdrop-blur-sm shadow-md flex items-center justify-center z-10"
                    style={{ width: '235px', height: '67px', borderRadius: '31px', borderWidth: '0.62px', borderColor: '#00676E', bottom: '-25.5px', left: '43.5px' }}
@@ -118,7 +119,7 @@ export default function NotGeneric() {
                 className="relative shadow-none"
                 style={{ width: '100%', maxWidth: '322px', height: '325px' }}
               >
-                 <Image src="/assets/images/risk-assessment/Rectangle_103.webp" alt="Person working" fill className="object-cover object-top shadow-sm" sizes="(max-width: 768px) 100vw, 322px" />
+                 <Image src={assetUrl(ASSETS.riskAssessment.rectangle103)} alt="Person working" fill className="object-cover object-top shadow-sm" sizes="(max-width: 768px) 100vw, 322px" />
                  <div 
                    className="absolute bg-[#EEF1FC]/95 backdrop-blur-sm shadow-md flex items-center justify-center z-10 p-2"
                    style={{ width: '200px', height: '61px', borderRadius: '31px', borderWidth: '0.62px', borderColor: '#00676E', bottom: '20px', left: '20px' }}
@@ -139,7 +140,7 @@ export default function NotGeneric() {
                 className="relative shadow-none"
                 style={{ width: '100%', maxWidth: '322px', height: '249px' }}
               >
-                 <Image src="/assets/images/risk-assessment/Rectangle_102.webp" alt="Girl working outdoors" fill className="object-cover shadow-sm" sizes="(max-width: 768px) 100vw, 322px" />
+                 <Image src={assetUrl(ASSETS.riskAssessment.rectangle102)} alt="Girl working outdoors" fill className="object-cover shadow-sm" sizes="(max-width: 768px) 100vw, 322px" />
                  <div 
                    className="absolute bg-[#EEF1FC]/95 backdrop-blur-sm shadow-md flex items-center justify-center z-10"
                    style={{ width: '149.97px', height: '48px', borderRadius: '31px', borderWidth: '0.62px', borderColor: '#00676E', bottom: '-10px', left: '86px' }}
@@ -157,7 +158,7 @@ export default function NotGeneric() {
                 className="relative shadow-none"
                 style={{ width: '100%', maxWidth: '322px', height: '380px' }}
               >
-                 <Image src="/assets/images/risk-assessment/Rectangle_101.webp" alt="Guy focusing with headset" fill className="object-cover rounded-[14px] shadow-sm" sizes="(max-width: 768px) 100vw, 322px" />
+                 <Image src={assetUrl(ASSETS.riskAssessment.rectangle101)} alt="Guy focusing with headset" fill className="object-cover rounded-[14px] shadow-sm" sizes="(max-width: 768px) 100vw, 322px" />
                  <div 
                    className="absolute bg-[#EEF1FC]/95 backdrop-blur-sm shadow-md flex items-center justify-center z-10"
                    style={{ width: '267px', height: '48px', borderRadius: '31px', borderWidth: '0.62px', borderColor: '#00676E', bottom: '45px', left: '27.5px' }}
