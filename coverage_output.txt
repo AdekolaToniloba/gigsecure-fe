@@ -1,0 +1,76 @@
+
+> gigsecure-fe@0.1.0 test:coverage
+> vitest run --coverage
+
+
+[1m[46m RUN [49m[22m [36mv4.1.3 [39m[90m/Users/naijaghost/Desktop/projects/gigsecure-fe[39m
+      [2mCoverage enabled with [22m[33mv8[39m
+
+ [31m❯[39m src/__tests__/components/Hero.test.tsx [2m([22m[2m3 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[33m 349[2mms[22m[39m
+     [32m✓[39m renders the main typography and text correctly[32m 59[2mms[22m[39m
+[31m     [31m×[31m renders the call to action buttons correctly[39m[32m 260[2mms[22m[39m
+     [32m✓[39m renders the overlapping cards with the correct images and alt text[32m 18[2mms[22m[39m
+[90mstdout[2m | src/__tests__/pages/WaitlistPage.test.tsx[2m > [22m[2mWaitlistPage[2m > [22m[2mempty submit shows validation errors
+[22m[39mButton disabled? [33mfalse[39m
+
+[90mstdout[2m | src/__tests__/pages/WaitlistPage.test.tsx[2m > [22m[2mWaitlistPage[2m > [22m[2mempty submit shows validation errors
+[22m[39mDOM after click: <div><div class="min-h-screen bg-white flex flex-col lg:flex-row"><div class="bg-[#004E4C] w-full lg:w-1/2 min-h-[40vh] lg:min-h-screen flex flex-col px-8 py-12 lg:p-16 relative overflow-hidden"><div class="absolute top-0 left-0 right-0 h-1/2 bg-gradient-to-b from-white/5 to-transparent pointer-events-none"></div><a class="relative z-10 mb-12" href="/"><img alt="GigSecure" width="160" height="40" decoding="async" data-nimg="1" class="h-8 w-auto object-contain cursor-pointer" style="color: transparent;" srcset="/_next/image?url=%2Flogo.png&amp;w=256&amp;q=75 1x, /_next/image?url=%2Flogo.png&amp;w=384&amp;q=75 2x" src="/_next/image?url=%2Flogo.png&amp;w=384&amp;q=75"></a><div class="flex-1 flex flex-col justify-center relative z-10"><div class="flex h-12 w-16 items-center justify-center rounded-[8px] bg-white/10 mb-6 relative"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-mail text-[#FFE419] h-6 w-6" aria-hidden="true"><path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7"></path><rect x="2" y="4" width="20" height="16" rx="2"></rect></svg></div><h1 class="text-[#FFE419] font-heading text-[32px] sm:text-[40px] lg:text-[48px] font-bold leading-tight mb-6 max-w-xl">Join the early access list</h1><p class="text-white/90 font-body text-[18px] lg:text-[20px] max-w-[480px] leading-relaxed">You're among the first freelancers shaping GigSecure. Drop your email and we'll reach out the moment coverage goes live.</p></div></div><div class="w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-16 relative"><div class="w-full max-w-[480px]"><div style="opacity: 0.12520761983614648; transform: translateY(14.90755236284044px);"><div class="flex flex-col gap-4 mb-10"><div class="flex items-start gap-4"><div class="flex h-6 w-6 items-center justify-center rounded-full bg-[#004E4C] flex-shrink-0"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check text-white" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></div><span class="font-body text-[#334155] text-[16px] leading-relaxed">Be first to compare and activate coverage plans</span></div><div class="flex items-start gap-4"><div class="flex h-6 w-6 items-center justify-center rounded-full bg-[#004E4C] flex-shrink-0"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check text-white" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></div><span class="font-body text-[#334155] text-[16px] leading-relaxed">Exclusive launch pricing locked in before public release</span></div><div class="flex items-start gap-4"><div class="flex h-6 w-6 items-center justify-center rounded-full bg-[#004E4C] flex-shrink-0"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check text-white" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></div><span class="font-body text-[#334155] text-[16px] leading-relaxed">Your risk profile saved and ready when we launch</span></div></div><form class="space-y-6" novalidate=""><div><label for="email" class="block text-sm font-bold text-[#334155] mb-2 font-body">Your Email Address</label><input id="email" class="w-full h-[56px] rounded-lg border border-gray-200 bg-[#F8FAFC] px-4 font-body text-[16px] text-gray-900 focus:border-[#004E4C] focus:outline-none focus:ring-1 focus:ring-[#004E4C] transition-colors" placeholder="e.g. hello@example.com" type="email" name="email"><p class="mt-1.5 text-sm text-red-500">Invalid email format</p></div><div class="grid grid-cols-1 md:grid-cols-2 gap-6"><div><label for="first_name" class="block text-sm font-bold text-[#334155] mb-2 font-body">First Name</label><input id="first_name" class="w-full h-[56px] rounded-lg border border-gray-200 bg-[#F8FAFC] px-4 font-body text-[16px] text-gray-900 focus:border-[#004E4C] focus:outline-none focus:ring-1 focus:ring-[#004E4C] transition-colors" placeholder="John" type="text" name="first_name"><p class="mt-1.5 text-sm text-red-500">First name is required</p></div><div><label for="last_name" class="block text-sm font-bold text-[#334155] mb-2 font-body">Last Name</label><input id="last_name" class="w-full h-[56px] rounded-lg border border-gray-200 bg-[#F8FAFC] px-4 font-body text-[16px] text-gray-900 focus:border-[#004E4C] focus:outline-none focus:ring-1 focus:ring-[#004E4C] transition-colors" placeholder="Doe" type="text" name="last_name"></div></div><button type="submit" class="w-full h-[60px] rounded-lg bg-[#FFE419] font-body text-[18px] font-bold text-[#004E4C] shadow-sm transition-colors hover:bg-[#EBD001] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004E4C] disabled:opacity-70 disabled:cursor-not-allowed mt-4 cursor-pointer flex justify-center items-center" tabindex="0" style="transform: scale(1.001976283126945);">Secure my Spot &amp; Continue</button></form><div class="mt-8 flex items-start gap-4 p-4 bg-gray-50 rounded-xl"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-lock text-gray-400 mt-0.5 flex-shrink-0" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg><p class="text-[14px] text-gray-500 leading-relaxed font-body">We'll only contact you about GigSecure. No spam, no third-party sharing. Unsubscribe anytime.</p></div></div></div></div></div></div>
+
+ [32m✓[39m src/__tests__/pages/RiskAssessmentPage.test.tsx [2m([22m[2m1 test[22m[2m)[22m[33m 536[2mms[22m[39m
+     [33m[2m✓[22m[39m renders all structural components of the risk assessment page cleanly [33m 532[2mms[22m[39m
+ [32m✓[39m src/__tests__/components/FAQ.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[33m 617[2mms[22m[39m
+ [32m✓[39m src/__tests__/components/wizard/ReportScreen.test.tsx [2m([22m[2m13 tests[22m[2m)[22m[33m 780[2mms[22m[39m
+ [32m✓[39m src/__tests__/pages/FAQPage.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[33m 1155[2mms[22m[39m
+     [33m[2m✓[22m[39m renders the header and FAQ list [33m 702[2mms[22m[39m
+     [33m[2m✓[22m[39m toggles FAQ answers when clicked [33m 448[2mms[22m[39m
+ [32m✓[39m src/__tests__/components/wizard/inputs/QuestionInputs.test.tsx [2m([22m[2m15 tests[22m[2m)[22m[33m 1390[2mms[22m[39m
+ [32m✓[39m src/__tests__/components/wizard/RiskWizard.test.tsx [2m([22m[2m6 tests[22m[2m)[22m[33m 1082[2mms[22m[39m
+     [33m[2m✓[22m[39m "Start over" resets to step 0 [33m 770[2mms[22m[39m
+ [32m✓[39m src/__tests__/components/wizard/StepComponents.test.tsx [2m([22m[2m6 tests[22m[2m)[22m[33m 1545[2mms[22m[39m
+       [33m[2m✓[22m[39m requires valid submission state to click Next [33m 360[2mms[22m[39m
+       [33m[2m✓[22m[39m preserves previous answers as defaults [33m 585[2mms[22m[39m
+       [33m[2m✓[22m[39m calls onSubmit with merged answers on valid submit [33m 409[2mms[22m[39m
+ [32m✓[39m src/__tests__/components/Button.test.tsx [2m([22m[2m9 tests[22m[2m)[22m[33m 381[2mms[22m[39m
+ [32m✓[39m src/__tests__/components/wizard/ConsentGate.test.tsx [2m([22m[2m5 tests[22m[2m)[22m[33m 649[2mms[22m[39m
+ [32m✓[39m src/__tests__/components/wizard/StepWrapper.test.tsx [2m([22m[2m10 tests[22m[2m)[22m[33m 402[2mms[22m[39m
+ [32m✓[39m src/__tests__/components/Navbar.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[33m 835[2mms[22m[39m
+     [33m[2m✓[22m[39m renders the CTA button with correct text [33m 376[2mms[22m[39m
+     [33m[2m✓[22m[39m toggles mobile menu when hamburger is clicked [33m 389[2mms[22m[39m
+ [32m✓[39m src/__tests__/components/HowItWorks.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 757[2mms[22m[39m
+     [33m[2m✓[22m[39m renders the section heading correctly [33m 559[2mms[22m[39m
+ [32m✓[39m src/__tests__/components/BuiltAround.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[33m 339[2mms[22m[39m
+ [32m✓[39m src/__tests__/pages/AboutPage.test.tsx [2m([22m[2m1 test[22m[2m)[22m[33m 735[2mms[22m[39m
+     [33m[2m✓[22m[39m renders all structural components of the about page accurately [33m 729[2mms[22m[39m
+ [32m✓[39m src/__tests__/components/Footer.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 718[2mms[22m[39m
+     [33m[2m✓[22m[39m renders the brand logo and descriptive text [33m 373[2mms[22m[39m
+     [33m[2m✓[22m[39m renders accurate navigation links mapping [33m 327[2mms[22m[39m
+ [32m✓[39m src/__tests__/components/CTA.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[33m 322[2mms[22m[39m
+ [32m✓[39m src/__tests__/pages/WaitlistPage.test.tsx [2m([22m[2m7 tests[22m[2m)[22m[33m 4391[2mms[22m[39m
+     [33m[2m✓[22m[39m renders email, first name, and last name fields [33m 358[2mms[22m[39m
+     [33m[2m✓[22m[39m invalid email shows format error [33m 448[2mms[22m[39m
+     [33m[2m✓[22m[39m successful submit stores token, shows success message, and redirects [33m 2299[2mms[22m[39m
+     [33m[2m✓[22m[39m API error shows inline error message [33m 474[2mms[22m[39m
+     [33m[2m✓[22m[39m submit button disabled while pending [33m 668[2mms[22m[39m
+ [32m✓[39m src/__tests__/components/Spinner.test.tsx [2m([22m[2m6 tests[22m[2m)[22m[33m 618[2mms[22m[39m
+     [33m[2m✓[22m[39m renders without crashing [33m 514[2mms[22m[39m
+ [32m✓[39m src/__tests__/components/KnowYourRisk.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 628[2mms[22m[39m
+     [33m[2m✓[22m[39m renders the heading and paragraph text appropriately [33m 554[2mms[22m[39m
+ [32m✓[39m src/__tests__/components/Features.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[33m 335[2mms[22m[39m
+ [32m✓[39m src/__tests__/components/Waitlist.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[33m 603[2mms[22m[39m
+     [33m[2m✓[22m[39m navigates when clicking the join waitlist button [33m 458[2mms[22m[39m
+ [32m✓[39m src/__tests__/components/wizard/StepSidebar.test.tsx [2m([22m[2m5 tests[22m[2m)[22m[32m 242[2mms[22m[39m
+ [32m✓[39m src/__tests__/lib/renderInlineBold.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[32m 31[2mms[22m[39m
+ [32m✓[39m src/__tests__/lib/buildStepSchema.test.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 19[2mms[22m[39m
+ [32m✓[39m src/__tests__/lib/utils.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 19[2mms[22m[39m
+ [32m✓[39m src/__tests__/lib/validators.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32m✓[39m src/__tests__/store/auth-store.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m src/__tests__/lib/parseInsights.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m src/__tests__/store/wizard-store.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m src/__tests__/store/ui-store.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 4[2mms[22m[39m
+ [32m✓[39m src/__tests__/lib/getRiskLevel.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 4[2mms[22m[39m
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m31 passed[39m[22m[90m (32)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m184 passed[39m[22m[90m (185)[39m
+[2m   Start at [22m 08:04:47
+[2m   Duration [22m 8.29s[2m (transform 1.39s, setup 14.10s, import 6.30s, tests 19.51s, environment 22.04s)[22m
+

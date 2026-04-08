@@ -13,8 +13,10 @@ export function parseInsights(raw: string): InsightBlock[] {
       if (/^[A-Z][A-Z\s:]+$/.test(line) && line.length > 4) {
         return { type: 'section-header', text: line } as const;
       }
-      // Bullet items: "- **Label:** body" or "- **Label** – body"
-      const itemMatch = line.match(/^-\s+\*\*(.+?)\*\*\s*[–:-]\s*(.+)/);
+      // Bullet items: "- **Label:** body" (colon inside bold) or "- **Label** – body" (separator outside)
+      const itemMatch =
+        line.match(/^-\s+\*\*(.+?):\*\*\s*(.+)/) ||        // colon inside: - **Label:** body
+        line.match(/^-\s+\*\*(.+?)\*\*\s*[–:-]\s*(.+)/);   // colon/dash outside: - **Label** – body
       if (itemMatch) {
         return { type: 'insight-item', label: itemMatch[1], body: itemMatch[2] } as const;
       }

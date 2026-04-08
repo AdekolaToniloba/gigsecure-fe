@@ -39,6 +39,8 @@ export const metadata: Metadata = {
   },
 };
 
+import { SpeedInsights } from '@vercel/speed-insights/next';
+
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
@@ -53,6 +55,7 @@ export default function RootLayout({
         {env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (
           <GoogleAnalytics gaId={env.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
         )}
+        <SpeedInsights />
       </body>
     </html>
   );

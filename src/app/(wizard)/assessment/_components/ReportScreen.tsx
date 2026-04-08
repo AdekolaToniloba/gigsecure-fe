@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, Fragment } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { pdf } from '@react-pdf/renderer';
 import type { AssessmentResponse } from '@/types/api';
@@ -9,6 +9,8 @@ import { Download, Share2, Check, CreditCard, AlertTriangle, Users, Clock, Heart
 import RiskReportPDF from './report/RiskReportPDF';
 import { reportColors } from '@/lib/report-theme';
 import { parseInsights } from '../_lib/parseInsights';
+import { getRiskLevel } from '../_lib/getRiskLevel';
+import { renderInlineBold } from '../_lib/renderInlineBold';
 
 const PILLAR_LABELS: Record<string, string> = {
   income: 'Income Stability',
@@ -18,12 +20,6 @@ const PILLAR_LABELS: Record<string, string> = {
   health: 'Health & Lifestyle',
 };
 
-function getRiskLevel(score: number) {
-  if (score > 70) return { label: 'High Risk', colors: reportColors.risk.high };
-  if (score >= 40) return { label: 'Moderate', colors: reportColors.risk.moderate };
-  return { label: 'Low Risk', colors: reportColors.risk.low };
-}
-
 function getInsightIcon(label: string) {
   const l = label.toLowerCase();
   if (l.includes('income') || l.includes('stability')) return <CreditCard className="w-5 h-5 text-teal-600" />;
@@ -32,18 +28,6 @@ function getInsightIcon(label: string) {
   if (l.includes('pressure') || l.includes('time') || l.includes('days')) return <Clock className="w-5 h-5 text-yellow-600" />;
   if (l.includes('health')) return <Heart className="w-5 h-5 text-red-600" />;
   return <Info className="w-5 h-5 text-slate-500" />;
-}
-
-// Utility to render inline **bold** text directly in React
-function renderInlineBold(text: string) {
-  const parts = text.split('**');
-  return parts.map((part, index) => {
-    // Every odd index in the split array was surrounded by **
-    if (index % 2 !== 0) {
-      return <strong key={index} className="font-semibold text-slate-800">{part}</strong>;
-    }
-    return <Fragment key={index}>{part}</Fragment>;
-  });
 }
 
 function CircularGauge({ score, profile }: { score: number; profile: string }) {
