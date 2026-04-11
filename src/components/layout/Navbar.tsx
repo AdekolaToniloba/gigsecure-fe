@@ -13,6 +13,7 @@ const NAV_LINKS = [
   { name: 'About', href: '/about' },
   { name: 'Blog', href: '/blog' },
   { name: 'Marketplace', href: '/marketplace' },
+  { name: 'Risk Assessment', href: '/risk-assessment' },
 ];
 
 export default function Navbar() {
@@ -100,7 +101,7 @@ export default function Navbar() {
             ))}
           </ul>
 
-          <motion.div
+          {/* <motion.div
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             className="flex"
@@ -112,7 +113,7 @@ export default function Navbar() {
             >
               Take the Assessment
             </Link>
-          </motion.div>
+          </motion.div> */}
         </div>
 
         {/* ─── Mobile Menu Toggle ──────────────────────────────────────────── */}
@@ -186,7 +187,7 @@ export default function Navbar() {
                   </motion.li>
                 ))}
                 
-                <motion.li
+                {/* <motion.li
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.2 }}
@@ -199,7 +200,7 @@ export default function Navbar() {
                   >
                     Take the Assessment
                   </Link>
-                </motion.li>
+                </motion.li> */}
               </ul>
             </div>
           </motion.div>
