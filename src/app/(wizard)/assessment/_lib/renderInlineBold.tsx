@@ -7,9 +7,10 @@ import { Fragment } from 'react';
 export function renderInlineBold(text: string) {
   const parts = text.split('**');
   return parts.map((part, index) => {
+    const cleanPart = part.replace(/\*/g, '');
     if (index % 2 !== 0) {
-      return <strong key={index} className="font-semibold text-slate-800">{part}</strong>;
+      return <strong key={index} className="font-semibold text-slate-800">{cleanPart}</strong>;
     }
-    return <Fragment key={index}>{part}</Fragment>;
+    return <Fragment key={index}>{cleanPart}</Fragment>;
   });
 }
