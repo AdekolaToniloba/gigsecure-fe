@@ -32,6 +32,7 @@ export default function ScrollCTA() {
     <AnimatePresence>
       {isVisible && !isDismissed && (
         <motion.div
+          key="scroll-cta"
           initial={{ opacity: 0, y: 50, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 20, scale: 0.95 }}
@@ -45,8 +46,13 @@ export default function ScrollCTA() {
           <div className="absolute top-[-20px] left-[-20px] w-[100px] h-[100px] bg-[#FFE419]/10 rounded-full blur-2xl pointer-events-none" aria-hidden="true" />
           
           <button
-            onClick={() => setIsDismissed(true)}
-            className="absolute top-4 right-4 text-white/50 hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFE419] rounded-full p-1 z-10 bg-[#004E4C]"
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              setIsDismissed(true);
+            }}
+            className="absolute top-4 right-4 text-white/50 hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFE419] rounded-full p-1 z-20 bg-[#004E4C] cursor-pointer"
             aria-label="Close dialog"
           >
             <XMarkIcon className="w-5 h-5" />
@@ -61,6 +67,7 @@ export default function ScrollCTA() {
           </p>
 
           <button
+            type="button"
             onClick={() => {
               setIsDismissed(true); // Close the dialog upon clicking
               router.push('/waitlist');
