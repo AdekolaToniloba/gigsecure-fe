@@ -68,7 +68,7 @@ export default function Hero() {
                   <JoinWaitlistButton />
                 </motion.div>
               </div>
-              <Link href="/waitlist" className="w-full sm:w-auto">
+              <Link href="/coming-soon" className="w-full sm:w-auto">
                 <motion.button
                   whileHover={{ scale: 1.05, backgroundColor: 'rgba(255,255,255,0.2)' }}
                   whileTap={{ scale: 0.95 }}

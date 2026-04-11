@@ -5,6 +5,7 @@ import BuiltAround from '@/components/home/BuiltAround';
 import FAQ from '@/components/home/FAQ';
 import KnowYourRisk from '@/components/home/KnowYourRisk';
 import CTA from '@/components/home/CTA';
+import ScrollCTA from '@/components/public/risk-assessment/ScrollCTA';
 
 export default function LandingPage() {
   return (
@@ -16,6 +17,7 @@ export default function LandingPage() {
       <FAQ />
       <KnowYourRisk />
       <CTA />
+      <ScrollCTA />
     </main>
   );
 }

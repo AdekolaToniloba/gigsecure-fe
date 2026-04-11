@@ -54,7 +54,6 @@ function CircularGauge({ score, profile }: { score: number; profile: string }) {
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span className="font-heading text-[32px] font-bold text-white leading-none">{score}%</span>
-          <span className="font-body text-xs text-white/70 mt-1">Out of 100%</span>
         </div>
       </div>
       <span
@@ -144,6 +143,46 @@ export default function ReportScreen({ data }: Props) {
         />
       </div>
 
+      {/* ─── 4. Risk Exposure Breakdown (Reordered) ─────────────────────────────── */}
+      <div className="mb-10 pl-1">
+        <h3 className="font-heading text-xl font-bold text-slate-900 mb-6">
+          Risk exposure breakdown
+        </h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {pillarEntries.map(([key, score]) => {
+            const risk = getRiskLevel(score);
+            const label = PILLAR_LABELS[key] ?? key;
+            const barWidth = `${Math.min(score, 100)}%`;
+            return (
+              <motion.div 
+                whileHover={{ y: -4, boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.05)' }}
+                key={key} 
+                className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm flex flex-col justify-between h-[130px] transition-all"
+              >
+                <div className="flex items-start justify-between gap-2 mb-3">
+                  <span className="font-body text-[14px] font-bold text-slate-800 leading-snug pr-2">{label}</span>
+                  <span 
+                    className="font-body text-[11px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap"
+                    style={{ backgroundColor: risk.colors.bg, color: risk.colors.text }}
+                  >
+                    {risk.label}
+                  </span>
+                </div>
+                <div>
+                  <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden mb-1">
+                    <div
+                      className="h-full rounded-full transition-all duration-1000 ease-out"
+                      style={{ width: barWidth, backgroundColor: risk.colors.bar }}
+                    />
+                  </div>
+                  <p className="font-body text-[12px] text-slate-500 font-medium">{Math.round(score)}% risk score</p>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      </div>
+
       {/* ─── 2. Personalized Insights ───────────────────────────────── */}
       <div className="bg-white rounded-2xl border border-gray-100 p-6 sm:p-8 mb-6 shadow-sm">
         <h3 className="font-heading text-xl font-bold text-slate-900 mb-6">
@@ -204,41 +243,7 @@ export default function ReportScreen({ data }: Props) {
         </div>
       )}
 
-      {/* ─── 4. Risk Exposure Breakdown ─────────────────────────────── */}
-      <div className="mb-8 pl-1">
-        <h3 className="font-heading text-xl font-bold text-slate-900 mb-6">
-          Risk exposure breakdown
-        </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          {pillarEntries.map(([key, score]) => {
-            const risk = getRiskLevel(score);
-            const label = PILLAR_LABELS[key] ?? key;
-            const barWidth = `${Math.min(score, 100)}%`;
-            return (
-              <div key={key} className="bg-white rounded-xl border border-slate-100 p-5 shadow-sm flex flex-col justify-between h-[120px]">
-                <div className="flex items-start justify-between gap-2 mb-3">
-                  <span className="font-body text-[13px] font-bold text-slate-800 leading-snug pr-2">{label}</span>
-                  <span 
-                    className="font-body text-[11px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap"
-                    style={{ backgroundColor: risk.colors.bg, color: risk.colors.text }}
-                  >
-                    {risk.label}
-                  </span>
-                </div>
-                <div>
-                  <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                    <div
-                      className="h-full rounded-full transition-all duration-700"
-                      style={{ width: barWidth, backgroundColor: risk.colors.bar }}
-                    />
-                  </div>
-                  <p className="font-body text-[12px] text-slate-400 mt-2">{score}% risk score</p>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+
 
       {/* ─── 5. Save / Share ─────────────────────────────────────────── */}
       <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 mb-12">
