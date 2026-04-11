@@ -101,19 +101,19 @@ export default function Navbar() {
             ))}
           </ul>
 
-          {/* <motion.div
+          <motion.div
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             className="flex"
           >
             <Link
-              href="/waitlist"
+              href="/risk-assessment"
               className="flex w-[201px] h-[53px] items-center justify-center rounded-[5px] bg-[#FFE419] px-[11px] py-[17px] text-center font-body text-[18px] font-semibold tracking-tight text-[#00676E] shadow-sm transition-colors hover:bg-[#FFE419]/90 outline-none focus-visible:ring-4 focus-visible:ring-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#004E4C] cursor-pointer"
               aria-label="Take the Assessment"
             >
               Take the Assessment
             </Link>
-          </motion.div> */}
+          </motion.div>
         </div>
 
         {/* ─── Mobile Menu Toggle ──────────────────────────────────────────── */}
@@ -187,20 +187,20 @@ export default function Navbar() {
                   </motion.li>
                 ))}
                 
-                {/* <motion.li
+                <motion.li
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.2 }}
                   className="pt-6"
                 >
                   <Link
-                    href="/waitlist"
+                    href="/risk-assessment"
                     className="flex h-[53px] w-full items-center justify-center rounded-[5px] bg-[#FFE419] text-center font-body text-[18px] font-semibold tracking-tight text-[#00676E] shadow-sm active:scale-[0.98] outline-none focus-visible:ring-4 focus-visible:ring-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#004E4C] cursor-pointer"
                     aria-label="Take the Assessment"
                   >
                     Take the Assessment
                   </Link>
-                </motion.li> */}
+                </motion.li>
               </ul>
             </div>
           </motion.div>

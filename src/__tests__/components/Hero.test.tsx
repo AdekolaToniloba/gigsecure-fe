@@ -31,7 +31,7 @@ describe('Hero Component', () => {
 
     const coverBtn = screen.getByRole('link', { name: /Get Covered in Minutes/i });
     expect(coverBtn).toBeInTheDocument();
-    expect(coverBtn).toHaveAttribute('href', '/waitlist');
+    expect(coverBtn).toHaveAttribute('href', '/coming-soon');
   });
 
   it('renders the overlapping cards with the correct images and alt text', () => {
