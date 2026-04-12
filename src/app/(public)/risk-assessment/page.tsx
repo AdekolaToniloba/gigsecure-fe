@@ -7,6 +7,8 @@ import WhatHappensAfter from '@/components/public/risk-assessment/WhatHappensAft
 import QuickQuestions from '@/components/public/risk-assessment/QuickQuestions';
 import BuiltForPeople from '@/components/public/risk-assessment/BuiltForPeople';
 
+import ScrollCTA from '@/components/public/risk-assessment/ScrollCTA';
+
 export const metadata: Metadata = {
   title: 'Risk Assessment - GigSecure',
   description: '67% of Nigerian gig workers have less than 2 months of money to fall back on. Where do you stand?',
@@ -22,6 +24,7 @@ export default function RiskAssessmentPage() {
       <WhatHappensAfter />
       <QuickQuestions />
       <BuiltForPeople />
+      <ScrollCTA />
     </main>
   );
 }

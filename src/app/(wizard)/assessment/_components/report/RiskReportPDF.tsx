@@ -1,4 +1,4 @@
-import { Document, Page, Text, View, StyleSheet, Svg, Circle } from '@react-pdf/renderer';
+import { Document, Page, Text, View, StyleSheet, Svg, Circle, Path } from '@react-pdf/renderer';
 import type { AssessmentResponse } from '@/types/api';
 import type { InsightBlock } from '../../_lib/parseInsights';
 import { reportColors } from '@/lib/report-theme';
@@ -15,6 +15,58 @@ function getRiskLevel(score: number) {
   if (score > 70) return { label: 'High Risk', colors: reportColors.risk.high };
   if (score >= 40) return { label: 'Moderate', colors: reportColors.risk.moderate };
   return { label: 'Low Risk', colors: reportColors.risk.low };
+}
+
+function getPdfInsightIcon(label: string) {
+  const l = label.toLowerCase();
+  if (l.includes('income') || l.includes('stability')) {
+    return (
+      <Svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+        <Path d="M3 10h18M7 15h.01M7 11h.01M3 6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6z" stroke="#0D9488" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </Svg>
+    );
+  }
+  if (l.includes('vulnerability') || l.includes('equipment')) {
+    return (
+      <Svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+        <Path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" stroke="#EA580C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <Path d="M12 9v4" stroke="#EA580C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <Path d="M12 17h.01" stroke="#EA580C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </Svg>
+    );
+  }
+  if (l.includes('common') || l.includes('freelancer')) {
+    return (
+      <Svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+        <Path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" stroke="#2563EB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <Circle cx="9" cy="7" r="4" stroke="#2563EB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <Path d="M22 21v-2a4 4 0 0 0-3-3.87" stroke="#2563EB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <Path d="M16 3.13a4 4 0 0 1 0 7.75" stroke="#2563EB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </Svg>
+    );
+  }
+  if (l.includes('pressure') || l.includes('time') || l.includes('days')) {
+    return (
+      <Svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+        <Circle cx="12" cy="12" r="10" stroke="#CA8A04" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <Path d="M12 6v6l4 2" stroke="#CA8A04" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </Svg>
+    );
+  }
+  if (l.includes('health')) {
+    return (
+      <Svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+        <Path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" stroke="#DC2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </Svg>
+    );
+  }
+  return (
+    <Svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+      <Circle cx="12" cy="12" r="10" stroke="#64748B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M12 16v-4" stroke="#64748B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M12 8h.01" stroke="#64748B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -56,8 +108,8 @@ const styles = StyleSheet.create({
   insightBody: { fontSize: 11, color: reportColors.text.body, lineHeight: 1.5 },
   
   // Recommendations
-  recRow: { flexDirection: 'row', marginBottom: 8, alignItems: 'flex-start' },
-  recBullet: { width: 14, height: 14, borderRadius: 7, backgroundColor: '#E2E8F0', marginRight: 10, marginTop: 1 },
+  recRow: { flexDirection: 'row', marginBottom: 8, alignItems: 'flex-start', backgroundColor: '#F8FAFC', padding: 8, borderRadius: 6 },
+  recBullet: { width: 14, height: 14, marginRight: 10, marginTop: 1 },
   recText: { fontSize: 11, color: reportColors.text.body, lineHeight: 1.5, flex: 1 },
 
   // Breakdown grid (2 cols)
@@ -98,7 +150,7 @@ export default function RiskReportPDF({
 
   return (
     <Document>
-      <Page style={styles.page}>
+      <Page size={[800, 1100]} style={styles.page}>
         <View style={styles.hero}>
           <View style={styles.heroLeft}>
             <Text style={styles.heroPre}>Your Personalized Protection Plan</Text>
@@ -123,44 +175,10 @@ export default function RiskReportPDF({
             </Svg>
             <View style={styles.gaugeScoreCont}>
               <Text style={styles.gaugeScore}>{`${Math.round(data.overall_score)}%`}</Text>
-              <Text style={styles.gaugeLabel}>Out of 100%</Text>
             </View>
             <Text style={styles.riskProfile}>{data.risk_profile}</Text>
           </View>
         </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Personalized Insights</Text>
-          {parsedInsights.map((block, idx) => {
-            if (block.type === 'section-header') {
-              return <Text key={idx} style={styles.insightHeader}>{block.text}</Text>;
-            }
-            if (block.type === 'insight-item') {
-              return (
-                <View key={idx} style={styles.insightItemRow}>
-                  <View style={styles.insightIconBox} />
-                  <View style={styles.insightItemCol}>
-                    <Text style={styles.insightLabel}>{block.label.replace(/\*\*/g, '')}</Text>
-                    <Text style={styles.insightBody}>{block.body.replace(/\*\*/g, '')}</Text>
-                  </View>
-                </View>
-              );
-            }
-            return <Text key={idx} style={styles.insightPara}>{block.text.replace(/\*\*/g, '')}</Text>;
-          })}
-        </View>
-
-        {data.recommendations.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Recommendations</Text>
-            {data.recommendations.map((rec, idx) => (
-              <View key={idx} style={styles.recRow}>
-                <View style={styles.recBullet} />
-                <Text style={styles.recText}>{rec}</Text>
-              </View>
-            ))}
-          </View>
-        )}
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Risk exposure breakdown</Text>
@@ -184,6 +202,45 @@ export default function RiskReportPDF({
             })}
           </View>
         </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Personalized Insights</Text>
+          {parsedInsights.map((block, idx) => {
+            if (block.type === 'section-header') {
+              return <Text key={idx} style={styles.insightHeader}>{block.text.replace(/\*/g, '')}</Text>;
+            }
+            if (block.type === 'insight-item') {
+              return (
+                <View key={idx} style={styles.insightItemRow}>
+                  <View style={styles.insightIconBox}>
+                    {getPdfInsightIcon(block.label)}
+                  </View>
+                  <View style={styles.insightItemCol}>
+                    <Text style={styles.insightLabel}>{block.label.replace(/\*/g, '')}</Text>
+                    <Text style={styles.insightBody}>{block.body.replace(/\*/g, '')}</Text>
+                  </View>
+                </View>
+              );
+            }
+            return <Text key={idx} style={styles.insightPara}>{block.text.replace(/\*/g, '')}</Text>;
+          })}
+        </View>
+
+        {data.recommendations.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Recommendations</Text>
+            {data.recommendations.map((rec, idx) => (
+              <View key={idx} style={styles.recRow}>
+                <View style={styles.recBullet}>
+                  <Svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                    <Path d="M20 6L9 17l-5-5" stroke="#059669" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                  </Svg>
+                </View>
+                <Text style={styles.recText}>{rec.replace(/\*/g, '')}</Text>
+              </View>
+            ))}
+          </View>
+        )}
         
         <View style={styles.footer}>
           <Text style={styles.footerText}>Generated by GigSecure · gigsecure.co</Text>

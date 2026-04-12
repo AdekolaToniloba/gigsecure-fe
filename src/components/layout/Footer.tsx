@@ -7,9 +7,9 @@ import { assetUrl, ASSETS } from '@/lib/assets';
 
 const FOOTER_LINKS = [
   { label: 'About', href: '/about' },
-  { label: 'Blog', href: '/blog' },
-  { label: 'Marketplace', href: '/marketplace' },
-  { label: 'Terms and Conditions', href: '/termsandconditions' },
+  { label: 'Blog', href: '/coming-soon' },
+  { label: 'Marketplace', href: '/coming-soon' },
+  { label: 'Terms and Conditions', href: '/coming-soon' },
 ];
 
 export default function Footer() {

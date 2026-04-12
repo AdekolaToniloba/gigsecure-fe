@@ -11,8 +11,9 @@ import { assetUrl, ASSETS } from '@/lib/assets';
 
 const NAV_LINKS = [
   { name: 'About', href: '/about' },
-  { name: 'Blog', href: '/blog' },
-  { name: 'Marketplace', href: '/marketplace' },
+  { name: 'Blog', href: '/coming-soon' },
+  { name: 'Marketplace', href: '/coming-soon' },
+  { name: 'Risk Assessment', href: '/risk-assessment' },
 ];
 
 export default function Navbar() {
@@ -106,7 +107,7 @@ export default function Navbar() {
             className="flex"
           >
             <Link
-              href="/waitlist"
+              href="/risk-assessment"
               className="flex w-[201px] h-[53px] items-center justify-center rounded-[5px] bg-[#FFE419] px-[11px] py-[17px] text-center font-body text-[18px] font-semibold tracking-tight text-[#00676E] shadow-sm transition-colors hover:bg-[#FFE419]/90 outline-none focus-visible:ring-4 focus-visible:ring-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#004E4C] cursor-pointer"
               aria-label="Take the Assessment"
             >
@@ -193,7 +194,7 @@ export default function Navbar() {
                   className="pt-6"
                 >
                   <Link
-                    href="/waitlist"
+                    href="/risk-assessment"
                     className="flex h-[53px] w-full items-center justify-center rounded-[5px] bg-[#FFE419] text-center font-body text-[18px] font-semibold tracking-tight text-[#00676E] shadow-sm active:scale-[0.98] outline-none focus-visible:ring-4 focus-visible:ring-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#004E4C] cursor-pointer"
                     aria-label="Take the Assessment"
                   >

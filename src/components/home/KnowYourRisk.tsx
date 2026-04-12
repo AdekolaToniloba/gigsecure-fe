@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { assetUrl, ASSETS } from '@/lib/assets';
 
@@ -44,13 +45,15 @@ export default function KnowYourRisk() {
               transition={{ duration: 0.6, delay: 0.4, ease: 'easeOut' }}
               className="pt-2"
             >
-              <motion.button 
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="flex h-12 w-full sm:w-auto items-center justify-center rounded-[4px] bg-[#FFE419] px-10 font-body text-base font-bold tracking-tight text-[#00676E] shadow-sm transition-colors hover:bg-[#FFE419]/90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-offset-2 focus-visible:ring-accent/50 cursor-pointer"
-              >
-                Contact Us
-              </motion.button>
+              <Link href="/coming-soon" className="inline-block w-full sm:w-auto">
+                <motion.button 
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="flex h-12 w-full sm:w-auto items-center justify-center rounded-[4px] bg-[#FFE419] px-10 font-body text-base font-bold tracking-tight text-[#00676E] shadow-sm transition-colors hover:bg-[#FFE419]/90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-offset-2 focus-visible:ring-accent/50 cursor-pointer"
+                >
+                  Contact Us
+                </motion.button>
+              </Link>
             </motion.div>
           </div>
 
