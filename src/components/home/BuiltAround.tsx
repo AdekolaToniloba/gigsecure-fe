@@ -48,7 +48,7 @@ export default function BuiltAround() {
               transition={{ duration: 0.6, delay: 0.4, ease: 'easeOut' }}
               className="pt-2"
             >
-              <Link href="/plans">
+              <Link href="/coming-soon">
                 <motion.button 
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
