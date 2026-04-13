@@ -54,21 +54,10 @@ export default function WaitlistPage() {
         {/* Decorative background visual */}
         <div className="absolute top-0 left-0 right-0 h-1/2 bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
 
-        {/* Logo */}
-        <Link href="/" className="relative z-10 mb-12">
-          <Image
-            src={assetUrl(ASSETS.logo)}
-            alt="GigSecure"
-            width={160}
-            height={40}
-            className="h-8 w-auto object-contain cursor-pointer"
-            priority
-          />
-        </Link>
-        
-        <div className="flex-1 flex flex-col justify-center relative z-10">
-          <div className="flex h-12 w-16 items-center justify-center rounded-[8px] bg-white/10 mb-6 relative">
-            <Mail className="text-[#FFE419] h-6 w-6" />
+
+        <div className="flex-1 flex flex-col justify-center items-center text-center relative z-10">
+          <div className="flex h-20 w-24 items-center justify-center rounded-[12px] bg-white/10 mb-8 relative">
+            <Mail className="text-[#FFE419] h-10 w-10" />
           </div>
           <h1 className="text-[#FFE419] font-heading text-[32px] sm:text-[40px] lg:text-[48px] font-bold leading-tight mb-6 max-w-xl">
             Join the early access list
