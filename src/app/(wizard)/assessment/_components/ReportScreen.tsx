@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { pdf } from '@react-pdf/renderer';
 import type { AssessmentResponse } from '@/types/api';
 import { useAuthStore } from '@/store/auth-store';
-import { Download, Share2, Check, CreditCard, AlertTriangle, Users, Clock, Heart, Info } from 'lucide-react';
+import { Check, CreditCard, AlertTriangle, Users, Clock, Heart, Info, Download} from 'lucide-react';
 import RiskReportPDF from './report/RiskReportPDF';
 import { reportColors } from '@/lib/report-theme';
 import { parseInsights } from '../_lib/parseInsights';
@@ -72,10 +72,11 @@ interface Props {
 
 export default function ReportScreen({ data }: Props) {
   const firstName = useAuthStore((s) => s.firstName);
-  const [copied, setCopied] = useState(false);
+  // const [copied, setCopied] = useState(false);
 
   const parsedInsights = parseInsights(data.ai_insights);
 
+  
   const handleDownload = async () => {
     const blob = await pdf(<RiskReportPDF data={data} parsedInsights={parsedInsights} firstName={firstName} />).toBlob();
     const url = URL.createObjectURL(blob);
@@ -86,11 +87,12 @@ export default function ReportScreen({ data }: Props) {
     URL.revokeObjectURL(url);
   };
 
-  const handleShare = async () => {
-    await navigator.clipboard.writeText(window.location.href);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2500);
-  };
+  // const handleShare = async () => {
+  //   await navigator.clipboard.writeText(window.location.href);
+  //   setCopied(true);
+  //   setTimeout(() => setCopied(false), 2500);
+  // };
+  
 
   const pillarEntries = Object.entries(data.pillar_scores) as [string, number][];
   const criticalGaps = pillarEntries.filter(([_, score]) => score > 70).length;
@@ -246,11 +248,12 @@ export default function ReportScreen({ data }: Props) {
 
 
       {/* ─── 5. Save / Share ─────────────────────────────────────────── */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 mb-12">
+      
+      {/* <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 mb-12">
         <div className="text-center md:text-left">
-          <h3 className="font-heading text-lg font-bold text-slate-900 mb-1">Save or share your risk summary</h3>
+          <h3 className="font-heading text-lg font-bold text-slate-900 mb-1">Save your risk summary</h3>
           <p className="font-body text-[14px] text-slate-500">
-            Download a PDF of your full profile, or copy a shareable link.
+            Download a PDF of your full risk profile.
           </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
@@ -271,7 +274,8 @@ export default function ReportScreen({ data }: Props) {
             {copied ? 'Copied!' : 'Share Link'}
           </button>
         </div>
-      </div>
+      </div> */}
+     
 
       </div> {/* end of max-w-3xl */}
 
@@ -286,12 +290,14 @@ export default function ReportScreen({ data }: Props) {
               Be the first to compare prices, activate coverage, and access exclusive launch benefits.
             </p>
           </div>
-          <a
-            href="/waitlist"
-            className="flex items-center justify-center h-12 px-8 rounded-lg bg-[#FFE419] text-[#004E4C] font-body text-[15px] font-bold hover:bg-[#EBD001] transition-colors flex-shrink-0 cursor-pointer"
+          <button
+
+            onClick={handleDownload}
+            className="flex items-center justify-center gap-2 h-12 px-8 rounded-lg bg-[#FFE419] text-[#004E4C] font-body text-[15px] font-bold hover:bg-[#EBD001] transition-colors flex-shrink-0 cursor-pointer"
           >
-            Join early access list
-          </a>
+            <Download className="h-4 w-4" />
+            Download PDF
+          </button>
         </div>
       </footer>
     </motion.div>

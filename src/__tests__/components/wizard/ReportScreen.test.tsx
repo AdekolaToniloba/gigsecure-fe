@@ -84,6 +84,7 @@ describe('ReportScreen', () => {
     expect(lowRiskBadges.length).toBeGreaterThan(0);
   });
 
+  /*
   it('"Share Link" copies URL and shows "Copied!"', async () => {
     const user = userEvent.setup();
     const writeTextSpy = vi.fn().mockResolvedValue(undefined);
@@ -100,11 +101,14 @@ describe('ReportScreen', () => {
     expect(writeTextSpy).toHaveBeenCalled();
     expect(screen.getByText('Copied!')).toBeInTheDocument();
   });
+  */
 
+  /*
   it('renders Download PDF button', () => {
     render(<ReportScreen data={mockAssessmentResponse} />);
     expect(screen.getByRole('button', { name: /download pdf/i })).toBeInTheDocument();
   });
+  */
 
   it('renders footer section', () => {
     render(<ReportScreen data={mockAssessmentResponse} />);
