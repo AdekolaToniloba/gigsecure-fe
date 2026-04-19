@@ -58,21 +58,13 @@ export default function Hero() {
             </motion.p>
 
             {/* CTA Buttons */}
-            <motion.div variants={fadeUpVariant} className="flex flex-col sm:flex-row items-center gap-4 shrink-0">
-              <div className="w-full sm:w-auto">
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="flex w-full  px-6 font-body   cursor-pointer"
-                >
-                  <JoinWaitlistButton />
-                </motion.div>
-              </div>
-              <Link href="/coming-soon" className="w-full sm:w-auto">
+            <motion.div variants={fadeUpVariant} className="grid grid-cols-1 sm:grid-cols-2 gap-4 shrink-0 w-full lg:w-max">
+              <JoinWaitlistButton className="flex h-[50px] w-full items-center justify-center rounded-[5px] bg-[#FFE419] px-6 font-body text-base font-bold tracking-tight text-[#00676E] shadow-sm transition-colors hover:bg-[#FFE419]/90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-offset-2 focus-visible:ring-[#FFE419]/50 cursor-pointer whitespace-nowrap" />
+              <Link href="/coming-soon" className="w-full">
                 <motion.button
                   whileHover={{ scale: 1.05, backgroundColor: 'rgba(255,255,255,0.2)' }}
                   whileTap={{ scale: 0.95 }}
-                  className="flex h-[50px] w-full items-center justify-center rounded-[5px] border border-white/40 bg-white/10 px-6 font-body text-base font-medium tracking-tight text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/50 backdrop-blur-sm cursor-pointer"
+                  className="flex h-[50px] w-full items-center justify-center rounded-[5px] border border-white/40 bg-white/10 px-6 font-body text-base font-medium tracking-tight text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/50 backdrop-blur-sm cursor-pointer whitespace-nowrap"
                 >
                   Get Covered in Minutes
                 </motion.button>
