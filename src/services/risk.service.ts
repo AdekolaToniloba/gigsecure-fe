@@ -24,12 +24,17 @@ const ASSESSMENT_SUBMISSION_ENDPOINT = '/api/v1/risk/assessment/tech_freelancer'
 
 export const riskService = {
   /** Fetch the question bank — no Zod parse needed (shape is loosely typed from API) */
-  async getQuestions(signal?: AbortSignal): Promise<RiskQuestionsResponse> {
+  async getQuestions(category: string, signal?: AbortSignal): Promise<RiskQuestionsResponse> {
     const { data } = await apiClient.get(ENDPOINTS.RISK.QUESTIONS, {
       signal,
-      params: { category: 'tech_freelancer' },
+      params: { category },
     });
     return data as RiskQuestionsResponse;
+  },
+
+  async getCategories(signal?: AbortSignal): Promise<any[]> {
+    const { data } = await apiClient.get(ENDPOINTS.RISK.CATEGORIES, { signal });
+    return data;
   },
 
   async getLatestAssessment(signal?: AbortSignal): Promise<RiskAssessmentResponse> {

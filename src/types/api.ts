@@ -32,6 +32,14 @@ export interface AssessmentResponse {
 }
 
 export interface TechAssessmentInput {
+  first_name?: string;
+  last_name?: string;
+  date_of_birth?: string;
+  gender?: string;
+  state?: string;
+  city?: string;
+  occupation?: string;
+  marital_status?: string;
   job_type: string;
   freelance_duration: string;
   client_geography: string;
