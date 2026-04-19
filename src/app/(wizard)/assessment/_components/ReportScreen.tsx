@@ -217,6 +217,46 @@ export default function ReportScreen({ data }: Props) {
                 </div>
               );
             }
+            if (block.type === 'table') {
+              return (
+                <div key={idx} className="overflow-hidden overflow-x-auto rounded-xl border border-slate-200 mt-2 mb-2 shadow-sm">
+                  <table className="w-full text-left text-sm text-slate-600 bg-white min-w-[600px]">
+                    <thead className="bg-slate-50/80 text-slate-900 border-b border-slate-200">
+                      <tr>
+                        {block.headers.map((h, i) => (
+                          <th key={i} className="px-5 py-3.5 font-bold font-heading whitespace-nowrap">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {block.rows.map((row, i) => (
+                        <tr key={i} className="hover:bg-slate-50 transition-colors">
+                          {row.map((cell, j) => {
+                            const isRecommended = j === 1 && (cell.toLowerCase().includes('recommended') || cell.toLowerCase().includes('essential'));
+                            return (
+                            <td key={j} className="px-5 py-4 align-top">
+                              {isRecommended ? (
+                                <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold ${
+                                  cell.toLowerCase().includes('essential') 
+                                    ? 'bg-orange-100 text-orange-700 border border-orange-200' 
+                                    : 'bg-teal-50 text-teal-700 border border-teal-200'
+                                }`}>
+                                  {renderInlineBold(cell)}
+                                </span>
+                              ) : j === 0 ? (
+                                <span className="font-semibold text-slate-800">{renderInlineBold(cell)}</span>
+                              ) : (
+                                <span className="leading-relaxed">{renderInlineBold(cell)}</span>
+                              )}
+                            </td>
+                          )})}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              );
+            }
             return (
               <p key={idx} className="text-[14px] text-slate-600 leading-relaxed">
                 {renderInlineBold(block.text)}

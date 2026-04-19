@@ -112,6 +112,38 @@ const styles = StyleSheet.create({
   recBullet: { width: 14, height: 14, marginRight: 10, marginTop: 1 },
   recText: { fontSize: 11, color: reportColors.text.body, lineHeight: 1.5, flex: 1 },
 
+  // Tables
+  tableContainer: {
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 6,
+    marginTop: 8,
+    marginBottom: 12,
+    overflow: 'hidden',
+  },
+  tableHeaderRow: {
+    flexDirection: 'row',
+    backgroundColor: '#F8FAFC',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+  },
+  tableRow: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  tableCellHeader: {
+    padding: 8,
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: reportColors.text.dark,
+  },
+  tableCell: {
+    fontSize: 10,
+    color: reportColors.text.body,
+    lineHeight: 1.4,
+  },
+
   // Breakdown grid (2 cols)
   grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
   pillarCard: { 
@@ -219,6 +251,36 @@ export default function RiskReportPDF({
                     <Text style={styles.insightLabel}>{block.label.replace(/\*/g, '')}</Text>
                     <Text style={styles.insightBody}>{block.body.replace(/\*/g, '')}</Text>
                   </View>
+                </View>
+              );
+            }
+            if (block.type === 'table') {
+              return (
+                <View key={idx} style={styles.tableContainer}>
+                  <View style={styles.tableHeaderRow}>
+                    {block.headers.map((h, i) => (
+                      <View key={i} style={{ flex: i === 2 ? 3 : 2 }}>
+                        <Text style={styles.tableCellHeader}>{h}</Text>
+                      </View>
+                    ))}
+                  </View>
+                  {block.rows.map((row, i) => (
+                    <View key={i} style={[styles.tableRow, i === block.rows.length - 1 ? { borderBottomWidth: 0 } : {}]}>
+                      {row.map((cell, j) => {
+                        const isRecommended = j === 1 && (cell.toLowerCase().includes('recommended') || cell.toLowerCase().includes('essential'));
+                        return (
+                        <View key={j} style={{ flex: j === 2 ? 3 : 2, padding: 8 }}>
+                          {isRecommended ? (
+                            <View style={{ backgroundColor: cell.toLowerCase().includes('essential') ? '#FFEDD5' : '#CCFBF1', paddingHorizontal: 6, paddingVertical: 3, borderRadius: 4, alignSelf: 'flex-start' }}>
+                              <Text style={{ fontSize: 9, fontWeight: 'bold', color: cell.toLowerCase().includes('essential') ? '#C2410C' : '#0F766E' }}>{cell.replace(/\*/g, '')}</Text>
+                            </View>
+                          ) : (
+                            <Text style={[styles.tableCell, j === 0 ? { fontWeight: 'bold', color: reportColors.text.dark } : {}]}>{cell.replace(/\*/g, '')}</Text>
+                          )}
+                        </View>
+                      )})}
+                    </View>
+                  ))}
                 </View>
               );
             }
