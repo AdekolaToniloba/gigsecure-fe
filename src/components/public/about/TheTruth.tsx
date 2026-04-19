@@ -3,10 +3,12 @@
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 
+import { assetUrl, ASSETS } from '@/lib/assets';
+
 const IMAGES = [
-  { src: '/assets/images/about/Rectangle_146.webp', alt: 'Gig worker smiling' },
-  { src: '/assets/images/about/Rectangle_133.webp', alt: 'Independent professional' },
-  { src: '/assets/images/about/Rectangle_129.webp', alt: 'Freelancer working' },
+  { src: assetUrl(ASSETS.about.rectangle146), alt: 'Gig worker smiling' },
+  { src: assetUrl(ASSETS.about.rectangle133), alt: 'Independent professional' },
+  { src: assetUrl(ASSETS.about.rectangle129), alt: 'Freelancer working' },
 ];
 
 export default function TheTruth() {

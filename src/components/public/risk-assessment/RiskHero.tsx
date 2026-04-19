@@ -40,9 +40,9 @@ export default function RiskHero() {
             <div className="flex items-center gap-4">
               <div className="flex -space-x-2">
                 {[
-                  '/assets/images/ff066588c527ccd21434dec0d44a32b6f4062ba6.webp',
-                  '/assets/images/413aa6d39706739b55c3d3547197c15e8942316d.webp',
-                  '/assets/images/77b7b280d62e8e9a4f26c135f20e276995476f53.webp'
+                  assetUrl(ASSETS.ff066588c527ccd21434dec0d44a32b6f4062ba6),
+                  assetUrl(ASSETS.img413aa6d39706739b55c3d3547197c15e8942316d),
+                  assetUrl(ASSETS.img77b7b280d62e8e9a4f26c135f20e276995476f53)
                 ].map((src, i) => (
                   <div key={i} className="w-[45px] h-[45px] rounded-full border-[3px] border-[#FFE419] overflow-hidden relative shadow-sm">
                     <Image src={src} alt={`User avatar ${i+1}`} fill className="object-cover" sizes="45px" />
