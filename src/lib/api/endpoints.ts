@@ -22,6 +22,7 @@ export const ENDPOINTS = {
     ME: '/api/v1/users/me',
   },
   RISK: {
+    CATEGORIES: '/api/v1/risk/categories',
     QUESTIONS: '/api/v1/risk/questions',
     ASSESSMENT: '/api/v1/risk/assessment',
     HISTORY: '/api/v1/risk/history',

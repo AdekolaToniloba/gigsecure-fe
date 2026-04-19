@@ -7,12 +7,21 @@ import type { TechAssessmentInput, AssessmentResponse } from '@/types/api';
 import type { RiskQuestionsResponse } from '@/types/risk-assessment';
 import type { SubmitAssessmentRequest } from '@/lib/validators/risk';
 
-export function useRiskQuestions() {
+export function useRiskQuestions(category: string | null) {
   return useQuery({
-    queryKey: QUERY_KEYS.RISK_QUESTIONS,
-    queryFn: ({ signal }) => riskService.getQuestions(signal),
+    queryKey: [...QUERY_KEYS.RISK_QUESTIONS, category],
+    queryFn: ({ signal }) => riskService.getQuestions(category as string, signal),
     staleTime: Infinity, // Never refetch during session
     retry: 2,
+    enabled: !!category,
+  });
+}
+
+export function useRiskCategories() {
+  return useQuery({
+    queryKey: ['risk-categories'],
+    queryFn: ({ signal }) => riskService.getCategories(signal),
+    staleTime: Infinity,
   });
 }
 

@@ -5,10 +5,10 @@ import KnowYourRisk from '@/components/home/KnowYourRisk';
 // Mock framer-motion to return standard tags
 vi.mock('framer-motion', () => ({
   motion: {
-    div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-    h2: ({ children, ...props }: any) => <h2 {...props}>{children}</h2>,
-    p: ({ children, ...props }: any) => <p {...props}>{children}</p>,
-    button: ({ children, ...props }: any) => <button {...props}>{children}</button>,
+    div: ({ children, whileHover, whileInView, whileTap, viewport, transition, initial, animate, exit, variants, ...props }: any) => <div {...props}>{children}</div>,
+    h2: ({ children, whileHover, whileInView, whileTap, viewport, transition, initial, animate, exit, variants, ...props }: any) => <h2 {...props}>{children}</h2>,
+    p: ({ children, whileHover, whileInView, whileTap, viewport, transition, initial, animate, exit, variants, ...props }: any) => <p {...props}>{children}</p>,
+    button: ({ children, whileHover, whileInView, whileTap, viewport, transition, initial, animate, exit, variants, ...props }: any) => <button {...props}>{children}</button>,
   },
 }));
 

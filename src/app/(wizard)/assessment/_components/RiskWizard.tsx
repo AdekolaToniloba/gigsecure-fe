@@ -9,6 +9,7 @@ import { useRiskQuestions, useSubmitTechAssessment } from '@/hooks/risk/useRisk'
 import StepSidebar from './StepSidebar';
 import ConsentGate from './ConsentGate';
 import ReportScreen from './ReportScreen';
+import StepPersonalDetails from './steps/StepPersonalDetails';
 import StepYourWork from './steps/StepYourWork';
 import StepIncomeStability from './steps/StepIncomeStability';
 import StepYourRisks from './steps/StepYourRisks';
@@ -20,20 +21,30 @@ import {
   ReportSkeleton,
 } from './skeletons/Skeletons';
 import type { TechAssessmentInput } from '@/types/api';
+import type { AssessmentStep } from '@/types/risk-assessment';
+
+const STATIC_FALLBACK_STEPS: AssessmentStep[] = [
+  { step: 1, title: 'Personal Details', subtitle: 'Basic information', questions: [] },
+  { step: 2, title: 'You & your work', subtitle: 'Employment info', questions: [] },
+  { step: 3, title: 'Income & stability', subtitle: 'Employment info', questions: [] },
+  { step: 4, title: 'Your risks', subtitle: 'Risk factors', questions: [] },
+  { step: 5, title: 'Health & lifestyle', subtitle: 'Previous coverage', questions: [] },
+  { step: 6, title: 'Safety net & history', subtitle: 'Medical background', questions: [] },
+];
 
 export default function RiskWizard() {
   const router = useRouter();
   const token = useAuthStore((s) => s.accessToken);
-  const { currentStep, answers, healthConsent, reset } = useWizardStore();
+  const { currentStep, answers, selectedCategory, healthConsent, reset } = useWizardStore();
   const [showResumeBanner, setShowResumeBanner] = useState(false);
   const [submitError, setSubmitError] = useState('');
 
   const {
     data: questionsData,
-    isLoading,
+    isLoading: isQuestionsLoading,
     isError,
     refetch,
-  } = useRiskQuestions();
+  } = useRiskQuestions(selectedCategory);
 
   const submitMutation = useSubmitTechAssessment();
 
@@ -63,6 +74,14 @@ export default function RiskWizard() {
     const toInt = (v: unknown) => parseInt(String(v), 10);
 
     return {
+      first_name: String(flatAnswers.first_name ?? ''),
+      last_name: String(flatAnswers.last_name ?? ''),
+      date_of_birth: String(flatAnswers.date_of_birth ?? ''),
+      gender: String(flatAnswers.gender ?? ''),
+      state: String(flatAnswers.state ?? ''),
+      city: String(flatAnswers.city ?? ''),
+      occupation: String(flatAnswers.occupation ?? ''),
+      marital_status: String(flatAnswers.marital_status ?? ''),
       job_type: String(flatAnswers.job_type ?? ''),
       freelance_duration: String(flatAnswers.freelance_duration ?? ''),
       client_geography: String(flatAnswers.client_geography ?? ''),
@@ -125,8 +144,8 @@ export default function RiskWizard() {
     );
   }
 
-  // Loading questions
-  if (isLoading) {
+  // Loading questions (only block if user has advanced past step 0 and we are still fetching)
+  if (isQuestionsLoading && currentStep > 0) {
     return (
       <div className="min-h-[calc(100vh-4rem)] bg-gray-50 px-6 py-10">
         <div className="max-w-5xl mx-auto flex gap-8">
@@ -139,8 +158,8 @@ export default function RiskWizard() {
     );
   }
 
-  // Error loading questions
-  if (isError || !questionsData) {
+  // Error loading questions (only block if past step 0)
+  if ((isError || (!questionsData && selectedCategory)) && currentStep > 0) {
     return (
       <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-6">
         <div className="text-center max-w-sm">
@@ -165,9 +184,16 @@ export default function RiskWizard() {
     );
   }
 
-  const steps = questionsData.steps ?? [];
-  const activeStep = steps[currentStep];
-  const isHealthStep = currentStep === 3;
+  const apiSteps = questionsData?.steps;
+  const fullSteps: AssessmentStep[] = apiSteps
+    ? [
+        { step: 1, title: 'Personal Details', subtitle: 'Basic information', questions: [] } as AssessmentStep,
+        ...apiSteps,
+      ]
+    : STATIC_FALLBACK_STEPS;
+
+  const activeStep = fullSteps[currentStep];
+  const isHealthStep = currentStep === 4;
   const showConsentGate = isHealthStep && !healthConsent;
 
   return (
@@ -208,7 +234,7 @@ export default function RiskWizard() {
 
       <div className="w-full max-w-5xl mx-auto px-4 md:px-6 py-4 flex flex-col lg:flex-row gap-6 lg:gap-12">
         {/* Sidebar */}
-        <StepSidebar steps={steps} currentStep={currentStep} />
+        <StepSidebar steps={fullSteps} currentStep={currentStep} />
 
         {/* Main content */}
         <div className="flex-1 min-w-0">
@@ -230,11 +256,12 @@ export default function RiskWizard() {
               {showConsentGate ? (
                 <ConsentGate step={activeStep} />
               ) : activeStep ? (
-                currentStep === 0 ? <StepYourWork step={activeStep} /> :
-                currentStep === 1 ? <StepIncomeStability step={activeStep} /> :
-                currentStep === 2 ? <StepYourRisks step={activeStep} /> :
-                currentStep === 3 ? <StepHealthLifestyle step={activeStep} /> :
-                currentStep === 4 ? (
+                currentStep === 0 ? <StepPersonalDetails /> :
+                currentStep === 1 ? <StepYourWork step={activeStep} /> :
+                currentStep === 2 ? <StepIncomeStability step={activeStep} /> :
+                currentStep === 3 ? <StepYourRisks step={activeStep} /> :
+                currentStep === 4 ? <StepHealthLifestyle step={activeStep} /> :
+                currentStep === 5 ? (
                   <StepSafetyNet
                     step={activeStep}
                     isSubmitting={submitMutation.isPending}
