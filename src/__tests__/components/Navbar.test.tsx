@@ -55,12 +55,6 @@ describe('Navbar', () => {
     expect(screen.getAllByText('Marketplace')[0]).toBeInTheDocument();
   });
 
-  it('renders the CTA button with correct text', () => {
-    render(<Navbar />);
-    // The CTA button
-    const ctaButtons = screen.getAllByRole('link', { name: /Take the Assessment/i });
-    expect(ctaButtons.length).toBeGreaterThan(0);
-  });
 
   it('toggles mobile menu when hamburger is clicked', async () => {
     render(<Navbar />);

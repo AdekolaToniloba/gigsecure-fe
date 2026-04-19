@@ -23,21 +23,26 @@ describe('RiskWizard', () => {
   });
 
   it('shows skeleton while loading', () => {
-    useAuthStore.getState().setAccessToken('mock-token');
+    act(() => {
+      useAuthStore.getState().setAccessToken('mock-token');
+      useWizardStore.getState().setSelectedCategory('tech_freelancer');
+      useWizardStore.getState().nextStep(); // Move to step 1 (API-dependent)
+    });
     renderWithProviders(<RiskWizard />);
-    // StepSkeleton doesn't have a testId. Just check for animate-pulse wrapper
+    // Now it should show skeleton while fetching questions
     expect(document.querySelector('.animate-pulse')).toBeInTheDocument();
   });
 
-  it('renders Step 1 after load', async () => {
+  it('renders Step 1 (Personal Details) after load', async () => {
     act(() => {
       useAuthStore.getState().setAccessToken('mock-token');
     });
     renderWithProviders(<RiskWizard />);
     
-    // We get multiple "You & your work" (one in sidebar, one in header)
-    expect((await screen.findAllByText('You & your work')).length).toBeGreaterThan(0);
-    expect(screen.getByText('What type of tech freelancing do you do?')).toBeInTheDocument();
+    // Header title
+    expect(await screen.findByText("Let's get to know you")).toBeInTheDocument();
+    // Match the label (the user reverted to hyphens in UI)
+    expect(screen.getByText(/First-Name/i)).toBeInTheDocument();
   });
 
   it('sidebar highlights current step', async () => {
@@ -46,13 +51,14 @@ describe('RiskWizard', () => {
     });
     renderWithProviders(<RiskWizard />);
     
-    await screen.findAllByText('You & your work');
-    expect(screen.getAllByText('You & your work').length).toBeGreaterThan(1);
+    // Step 0 is Personal Details in sidebar
+    expect(await screen.findByText('Personal Details')).toBeInTheDocument();
   });
 
   it('resume banner shows when currentStep > 0', async () => {
     act(() => {
       useAuthStore.getState().setAccessToken('mock-token');
+      useWizardStore.getState().setSelectedCategory('tech_freelancer');
       useWizardStore.getState().nextStep(); // Set to step index 1
     });
     
@@ -65,6 +71,7 @@ describe('RiskWizard', () => {
     const user = userEvent.setup();
     act(() => {
       useAuthStore.getState().setAccessToken('mock-token');
+      useWizardStore.getState().setSelectedCategory('tech_freelancer');
       useWizardStore.getState().nextStep(); // Set to step index 1
     });
     

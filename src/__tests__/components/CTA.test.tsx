@@ -5,9 +5,9 @@ import CTA from '@/components/home/CTA';
 // Mock framer-motion to return standard tags
 vi.mock('framer-motion', () => ({
   motion: {
-    div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-    button: ({ children, ...props }: any) => <button {...props}>{children}</button>,
-    path: ({ children, ...props }: any) => <path {...props}>{children}</path>,
+    div: ({ children, whileHover, whileInView, whileTap, viewport, transition, initial, animate, exit, variants, ...props }: any) => <div {...props}>{children}</div>,
+    button: ({ children, whileHover, whileInView, whileTap, viewport, transition, initial, animate, exit, variants, ...props }: any) => <button {...props}>{children}</button>,
+    path: ({ children, whileHover, whileInView, whileTap, viewport, transition, initial, animate, exit, variants, ...props }: any) => <path {...props}>{children}</path>,
   },
 }));
 

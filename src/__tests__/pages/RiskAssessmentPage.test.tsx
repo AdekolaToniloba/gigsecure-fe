@@ -8,12 +8,12 @@ vi.mock('framer-motion', async () => {
   return {
     ...actual,
     motion: {
-      div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-      h1: ({ children, ...props }: any) => <h1 {...props}>{children}</h1>,
-      h2: ({ children, ...props }: any) => <h2 {...props}>{children}</h2>,
-      h3: ({ children, ...props }: any) => <h3 {...props}>{children}</h3>,
-      p: ({ children, ...props }: any) => <p {...props}>{children}</p>,
-      button: ({ children, ...props }: any) => <button {...props}>{children}</button>,
+      div: ({ children, whileHover, whileInView, whileTap, viewport, transition, initial, animate, exit, variants, ...props }: any) => <div {...props}>{children}</div>,
+      h1: ({ children, whileHover, whileInView, whileTap, viewport, transition, initial, animate, exit, variants, ...props }: any) => <h1 {...props}>{children}</h1>,
+      h2: ({ children, whileHover, whileInView, whileTap, viewport, transition, initial, animate, exit, variants, ...props }: any) => <h2 {...props}>{children}</h2>,
+      h3: ({ children, whileHover, whileInView, whileTap, viewport, transition, initial, animate, exit, variants, ...props }: any) => <h3 {...props}>{children}</h3>,
+      p: ({ children, whileHover, whileInView, whileTap, viewport, transition, initial, animate, exit, variants, ...props }: any) => <p {...props}>{children}</p>,
+      button: ({ children, whileHover, whileInView, whileTap, viewport, transition, initial, animate, exit, variants, ...props }: any) => <button {...props}>{children}</button>,
     },
     AnimatePresence: ({ children }: any) => <>{children}</>,
   };

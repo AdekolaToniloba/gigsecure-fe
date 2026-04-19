@@ -46,7 +46,8 @@ describe('ReportScreen', () => {
 
   it('renders insight items from parsedInsights', () => {
     render(<ReportScreen data={mockAssessmentResponse} />);
-    expect(screen.getByText('Personalized Insights')).toBeInTheDocument();
+    // Section headers are rendered lowercase in DOM, styled with CSS capitalize
+    expect(screen.getByText(/personalized insights/i)).toBeInTheDocument();
     // The ai_insights contains "Income Vulnerability" as a label
     expect(screen.getByText(/Income Vulnerability/)).toBeInTheDocument();
   });
