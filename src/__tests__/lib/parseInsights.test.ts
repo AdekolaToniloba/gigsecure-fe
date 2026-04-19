@@ -39,8 +39,10 @@ describe('parseInsights — root cause fixes', () => {
   it('treats --- as a section divider, not content', () => {
     const result = parseInsights('Some text\n---\n**NEW SECTION**');
     const types = result.map((b) => b.type);
-    expect(types).not.toContain('paragraph'); // dash should not produce content
-    // The NEW SECTION should be a header
+    expect(types).toContain('paragraph');
+    expect(types).toContain('section-header');
+    // Result should be exactly two blocks (The text and the header)
+    expect(result).toHaveLength(2);
     expect(result.find((b) => b.type === 'section-header')).toBeDefined();
   });
 

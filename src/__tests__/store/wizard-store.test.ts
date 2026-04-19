@@ -21,11 +21,11 @@ describe('useWizardStore', () => {
     expect(useWizardStore.getState().currentStep).toBe(1);
   });
 
-  it('nextStep caps at 4', () => {
+  it('nextStep caps at 5', () => {
     act(() => {
       for (let i = 0; i < 10; i++) useWizardStore.getState().nextStep();
     });
-    expect(useWizardStore.getState().currentStep).toBe(4);
+    expect(useWizardStore.getState().currentStep).toBe(5);
   });
 
   it('prevStep decrements currentStep', () => {

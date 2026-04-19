@@ -3,7 +3,7 @@ import { http, HttpResponse } from 'msw';
 const BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000';
 
 const mockUser = {
-  id: '00000000-0000-0000-0000-000000000001',
+  id: '00000000-0000-0000-0000-000000000000',
   email: 'test@gigsecure.com',
   first_name: 'Test',
   last_name: 'User',

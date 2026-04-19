@@ -16,11 +16,11 @@ const personalDetailsSchema = z.object({
   first_name: z.string().min(1, 'First name is required'),
   last_name: z.string().min(1, 'Last name is required'),
   date_of_birth: z.string().min(1, 'Date of birth is required').regex(/^\d{2}\/\d{2}\/\d{4}$/, 'Format must be dd/mm/yyyy'),
-  gender: z.enum(['male', 'female', 'other'], { errorMap: () => ({ message: 'Please select gender' }) }),
+  gender: z.enum(['male', 'female', 'other'], { message: 'Please select gender' }),
   state: z.string().min(1, 'State is required'),
   city: z.string().min(1, 'City is required'),
   occupation: z.string().min(1, 'Occupation is required'),
-  marital_status: z.enum(['Married', 'Single', 'Divorced'], { errorMap: () => ({ message: 'Please select marital status' }) }),
+  marital_status: z.enum(['Married', 'Single', 'Divorced'], { message: 'Please select marital status' }),
 });
 
 type FormValues = z.infer<typeof personalDetailsSchema>;

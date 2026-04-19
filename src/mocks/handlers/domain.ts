@@ -30,7 +30,7 @@ const mockProducts = [
 const mockPolicies = [
   {
     id: 'pol-001',
-    user_id: '00000000-0000-0000-0000-000000000001',
+    user_id: '00000000-0000-0000-0000-000000000000',
     product_id: 'prod-001',
     status: 'active',
     start_date: new Date().toISOString(),
@@ -44,7 +44,7 @@ const mockPolicies = [
 const mockClaims = [
   {
     id: 'claim-001',
-    user_id: '00000000-0000-0000-0000-000000000001',
+    user_id: '00000000-0000-0000-0000-000000000000',
     policy_id: 'pol-001',
     status: 'pending',
     description: 'Unable to work due to illness',
@@ -139,6 +139,12 @@ export const domainHandlers = [
   http.get(`${BASE}/api/v1/risk/recommendations`, () =>
     HttpResponse.json([{ product_id: 'prod-001', reason: 'High income volatility detected', priority: 1 }])
   ),
+  http.get(`${BASE}/api/v1/risk/categories`, () =>
+    HttpResponse.json([
+      { id: 'cat-001', name: 'Tech Freelancer', slug: 'tech_freelancer' },
+      { id: 'cat-002', name: 'Creative Freelancer', slug: 'creative_freelancer' },
+    ])
+  ),
 
   // Auth — waitlist signup
   http.post('/api/auth/waitlist', () =>
@@ -155,7 +161,7 @@ export const domainHandlers = [
     HttpResponse.json({ payment_id: 'pay-001', authorization_url: 'https://paystack.com/pay/test', reference: 'GS_TEST_001' })
   ),
   http.get(`${BASE}/api/v1/payments/:id`, ({ params }) =>
-    HttpResponse.json({ id: params.id, user_id: '00000000-0000-0000-0000-000000000001', policy_id: 'pol-001', status: 'success', amount: 5000, currency: 'NGN', created_at: new Date().toISOString() })
+    HttpResponse.json({ id: params.id, user_id: '00000000-0000-0000-0000-000000000000', policy_id: 'pol-001', status: 'success', amount: 5000, currency: 'NGN', created_at: new Date().toISOString() })
   ),
   http.get(`${BASE}/api/v1/payments/history`, () => HttpResponse.json([])),
 ];
