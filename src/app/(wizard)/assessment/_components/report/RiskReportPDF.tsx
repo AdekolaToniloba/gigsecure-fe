@@ -235,58 +235,107 @@ export default function RiskReportPDF({
           </View>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Personalized Insights</Text>
-          {parsedInsights.map((block, idx) => {
+        {(() => {
+          // Group blocks by section header — identical logic to the web UI
+          const sections: { header: string; blocks: typeof parsedInsights }[] = [];
+          let current: { header: string; blocks: typeof parsedInsights } = {
+            header: 'Personalized Insights',
+            blocks: [],
+          };
+          parsedInsights.forEach((block) => {
             if (block.type === 'section-header') {
-              return <Text key={idx} style={styles.insightHeader}>{block.text.replace(/\*/g, '')}</Text>;
+              if (current.blocks.length > 0) {
+                sections.push(current);
+                current = { header: block.text, blocks: [] };
+              } else {
+                current.header = block.text;
+              }
+            } else {
+              current.blocks.push(block);
             }
-            if (block.type === 'insight-item') {
-              return (
-                <View key={idx} style={styles.insightItemRow}>
-                  <View style={styles.insightIconBox}>
-                    {getPdfInsightIcon(block.label)}
-                  </View>
-                  <View style={styles.insightItemCol}>
-                    <Text style={styles.insightLabel}>{block.label.replace(/\*/g, '')}</Text>
-                    <Text style={styles.insightBody}>{block.body.replace(/\*/g, '')}</Text>
-                  </View>
-                </View>
-              );
-            }
-            if (block.type === 'table') {
-              return (
-                <View key={idx} style={styles.tableContainer}>
-                  <View style={styles.tableHeaderRow}>
-                    {block.headers.map((h, i) => (
-                      <View key={i} style={{ flex: i === 2 ? 3 : 2 }}>
-                        <Text style={styles.tableCellHeader}>{h}</Text>
-                      </View>
-                    ))}
-                  </View>
-                  {block.rows.map((row, i) => (
-                    <View key={i} style={[styles.tableRow, i === block.rows.length - 1 ? { borderBottomWidth: 0 } : {}]}>
-                      {row.map((cell, j) => {
-                        const isRecommended = j === 1 && (cell.toLowerCase().includes('recommended') || cell.toLowerCase().includes('essential'));
-                        return (
-                        <View key={j} style={{ flex: j === 2 ? 3 : 2, padding: 8 }}>
-                          {isRecommended ? (
-                            <View style={{ backgroundColor: cell.toLowerCase().includes('essential') ? '#FFEDD5' : '#CCFBF1', paddingHorizontal: 6, paddingVertical: 3, borderRadius: 4, alignSelf: 'flex-start' }}>
-                              <Text style={{ fontSize: 9, fontWeight: 'bold', color: cell.toLowerCase().includes('essential') ? '#C2410C' : '#0F766E' }}>{cell.replace(/\*/g, '')}</Text>
-                            </View>
-                          ) : (
-                            <Text style={[styles.tableCell, j === 0 ? { fontWeight: 'bold', color: reportColors.text.dark } : {}]}>{cell.replace(/\*/g, '')}</Text>
-                          )}
+          });
+          if (current.header || current.blocks.length > 0) sections.push(current);
+
+          return sections.map((section, sIdx) => (
+            // Each section is its own atomic View — wrap={false} here means
+            // the ENTIRE section (header + all blocks) shifts to the next page
+            // rather than being split at a page boundary.
+            <View key={sIdx} style={[styles.section, { marginBottom: 20 }]} wrap={false}>
+              <Text style={styles.sectionTitle}>{section.header.toLowerCase()}</Text>
+
+              {section.blocks.map((block, idx) => {
+                if (block.type === 'list') {
+                  return (
+                    <View key={idx} style={{ marginBottom: 15 }}>
+                      {block.items.map((item, i) => (
+                        <View key={i} style={{ flexDirection: 'row', marginBottom: 6, alignItems: 'flex-start' }}>
+                          <View style={{ width: 12, marginRight: 8, marginTop: 3 }}>
+                            <Svg width="10" height="10" viewBox="0 0 24 24" fill="none">
+                              <Path d="M20 6L9 17l-5-5" stroke="#0D9488" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                            </Svg>
+                          </View>
+                          <Text style={[styles.insightBody, { flex: 1 }]}>{item}</Text>
                         </View>
-                      )})}
+                      ))}
                     </View>
-                  ))}
-                </View>
-              );
-            }
-            return <Text key={idx} style={styles.insightPara}>{block.text.replace(/\*/g, '')}</Text>;
-          })}
-        </View>
+                  );
+                }
+                if (block.type === 'insight-item') {
+                  return (
+                    <View key={idx} style={styles.insightItemRow}>
+                      <View style={styles.insightIconBox}>
+                        {getPdfInsightIcon(block.label)}
+                      </View>
+                      <View style={styles.insightItemCol}>
+                        <Text style={styles.insightLabel}>{block.label}</Text>
+                        <Text style={styles.insightBody}>{block.body}</Text>
+                      </View>
+                    </View>
+                  );
+                }
+                if (block.type === 'table') {
+                  return (
+                    <View key={idx} style={styles.tableContainer}>
+                      <View style={styles.tableHeaderRow}>
+                        {block.headers.map((h, i) => (
+                          <View key={i} style={{ flex: i === 2 ? 3 : 2 }}>
+                            <Text style={styles.tableCellHeader}>{h}</Text>
+                          </View>
+                        ))}
+                      </View>
+                      {block.rows.map((row, i) => (
+                        <View key={i} style={[styles.tableRow, i === block.rows.length - 1 ? { borderBottomWidth: 0 } : {}]}>
+                          {row.map((cell, j) => {
+                            const isRecommended = j === 1 && (cell.toLowerCase().includes('recommended') || cell.toLowerCase().includes('essential'));
+                            return (
+                              <View key={j} style={{ flex: j === 2 ? 3 : 2, padding: 8 }}>
+                                {isRecommended ? (
+                                  <View style={{ backgroundColor: cell.toLowerCase().includes('essential') ? '#FFEDD5' : '#CCFBF1', paddingHorizontal: 6, paddingVertical: 3, borderRadius: 4, alignSelf: 'flex-start' }}>
+                                    <Text style={{ fontSize: 9, fontWeight: 'bold', color: cell.toLowerCase().includes('essential') ? '#C2410C' : '#0F766E' }}>{cell}</Text>
+                                  </View>
+                                ) : (
+                                  <Text style={[styles.tableCell, j === 0 ? { fontWeight: 'bold', color: reportColors.text.dark } : {}]}>{cell}</Text>
+                                )}
+                              </View>
+                            );
+                          })}
+                        </View>
+                      ))}
+                    </View>
+                  );
+                }
+                if (block.type === 'callout') {
+                  return (
+                    <View key={idx} style={{ marginTop: 10, marginBottom: 8, backgroundColor: '#F0FDFA', borderRadius: 6, padding: 10, borderLeftWidth: 3, borderLeftColor: '#0D9488' }}>
+                      <Text style={{ fontSize: 11, color: '#115E59', lineHeight: 1.5 }}>{block.text}</Text>
+                    </View>
+                  );
+                }
+                return <Text key={idx} style={styles.insightPara}>{block.text}</Text>;
+              })}
+            </View>
+          ));
+        })()}
 
         {data.recommendations.length > 0 && (
           <View style={styles.section}>
@@ -298,7 +347,7 @@ export default function RiskReportPDF({
                     <Path d="M20 6L9 17l-5-5" stroke="#059669" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
                   </Svg>
                 </View>
-                <Text style={styles.recText}>{rec.replace(/\*/g, '')}</Text>
+                <Text style={styles.recText}>{rec}</Text>
               </View>
             ))}
           </View>

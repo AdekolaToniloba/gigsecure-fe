@@ -11,6 +11,7 @@ import { reportColors } from '@/lib/report-theme';
 import { parseInsights } from '../_lib/parseInsights';
 import { getRiskLevel } from '../_lib/getRiskLevel';
 import { renderInlineBold } from '../_lib/renderInlineBold';
+import { twMerge } from 'tailwind-merge';
 
 const PILLAR_LABELS: Record<string, string> = {
   income: 'Income Stability',
@@ -185,85 +186,134 @@ export default function ReportScreen({ data }: Props) {
         </div>
       </div>
 
-      {/* ─── 2. Personalized Insights ───────────────────────────────── */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 sm:p-8 mb-6 shadow-sm">
-        <h3 className="font-heading text-xl font-bold text-slate-900 mb-6">
-          Personalized Insights
-        </h3>
-        
-        <div className="flex flex-col gap-4">
-          {parsedInsights.map((block, idx) => {
+      {/* ─── 2. Insight Sections (Grouped by Header) ─────────────────── */}
+      <div className="flex flex-col gap-6 mb-6">
+        {(() => {
+          const sections: { header: string; blocks: any[] }[] = [];
+          let current: { header: string; blocks: any[] } = { header: 'Personalized Insights', blocks: [] };
+
+          parsedInsights.forEach((block) => {
             if (block.type === 'section-header') {
-              return (
-                <p key={idx} className="text-xs font-bold uppercase tracking-widest text-slate-400 mt-4 mb-1">
-                  {block.text}
-                </p>
-              );
+              if (current.blocks.length > 0) {
+                sections.push(current);
+                current = { header: block.text, blocks: [] };
+              } else {
+                current.header = block.text;
+              }
+            } else {
+              current.blocks.push(block);
             }
-            if (block.type === 'insight-item') {
-              return (
-                <div key={idx} className="flex gap-4 items-start p-4 bg-slate-50 rounded-xl">
-                  <div className="flex-shrink-0 mt-0.5">
-                    {getInsightIcon(block.label)}
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="font-medium text-slate-800 text-[15px] mb-1">
-                      {renderInlineBold(block.label)}
-                    </span>
-                    <p className="text-[14px] text-slate-600 leading-relaxed">
-                      {renderInlineBold(block.body)}
-                    </p>
-                  </div>
-                </div>
-              );
-            }
-            if (block.type === 'table') {
-              return (
-                <div key={idx} className="overflow-hidden overflow-x-auto rounded-xl border border-slate-200 mt-2 mb-2 shadow-sm">
-                  <table className="w-full text-left text-sm text-slate-600 bg-white min-w-[600px]">
-                    <thead className="bg-slate-50/80 text-slate-900 border-b border-slate-200">
-                      <tr>
-                        {block.headers.map((h, i) => (
-                          <th key={i} className="px-5 py-3.5 font-bold font-heading whitespace-nowrap">{h}</th>
+          });
+          if (current.header || current.blocks.length > 0) sections.push(current);
+
+          return sections.map((section, sIdx) => (
+            <div key={sIdx} className="bg-white rounded-2xl border border-gray-100 p-6 sm:p-8 shadow-sm">
+              <h3 className="font-heading text-xl font-bold text-slate-900 mb-6 capitalize leading-snug">
+                {section.header.toLowerCase()}
+              </h3>
+              
+              <div className="flex flex-col gap-4">
+                {section.blocks.map((block, idx) => {
+                  if (block.type === 'list') {
+                    return (
+                      <div key={idx} className="flex flex-col gap-3 py-1">
+                        {block.items.map((item: string, i: number) => (
+                          <div key={i} className="flex gap-4 items-start rounded-xl">
+                            <div className="flex-shrink-0 mt-1 h-5 w-5 rounded-full bg-teal-50 flex items-center justify-center">
+                              <Check className="h-3 w-3 text-teal-600" />
+                            </div>
+                            <p className="text-[14px] text-slate-600 leading-relaxed">
+                              {renderInlineBold(item)}
+                            </p>
+                          </div>
                         ))}
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {block.rows.map((row, i) => (
-                        <tr key={i} className="hover:bg-slate-50 transition-colors">
-                          {row.map((cell, j) => {
-                            const isRecommended = j === 1 && (cell.toLowerCase().includes('recommended') || cell.toLowerCase().includes('essential'));
-                            return (
-                            <td key={j} className="px-5 py-4 align-top">
-                              {isRecommended ? (
-                                <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold ${
-                                  cell.toLowerCase().includes('essential') 
-                                    ? 'bg-orange-100 text-orange-700 border border-orange-200' 
-                                    : 'bg-teal-50 text-teal-700 border border-teal-200'
-                                }`}>
-                                  {renderInlineBold(cell)}
-                                </span>
-                              ) : j === 0 ? (
-                                <span className="font-semibold text-slate-800">{renderInlineBold(cell)}</span>
-                              ) : (
-                                <span className="leading-relaxed">{renderInlineBold(cell)}</span>
-                              )}
-                            </td>
-                          )})}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              );
-            }
-            return (
-              <p key={idx} className="text-[14px] text-slate-600 leading-relaxed">
-                {renderInlineBold(block.text)}
-              </p>
-            );
-          })}
-        </div>
+                      </div>
+                    );
+                  }
+                  if (block.type === 'insight-item') {
+                    return (
+                      <div key={idx} className="flex gap-4 items-start p-4 bg-slate-50 rounded-xl">
+                        <div className="flex-shrink-0 mt-0.5">
+                          {getInsightIcon(block.label)}
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="font-medium text-slate-800 text-[15px] mb-1">
+                            {renderInlineBold(block.label)}
+                          </span>
+                          <p className="text-[14px] text-slate-600 leading-relaxed">
+                            {renderInlineBold(block.body)}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  }
+                  if (block.type === 'table') {
+                    return (
+                      <div key={idx} className="overflow-hidden overflow-x-auto rounded-xl border border-slate-200 mt-2 mb-2 shadow-sm">
+                        <table className="w-full text-left text-sm text-slate-600 bg-white min-w-[600px]">
+                          <thead className="bg-slate-50/80 text-slate-900 border-b border-slate-200">
+                            <tr>
+                              {block.headers.map((h: string, i: number) => (
+                                <th key={i} className="px-5 py-3.5 font-bold font-heading whitespace-nowrap">{h}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100">
+                            {block.rows.map((row: string[], i: number) => {
+                              const isRecommendedRow = row[1]?.toLowerCase().includes('recommended') || row[1]?.toLowerCase().includes('essential');
+                              return (
+                                <tr key={i} className={twMerge(
+                                  "transition-colors",
+                                  isRecommendedRow ? "bg-teal-50/20 hover:bg-teal-50/30" : "hover:bg-slate-50"
+                                )}>
+                                  {row.map((cell, j) => {
+                                    const isRecommended = j === 1 && (cell.toLowerCase().includes('recommended') || cell.toLowerCase().includes('essential'));
+                                    return (
+                                    <td key={j} className="px-5 py-4 align-top">
+                                      {isRecommended ? (
+                                        <span className={twMerge(
+                                          "inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold border",
+                                          cell.toLowerCase().includes('essential') 
+                                            ? 'bg-orange-100 text-orange-700 border-orange-200' 
+                                            : 'bg-white text-teal-700 border-teal-200 shadow-sm'
+                                        )}>
+                                          {renderInlineBold(cell)}
+                                        </span>
+                                      ) : j === 0 ? (
+                                        <span className="font-semibold text-slate-800 break-words block">{renderInlineBold(cell)}</span>
+                                      ) : (
+                                        <span className="leading-relaxed block text-[#475569]">{renderInlineBold(cell)}</span>
+                                      )}
+                                    </td>
+                                  )})}
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    );
+                  }
+                  if (block.type === 'callout') {
+                    return (
+                      <div key={idx} className="mt-2 flex items-start gap-3 rounded-xl border border-teal-100 bg-teal-50/60 px-4 py-3">
+                        <Info className="h-4 w-4 text-teal-600 flex-shrink-0 mt-0.5" />
+                        <p className="text-[13px] text-teal-800 leading-relaxed font-medium">
+                          {block.text}
+                        </p>
+                      </div>
+                    );
+                  }
+                  return (
+                    <p key={idx} className="text-[14px] text-slate-600 leading-relaxed">
+                      {block.text}
+                    </p>
+                  );
+                })}
+              </div>
+            </div>
+          ));
+        })()}
       </div>
 
       {/* ─── 3. Recommendations ────────────────────────────────────── */}

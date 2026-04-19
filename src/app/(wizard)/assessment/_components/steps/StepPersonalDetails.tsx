@@ -4,7 +4,9 @@ import React, { useEffect, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { ChevronDown, User, Calendar } from 'lucide-react';
+import { User } from 'lucide-react';
+import DatePicker from '@/components/ui/DatePicker';
+import Select from '@/components/ui/Select';
 import { useWizardStore } from '@/store/wizard-store';
 import { useCurrentUser } from '@/hooks/user/useUser';
 import { useRiskCategories } from '@/hooks/risk/useRisk';
@@ -136,41 +138,47 @@ export default function StepPersonalDetails() {
         {/* Date of Birth */}
         <div className="md:col-span-2">
           <label htmlFor="date_of_birth" className="block text-sm font-bold text-[#334155] mb-2 font-body">Date of Birth <span className="text-red-500">*</span></label>
-          <div className="relative">
-            {/* Using a text input pattern to match styling as requested */}
-            <input
-              id="date_of_birth"
-              type="text"
-              placeholder="dd/mm/yyyy"
-              {...form.register('date_of_birth')}
-              className={inputClassName}
-            />
-            <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
-              <Calendar size={18} />
-            </div>
-          </div>
+          <Controller
+            name="date_of_birth"
+            control={form.control}
+            render={({ field }) => (
+              <DatePicker
+                id="date_of_birth"
+                name={field.name}
+                value={field.value}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                hasError={!!form.formState.errors.date_of_birth}
+              />
+            )}
+          />
           {form.formState.errors.date_of_birth && <p className="mt-1.5 text-xs text-red-500">{form.formState.errors.date_of_birth.message}</p>}
         </div>
 
         {/* Gender */}
         <div>
           <label htmlFor="gender" className="block text-sm font-bold text-[#334155] mb-2 font-body">Gender <span className="text-red-500">*</span></label>
-          <div className="relative">
-            <select
-              id="gender"
-              {...form.register('gender')}
-              disabled={!!profile?.gender}
-              className={`${inputClassName} appearance-none cursor-pointer`}
-            >
-              <option value="" disabled hidden>Select gender</option>
-              <option value="male">Male</option>
-              <option value="female">Female</option>
-              <option value="other">Other</option>
-            </select>
-            <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
-              <ChevronDown size={18} />
-            </div>
-          </div>
+          <Controller
+            name="gender"
+            control={form.control}
+            render={({ field }) => (
+              <Select
+                id="gender"
+                name={field.name}
+                options={[
+                  { value: 'male', label: 'Male' },
+                  { value: 'female', label: 'Female' },
+                  { value: 'other', label: 'Other' },
+                ]}
+                value={field.value}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                placeholder="Select gender"
+                disabled={!!profile?.gender}
+                hasError={!!form.formState.errors.gender}
+              />
+            )}
+          />
           {form.formState.errors.gender && <p className="mt-1.5 text-xs text-red-500">{form.formState.errors.gender.message}</p>}
         </div>
 
@@ -205,42 +213,48 @@ export default function StepPersonalDetails() {
         {/* Occupation */}
         <div>
           <label htmlFor="occupation" className="block text-sm font-bold text-[#334155] mb-2 font-body">Occupation <span className="text-red-500">*</span></label>
-          <div className="relative">
-            <select
-              id="occupation"
-              {...form.register('occupation')}
-              className={`${inputClassName} appearance-none cursor-pointer`}
-            >
-              <option value="" disabled hidden>Select occupation</option>
-              {categories?.map((cat: any) => (
-                <option key={cat.category} value={cat.category}>{cat.category}</option>
-              ))}
-            </select>
-            <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
-              <ChevronDown size={18} />
-            </div>
-          </div>
+          <Controller
+            name="occupation"
+            control={form.control}
+            render={({ field }) => (
+              <Select
+                id="occupation"
+                name={field.name}
+                options={(categories || []).map((cat: any) => ({ value: cat.category, label: cat.category }))}
+                value={field.value}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                placeholder="Select occupation"
+                hasError={!!form.formState.errors.occupation}
+              />
+            )}
+          />
           {form.formState.errors.occupation && <p className="mt-1.5 text-xs text-red-500">{form.formState.errors.occupation.message}</p>}
         </div>
 
         {/* Marital Status */}
         <div className="md:col-span-2">
           <label htmlFor="marital_status" className="block text-sm font-bold text-[#334155] mb-2 font-body">Marital Status <span className="text-red-500">*</span></label>
-          <div className="relative">
-            <select
-              id="marital_status"
-              {...form.register('marital_status')}
-              className={`${inputClassName} appearance-none cursor-pointer`}
-            >
-              <option value="" disabled hidden>Select marital status</option>
-              <option value="Married">Married</option>
-              <option value="Single">Single</option>
-              <option value="Divorced">Divorced</option>
-            </select>
-            <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
-              <ChevronDown size={18} />
-            </div>
-          </div>
+          <Controller
+            name="marital_status"
+            control={form.control}
+            render={({ field }) => (
+              <Select
+                id="marital_status"
+                name={field.name}
+                options={[
+                  { value: 'Married', label: 'Married' },
+                  { value: 'Single', label: 'Single' },
+                  { value: 'Divorced', label: 'Divorced' },
+                ]}
+                value={field.value}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                placeholder="Select marital status"
+                hasError={!!form.formState.errors.marital_status}
+              />
+            )}
+          />
           {form.formState.errors.marital_status && <p className="mt-1.5 text-xs text-red-500">{form.formState.errors.marital_status.message}</p>}
         </div>
 
