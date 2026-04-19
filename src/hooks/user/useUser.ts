@@ -9,7 +9,6 @@ export function useCurrentUser() {
     queryKey: QUERY_KEYS.USER_ME,
     queryFn: ({ signal }) => userService.getMe(signal),
     staleTime: 5 * 60 * 1000, // 5 minutes
-    throwOnError: true,
   });
 }
 
