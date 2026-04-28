@@ -65,10 +65,45 @@ apiClient.interceptors.response.use(
       return Promise.reject(error);
     }
 
+    // Check if token is waitlist scoped and if it is expired
+    let isWaitlist = false;
+    let isExpired = false;
+    const currentToken = useAuthStore.getState().accessToken;
+
+    if (currentToken) {
+      try {
+        const base64Url = currentToken.split('.')[1];
+        if (base64Url) {
+          let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+          const pad = base64.length % 4;
+          if (pad) base64 += '='.repeat(4 - pad);
+          const payload = JSON.parse(
+            decodeURIComponent(
+              atob(base64).split('').map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')
+            )
+          );
+          isWaitlist = payload.scope === 'waitlist';
+          isExpired = payload.exp * 1000 < Date.now();
+        }
+      } catch (e) {
+        // Ignore parse errors
+      }
+    }
+
+    // If waitlist token is not expired, it's a scope/permission error from the backend, not an auth expiration. 
+    // Waitlist tokens don't have refresh tokens, so attempting a refresh is guaranteed to fail and log them out.
+    // We just reject the request so the UI can gracefully handle the API failure without nuking the session.
+    if (isWaitlist && !isExpired) {
+      return Promise.reject(error);
+    }
+
     // Already retried — give up
     if (originalRequest._retry) {
       useAuthStore.getState().clearAuth();
-      if (typeof window !== 'undefined') window.location.href = '/login';
+      if (typeof window !== 'undefined') {
+        const isWizardPath = window.location.pathname.startsWith('/assessment');
+        window.location.href = isWizardPath ? '/waitlist?expired=true' : '/login';
+      }
       return Promise.reject(error);
     }
 
@@ -110,7 +145,11 @@ apiClient.interceptors.response.use(
     } catch (refreshError) {
       processQueue(refreshError, null);
       useAuthStore.getState().clearAuth();
-      if (typeof window !== 'undefined') window.location.href = '/login';
+      if (typeof window !== 'undefined') {
+        // Waitlist users have no refresh cookie — send them back to waitlist, not login
+        const isWizardPath = window.location.pathname.startsWith('/assessment');
+        window.location.href = isWizardPath ? '/waitlist?expired=true' : '/login';
+      }
       return Promise.reject(refreshError);
     } finally {
       isRefreshing = false;
