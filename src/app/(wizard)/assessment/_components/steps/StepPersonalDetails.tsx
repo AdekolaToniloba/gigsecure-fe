@@ -8,6 +8,7 @@ import { User } from 'lucide-react';
 import DatePicker from '@/components/ui/DatePicker';
 import Select from '@/components/ui/Select';
 import { useWizardStore } from '@/store/wizard-store';
+import { useAuthStore } from '@/store/auth-store';
 import { useCurrentUser } from '@/hooks/user/useUser';
 import { useRiskCategories } from '@/hooks/risk/useRisk';
 import StepWrapper from './StepWrapper';
@@ -27,6 +28,8 @@ type FormValues = z.infer<typeof personalDetailsSchema>;
 
 export default function StepPersonalDetails() {
   const { answers, setStepAnswers, nextStep, setSelectedCategory } = useWizardStore();
+  const authFirstName = useAuthStore((s) => s.firstName);
+  const authLastName = useAuthStore((s) => s.lastName);
   const { data: userResponse } = useCurrentUser();
   const { data: categories } = useRiskCategories();
 
@@ -39,8 +42,8 @@ export default function StepPersonalDetails() {
     resolver: zodResolver(personalDetailsSchema),
     mode: 'onChange',
     defaultValues: {
-      first_name: (answers.first_name as string) || '',
-      last_name: (answers.last_name as string) || '',
+      first_name: (answers.first_name as string) || authFirstName || '',
+      last_name: (answers.last_name as string) || authLastName || '',
       date_of_birth: (answers.date_of_birth as string) || '',
       gender: (answers.gender as any) || undefined,
       state: (answers.state as string) || '',
@@ -220,7 +223,10 @@ export default function StepPersonalDetails() {
               <Select
                 id="occupation"
                 name={field.name}
-                options={(categories || []).map((cat: any) => ({ value: cat.category, label: cat.category }))}
+                options={(categories || []).map((cat: any) => {
+                  const val = typeof cat === 'string' ? cat : cat.category;
+                  return { value: val, label: val };
+                })}
                 value={field.value}
                 onChange={field.onChange}
                 onBlur={field.onBlur}

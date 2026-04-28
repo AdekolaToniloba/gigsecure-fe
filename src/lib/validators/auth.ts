@@ -50,7 +50,7 @@ export const tokenResponseSchema = z.object({
 
 export const waitlistSignupResponseSchema = z.object({
   message: z.string(),
-  user_id: z.string(),
+  user_id: z.string().optional(),
   access_token: z.string(),
   token_type: z.string().default('bearer'),
 });
