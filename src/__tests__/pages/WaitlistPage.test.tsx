@@ -17,17 +17,17 @@ vi.mock('next/navigation', () => ({
 describe('WaitlistPage', () => {
   it('renders email, first name, and last name fields', () => {
     renderWithProviders(<WaitlistPage />);
-    expect(screen.getByLabelText(/your email address/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/first name/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/last name/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /secure my spot/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /start my assessment/i })).toBeInTheDocument();
   });
 
   it('empty submit shows validation errors', async () => {
     const user = userEvent.setup();
     renderWithProviders(<WaitlistPage />);
     
-    const btn = screen.getByRole('button', { name: /secure my spot/i });
+    const btn = screen.getByRole('button', { name: /start my assessment/i });
     console.log('Button disabled?', btn.hasAttribute('disabled'));
     
     await user.click(btn);
@@ -40,9 +40,9 @@ describe('WaitlistPage', () => {
     const user = userEvent.setup();
     renderWithProviders(<WaitlistPage />);
     
-    await user.type(screen.getByLabelText(/your email address/i), 'not-an-email');
+    await user.type(screen.getByLabelText(/email address/i), 'not-an-email');
     await user.type(screen.getByLabelText(/first name/i), 'John');
-    await user.click(screen.getByRole('button', { name: /secure my spot/i }));
+    await user.click(screen.getByRole('button', { name: /start my assessment/i }));
     
     expect(await screen.findByText(/Invalid email/i)).toBeInTheDocument();
   });
@@ -51,11 +51,11 @@ describe('WaitlistPage', () => {
     const user = userEvent.setup();
     renderWithProviders(<WaitlistPage />);
     
-    await user.type(screen.getByLabelText(/your email address/i), 'test@example.com');
+    await user.type(screen.getByLabelText(/email address/i), 'test@example.com');
     await user.type(screen.getByLabelText(/first name/i), 'John');
     await user.type(screen.getByLabelText(/last name/i), 'Doe');
     
-    await user.click(screen.getByRole('button', { name: /secure my spot/i }));
+    await user.click(screen.getByRole('button', { name: /start my assessment/i }));
     
     // Expect success UI
     expect(await screen.findByText('You are on the list!')).toBeInTheDocument();
@@ -80,11 +80,11 @@ describe('WaitlistPage', () => {
     const user = userEvent.setup();
     renderWithProviders(<WaitlistPage />);
     
-    await user.type(screen.getByLabelText(/your email address/i), 'test@example.com');
+    await user.type(screen.getByLabelText(/email address/i), 'test@example.com');
     await user.type(screen.getByLabelText(/first name/i), 'John');
     await user.type(screen.getByLabelText(/last name/i), 'Doe');
     
-    await user.click(screen.getByRole('button', { name: /secure my spot/i }));
+    await user.click(screen.getByRole('button', { name: /start my assessment/i }));
     
     expect(await screen.findByText('Email already registered')).toBeInTheDocument();
   });
@@ -93,11 +93,11 @@ describe('WaitlistPage', () => {
     const user = userEvent.setup();
     renderWithProviders(<WaitlistPage />);
     
-    await user.type(screen.getByLabelText(/your email address/i), 'test@example.com');
+    await user.type(screen.getByLabelText(/email address/i), 'test@example.com');
     await user.type(screen.getByLabelText(/first name/i), 'John');
     await user.type(screen.getByLabelText(/last name/i), 'Doe');
     
-    const button = screen.getByRole('button', { name: /secure my spot/i });
+    const button = screen.getByRole('button', { name: /start my assessment/i });
     await user.click(button);
     
     expect(button).toBeDisabled();
