@@ -31,6 +31,7 @@ const STATIC_FALLBACK_STEPS: AssessmentStep[] = [
   { step: 5, title: 'Health & lifestyle', subtitle: 'Previous coverage', questions: [] },
   { step: 6, title: 'Safety net & history', subtitle: 'Medical background', questions: [] },
 ];
+const HANDOFF_TIMING_KEY = 'gs_waitlist_handoff_start_ms';
 
 export default function RiskWizard() {
   const router = useRouter();
@@ -67,6 +68,26 @@ export default function RiskWizard() {
     const el = document.querySelector<HTMLElement>('[data-step-title]');
     el?.focus();
   }, [currentStep]);
+
+  // Track waitlist->assessment handoff timing once the assessment route mounts.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const startedAtRaw = sessionStorage.getItem(HANDOFF_TIMING_KEY);
+    if (!startedAtRaw) return;
+
+    const startedAtMs = Number.parseInt(startedAtRaw, 10);
+    sessionStorage.removeItem(HANDOFF_TIMING_KEY);
+    if (Number.isNaN(startedAtMs)) return;
+
+    const handoffDurationMs = Date.now() - startedAtMs;
+    const gtag = (window as Window & {
+      gtag?: (command: 'event', eventName: string, params?: Record<string, unknown>) => void;
+    }).gtag;
+    gtag?.('event', 'waitlist_to_assessment_handoff', {
+      handoff_duration_ms: handoffDurationMs,
+    });
+  }, []);
 
   // Build the typed payload from the flat answers map
   const buildPayload = (flatAnswers: Record<string, unknown>): TechAssessmentInput => {

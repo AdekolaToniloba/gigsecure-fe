@@ -1,28 +1,53 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { User } from 'lucide-react';
 import DatePicker from '@/components/ui/DatePicker';
 import Select from '@/components/ui/Select';
+import ComboboxSelect from '@/components/ui/ComboboxSelect';
 import { useWizardStore } from '@/store/wizard-store';
 import { useAuthStore } from '@/store/auth-store';
 import { useCurrentUser } from '@/hooks/user/useUser';
 import { useRiskCategories } from '@/hooks/risk/useRisk';
+import {
+  getCitiesByState,
+  getStateNames,
+  isValidCityForState,
+  isValidState,
+} from '@/lib/data/nigeriaStates';
 import StepWrapper from './StepWrapper';
 
-const personalDetailsSchema = z.object({
-  first_name: z.string().min(1, 'First name is required'),
-  last_name: z.string().min(1, 'Last name is required'),
-  date_of_birth: z.string().min(1, 'Date of birth is required').regex(/^\d{2}\/\d{2}\/\d{4}$/, 'Format must be dd/mm/yyyy'),
-  gender: z.enum(['male', 'female', 'other'], { message: 'Please select gender' }),
-  state: z.string().min(1, 'State is required'),
-  city: z.string().min(1, 'City is required'),
-  occupation: z.string().min(1, 'Occupation is required'),
-  marital_status: z.enum(['Married', 'Single', 'Divorced'], { message: 'Please select marital status' }),
-});
+const personalDetailsSchema = z
+  .object({
+    first_name: z.string().min(1, 'First name is required'),
+    last_name: z.string().min(1, 'Last name is required'),
+    date_of_birth: z
+      .string()
+      .min(1, 'Date of birth is required')
+      .regex(/^\d{2}\/\d{2}\/\d{4}$/, 'Format must be dd/mm/yyyy'),
+    gender: z.enum(['male', 'female', 'other'], { message: 'Please select gender' }),
+    state: z
+      .string()
+      .min(1, 'State is required')
+      .refine((value) => isValidState(value), 'Please select a valid state'),
+    city: z.string().min(1, 'City is required'),
+    occupation: z.string().min(1, 'Occupation is required'),
+    marital_status: z.enum(['Married', 'Single', 'Divorced', 'Separated'], {
+      message: 'Please select marital status',
+    }),
+  })
+  .superRefine((values, ctx) => {
+    if (values.state && values.city && !isValidCityForState(values.state, values.city)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['city'],
+        message: 'Please select a valid city for the selected state',
+      });
+    }
+  });
 
 type FormValues = z.infer<typeof personalDetailsSchema>;
 
@@ -37,6 +62,10 @@ export default function StepPersonalDetails() {
   const profile = userResponse?.profile;
 
   const [hasPrefilled, setHasPrefilled] = useState(false);
+  const stateOptions = useMemo(
+    () => getStateNames().map((stateName) => ({ value: stateName, label: stateName })),
+    []
+  );
 
   const form = useForm<FormValues>({
     resolver: zodResolver(personalDetailsSchema),
@@ -69,6 +98,21 @@ export default function StepPersonalDetails() {
       setHasPrefilled(true);
     }
   }, [userResponse, me, profile, form, hasPrefilled]);
+
+  const selectedState = form.watch('state');
+  const cityOptions = useMemo(
+    () => getCitiesByState(selectedState).map((cityName) => ({ value: cityName, label: cityName })),
+    [selectedState]
+  );
+
+  useEffect(() => {
+    const currentCity = form.getValues('city');
+    if (!currentCity || !selectedState) return;
+
+    if (!isValidCityForState(selectedState, currentCity)) {
+      form.setValue('city', '', { shouldValidate: true, shouldDirty: true });
+    }
+  }, [form, selectedState]);
 
   const onNext = form.handleSubmit((values) => {
     setStepAnswers({
@@ -188,13 +232,29 @@ export default function StepPersonalDetails() {
         {/* State of Residence */}
         <div>
           <label htmlFor="state" className="block text-sm font-bold text-[#334155] mb-2 font-body">State of Residence <span className="text-red-500">*</span></label>
-          <input
-            id="state"
-            type="text"
-            placeholder="Enter your state"
-            {...form.register('state')}
-            disabled={!!profile?.state}
-            className={inputClassName}
+          <Controller
+            name="state"
+            control={form.control}
+            render={({ field }) => (
+              <ComboboxSelect
+                id="state"
+                name={field.name}
+                options={stateOptions}
+                value={field.value}
+                onChange={(nextState) => {
+                  field.onChange(nextState);
+                  const currentCity = form.getValues('city');
+                  if (currentCity && !isValidCityForState(nextState, currentCity)) {
+                    form.setValue('city', '', { shouldValidate: true, shouldDirty: true });
+                  }
+                }}
+                onBlur={field.onBlur}
+                placeholder="Select your state"
+                searchPlaceholder="Search state..."
+                disabled={!!profile?.state}
+                hasError={!!form.formState.errors.state}
+              />
+            )}
           />
           {form.formState.errors.state && <p className="mt-1.5 text-xs text-red-500">{form.formState.errors.state.message}</p>}
         </div>
@@ -202,13 +262,22 @@ export default function StepPersonalDetails() {
         {/* City */}
         <div>
           <label htmlFor="city" className="block text-sm font-bold text-[#334155] mb-2 font-body">City <span className="text-red-500">*</span></label>
-          <input
-            id="city"
-            type="text"
-            placeholder="Enter your city"
-            {...form.register('city')}
-            disabled={!!profile?.city}
-            className={inputClassName}
+          <Controller
+            name="city"
+            control={form.control}
+            render={({ field }) => (
+              <Select
+                id="city"
+                name={field.name}
+                options={cityOptions}
+                value={field.value}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                placeholder={selectedState ? 'Select city' : 'Select state first'}
+                disabled={!selectedState || !!profile?.city}
+                hasError={!!form.formState.errors.city}
+              />
+            )}
           />
           {form.formState.errors.city && <p className="mt-1.5 text-xs text-red-500">{form.formState.errors.city.message}</p>}
         </div>
@@ -252,6 +321,7 @@ export default function StepPersonalDetails() {
                   { value: 'Married', label: 'Married' },
                   { value: 'Single', label: 'Single' },
                   { value: 'Divorced', label: 'Divorced' },
+                  { value: 'Separated', label: 'Separated' },
                 ]}
                 value={field.value}
                 onChange={field.onChange}

@@ -52,8 +52,9 @@ export default function Select({
   const selectedOption = options.find((opt) => opt.value === value);
 
   return (
-    <div ref={containerRef} className="relative w-full text-left" id={id}>
+    <div ref={containerRef} className="relative w-full text-left">
       <button
+        id={id}
         type="button"
         disabled={disabled}
         name={name}
