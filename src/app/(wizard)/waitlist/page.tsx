@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { motion } from 'framer-motion';
-import { Mail, Check, Lock, Info } from 'lucide-react';
+import { ShieldAlert, Check, Lock, Info } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useWaitlistSignup } from '@/hooks/auth/useAuth';
@@ -13,10 +13,11 @@ import { waitlistSignupRequestSchema, type WaitlistSignupRequest } from '@/lib/v
 import { assetUrl, ASSETS } from '@/lib/assets';
 
 const BENEFITS = [
-  "Be first to compare and activate coverage plans",
-  "Exclusive launch pricing locked in before public release",
-  "Your risk profile saved and ready when we launch"
+  "Results saved to your profile",
+  "Compare coverage options for your score",
+  "Early access when coverage goes live"
 ];
+const HANDOFF_TIMING_KEY = 'gs_waitlist_handoff_start_ms';
 
 export default function WaitlistPage() {
   const router = useRouter();
@@ -25,6 +26,10 @@ export default function WaitlistPage() {
   const { mutateAsync: signup, isPending } = useWaitlistSignup();
   const [isSuccess, setIsSuccess] = useState(false);
   const [formError, setFormError] = useState('');
+
+  useEffect(() => {
+    router.prefetch('/assessment');
+  }, [router]);
 
   const {
     register,
@@ -35,13 +40,28 @@ export default function WaitlistPage() {
   });
 
   const onSubmit = async (data: WaitlistSignupRequest) => {
+    const submitStartedAtMs = Date.now();
+
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem(HANDOFF_TIMING_KEY, String(submitStartedAtMs));
+    }
+
     try {
       setFormError('');
       await signup(data);
       setIsSuccess(true);
-      setTimeout(() => {
-        router.push('/assessment');
-      }, 2000);
+
+      const signupLatencyMs = Date.now() - submitStartedAtMs;
+      if (typeof window !== 'undefined') {
+        const gtag = (window as Window & {
+          gtag?: (command: 'event', eventName: string, params?: Record<string, unknown>) => void;
+        }).gtag;
+        gtag?.('event', 'waitlist_signup_success', {
+          signup_latency_ms: signupLatencyMs,
+        });
+      }
+
+      router.push('/assessment');
     } catch (error: any) {
       setFormError(error?.message || 'Something went wrong. Please try again.');
     }
@@ -55,17 +75,32 @@ export default function WaitlistPage() {
         <div className="absolute top-0 left-0 right-0 h-1/2 bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
 
 
-        <div className="flex-1 flex flex-col justify-center items-center text-center relative z-10">
+        <div className="flex-1 flex flex-col justify-center items-start text-left relative z-10">
           <div className="flex h-20 w-24 items-center justify-center rounded-[12px] bg-white/10 mb-8 relative">
-            <Mail className="text-[#FFE419] h-10 w-10" />
+            <ShieldAlert className="text-[#FFE419] h-10 w-10" />
           </div>
           <h1 className="text-[#FFE419] font-heading text-[32px] sm:text-[40px] lg:text-[48px] font-bold leading-tight mb-6 max-w-xl">
-            Join the early access list
+            Know your risk.
+            <br />
+            Before it costs you.
           </h1>
           <p className="text-white/90 font-body text-[18px] lg:text-[20px] max-w-[480px] leading-relaxed">
-            You're among the first freelancers shaping GigSecure.
-            Drop your email and we'll reach out the moment coverage goes live.
+            Your personalised risk score is a few questions away. We'll save
+            your results so you can revisit them anytime.
           </p>
+
+          <div className="flex flex-col gap-4 mt-10 max-w-[480px]">
+            {BENEFITS.map((text, i) => (
+              <div key={i} className="flex items-start gap-3">
+                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#FFE419] mt-1 flex-shrink-0">
+                  <Check size={14} className="text-[#004E4C]" strokeWidth={3} />
+                </div>
+                <span className="font-body text-white text-[16px] leading-relaxed">
+                  {text}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -99,30 +134,26 @@ export default function WaitlistPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
             >
-              <div className="flex flex-col gap-4 mb-10">
-                {BENEFITS.map((text, i) => (
-                  <div key={i} className="flex items-start gap-4">
-                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#004E4C] flex-shrink-0">
-                      <Check size={14} className="text-white" strokeWidth={3} />
-                    </div>
-                    <span className="font-body text-[#334155] text-[16px] leading-relaxed">
-                      {text}
-                    </span>
-                  </div>
-                ))}
+              <div className="mb-8">
+                <h2 className="font-heading text-[34px] leading-tight font-bold text-[#0F172A]">
+                  Let&apos;s get you set up
+                </h2>
+                <p className="mt-1 text-[24px] font-body text-[#0F172A]/90">
+                  Quick, free, takes under 3 minutes.
+                </p>
               </div>
 
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
                 <div>
                   <label htmlFor="email" className="block text-sm font-bold text-[#334155] mb-2 font-body">
-                    Your Email Address
+                    Email address
                   </label>
                   <input
                     id="email"
                     type="email"
                     {...register('email')}
                     className="w-full h-[56px] rounded-lg border border-gray-200 bg-[#F8FAFC] px-4 font-body text-[16px] text-gray-900 focus:border-[#004E4C] focus:outline-none focus:ring-1 focus:ring-[#004E4C] transition-colors"
-                    placeholder="e.g. hello@example.com"
+                    placeholder="hello@example.com"
                   />
                   {errors.email && <p className="mt-1.5 text-sm text-red-500">{errors.email.message}</p>}
                 </div>
@@ -130,7 +161,7 @@ export default function WaitlistPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label htmlFor="first_name" className="block text-sm font-bold text-[#334155] mb-2 font-body">
-                      First Name
+                      First name
                     </label>
                     <input
                       id="first_name"
@@ -143,7 +174,7 @@ export default function WaitlistPage() {
                   </div>
                   <div>
                     <label htmlFor="last_name" className="block text-sm font-bold text-[#334155] mb-2 font-body">
-                      Last Name
+                      Last name
                     </label>
                     <input
                       id="last_name"
@@ -170,7 +201,7 @@ export default function WaitlistPage() {
                   type="submit"
                   className="w-full h-[60px] rounded-lg bg-[#FFE419] font-body text-[18px] font-bold text-[#004E4C] shadow-sm transition-colors hover:bg-[#EBD001] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004E4C] disabled:opacity-70 disabled:cursor-not-allowed mt-4 cursor-pointer flex justify-center items-center"
                 >
-                  {isPending ? 'Authenticating...' : 'Secure my Spot & Continue'}
+                  {isPending ? 'Authenticating...' : 'Start my assessment'}
                 </motion.button>
               </form>
 
