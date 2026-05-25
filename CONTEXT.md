@@ -334,3 +334,24 @@ Kept `tokenResponseSchema` as the browser-safe BFF response shape so existing BF
 
 Known follow-ups:
 Task 4 still needs to remove access-token persistence from `src/store/auth-store.ts`; this known `RULES.md` conflict remains documented and intentionally untouched in Task 3. Task 6 should migrate `src/services/auth.service.ts` and `src/hooks/auth/useAuth.ts` onto the new BFF endpoint constants and updated response schemas. Verification passed with `npm test -- --run src/__tests__/lib/auth-validators.test.ts src/__tests__/lib/api-errors.test.ts`, `npx tsc --noEmit`, and scoped ESLint for the files changed in this task; full `npm run lint` is still expected to fail until the pre-existing unrelated lint issues documented in Task 2 are addressed.
+### 2026-05-25 13:31 WAT
+
+Task completed: Task 4 — Token Session Architecture
+
+Files changed:
+- `CONTEXT.md`
+- `src/store/auth-store.ts`
+- `src/lib/auth/session.ts`
+- `src/providers/AuthProvider.tsx`
+- `src/providers/index.tsx`
+- `src/__tests__/store/auth-store.test.ts`
+- `src/__tests__/lib/auth-session.test.ts`
+
+Summary:
+Reworked the auth store so access tokens are memory-only and removed the previous Zustand `persist`/localStorage behavior. Added explicit auth lifecycle states (`idle`, `initializing`, `authenticated`, `unauthenticated`) plus a client boot `AuthProvider` that attempts silent refresh once before settling the user as unauthenticated. Added focused tests for store transitions, silent refresh behavior, refresh failure handling, and token non-persistence.
+
+Important decisions:
+The silent refresh helper calls the BFF `/api/auth/refresh` route with `X-Requested-With: XMLHttpRequest`, keeping refresh token handling behind the httpOnly cookie contract. `AuthProvider` is nested inside `QueryProvider` at the app providers boundary so auth initialization runs once for the client app without changing route behavior in this task.
+
+Known follow-ups:
+Task 5 must add the API client refresh mutex/queue so concurrent 401s share one refresh promise and retry safely. Later route protection work must respect the new `initializing` status to avoid redirect flicker, and the backend contract question remains that refresh must be cookie-based rather than requiring browser JavaScript to send a refresh token body.

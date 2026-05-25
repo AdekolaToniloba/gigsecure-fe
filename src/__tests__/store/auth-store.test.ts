@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { act } from '@testing-library/react';
 import { useAuthStore } from '@/store/auth-store';
 
@@ -9,12 +9,13 @@ beforeEach(() => {
 });
 
 describe('useAuthStore', () => {
-  it('has correct initial state', () => {
+  it('has correct cleared unauthenticated state', () => {
     const state = useAuthStore.getState();
     expect(state.accessToken).toBeNull();
     expect(state.firstName).toBeNull();
     expect(state.lastName).toBeNull();
     expect(state.isAuthenticated).toBe(false);
+    expect(state.status).toBe('unauthenticated');
   });
 
   it('setAccessToken sets token and marks authenticated', () => {
@@ -22,6 +23,37 @@ describe('useAuthStore', () => {
     const state = useAuthStore.getState();
     expect(state.accessToken).toBe('test-token');
     expect(state.isAuthenticated).toBe(true);
+    expect(state.status).toBe('authenticated');
+  });
+
+  it('setAccessToken does not persist token to localStorage', () => {
+    const setItemSpy = vi.spyOn(Storage.prototype, 'setItem');
+
+    act(() => { useAuthStore.getState().setAccessToken('test-token'); });
+
+    expect(localStorage.getItem('gigsecure-auth')).toBeNull();
+    expect(setItemSpy).not.toHaveBeenCalled();
+
+    setItemSpy.mockRestore();
+  });
+
+  it('setAuthInitializing marks auth as initializing without a token', () => {
+    act(() => { useAuthStore.getState().setAuthInitializing(); });
+    const state = useAuthStore.getState();
+    expect(state.accessToken).toBeNull();
+    expect(state.isAuthenticated).toBe(false);
+    expect(state.status).toBe('initializing');
+  });
+
+  it('setUnauthenticated clears token and marks unauthenticated', () => {
+    act(() => {
+      useAuthStore.getState().setAccessToken('token');
+      useAuthStore.getState().setUnauthenticated();
+    });
+    const state = useAuthStore.getState();
+    expect(state.accessToken).toBeNull();
+    expect(state.isAuthenticated).toBe(false);
+    expect(state.status).toBe('unauthenticated');
   });
 
   it('setUserMeta sets firstName and lastName', () => {
@@ -48,5 +80,6 @@ describe('useAuthStore', () => {
     expect(state.firstName).toBeNull();
     expect(state.lastName).toBeNull();
     expect(state.isAuthenticated).toBe(false);
+    expect(state.status).toBe('unauthenticated');
   });
 });
