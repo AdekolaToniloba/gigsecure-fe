@@ -312,3 +312,25 @@ The refresh cookie path was changed to `/` so server-side middleware can see the
 
 Known follow-ups:
 Task 6 must update `src/services/auth.service.ts` and `src/hooks/auth/useAuth.ts` to call the new BFF endpoint constants; those files still reflect the older direct-backend shape and were intentionally not changed in this task. The existing `src/store/auth-store.ts` still persists access tokens to `localStorage`, which conflicts with `RULES.md` but belongs to Task 4. Verification passed with `npx tsc --noEmit` and `npm test -- --run src/__tests__/store/auth-store.test.ts`; `npm run lint` still fails on pre-existing unrelated lint errors in tests, public UI components, wizard code, scripts, and services.
+
+### 2026-05-25 13:04 WAT
+
+Task completed: Task 3 — Auth Types, Schemas, and Error Parser
+
+Files changed:
+- `CONTEXT.md`
+- `src/lib/validators/auth.ts`
+- `src/types/auth.ts`
+- `src/types/api.ts`
+- `src/lib/api/errors.ts`
+- `src/__tests__/lib/auth-validators.test.ts`
+- `src/__tests__/lib/api-errors.test.ts`
+
+Summary:
+Added accurate auth schemas for backend token responses, browser-safe BFF token responses, register message responses, reusable message responses, and all password creation/reset form flows with confirmation stripping. Added reusable auth types in `src/types/auth.ts` and API error parsing types/utilities that support string `detail`, 422 validation arrays, `message`, explicit field error maps, and Axios-style response errors. Added focused unit tests for token response separation, password confirmation behavior, token-required forms, and field-level API error mapping.
+
+Important decisions:
+Kept `tokenResponseSchema` as the browser-safe BFF response shape so existing BFF-facing login parsing remains compatible, and introduced `backendTokenResponseSchema` for responses that still include `refresh_token`. Password confirmation fields are represented only in UI form schemas and are removed by schema transforms before API payloads are produced, keeping the "never send confirmation fields" rule enforceable at the validation layer.
+
+Known follow-ups:
+Task 4 still needs to remove access-token persistence from `src/store/auth-store.ts`; this known `RULES.md` conflict remains documented and intentionally untouched in Task 3. Task 6 should migrate `src/services/auth.service.ts` and `src/hooks/auth/useAuth.ts` onto the new BFF endpoint constants and updated response schemas. Verification passed with `npm test -- --run src/__tests__/lib/auth-validators.test.ts src/__tests__/lib/api-errors.test.ts`, `npx tsc --noEmit`, and scoped ESLint for the files changed in this task; full `npm run lint` is still expected to fail until the pre-existing unrelated lint issues documented in Task 2 are addressed.
