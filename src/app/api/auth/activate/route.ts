@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
   assertCsrfHeader,
-  COOKIE_NAME,
   createBrowserSessionResponse,
   missingBackendUrlResponse,
   safeJson,
@@ -13,17 +12,12 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   if (csrfErr) return csrfErr;
   if (!BACKEND_URL) return missingBackendUrlResponse();
 
-  // Read the httpOnly cookie — browser sends it automatically on this path
-  const refreshToken = req.cookies.get(COOKIE_NAME)?.value;
+  const body = await req.json();
 
-  if (!refreshToken) {
-    return NextResponse.json({ detail: 'No refresh token' }, { status: 401 });
-  }
-
-  const backendRes = await fetch(`${BACKEND_URL}/api/v1/auth/refresh`, {
+  const backendRes = await fetch(`${BACKEND_URL}/api/v1/auth/activate`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ refresh_token: refreshToken }),
+    body: JSON.stringify(body),
   });
 
   const data = await safeJson(backendRes);
@@ -32,5 +26,5 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json(data, { status: backendRes.status });
   }
 
-  return createBrowserSessionResponse(data);
+  return createBrowserSessionResponse(data, { requireRefreshToken: true });
 }
