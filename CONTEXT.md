@@ -481,3 +481,42 @@ The check-inbox flow does not pass the user's email through query params to avoi
 
 Known follow-ups:
 The Google sign-up button remains a non-submit UI control because no Google OAuth endpoint or flow is documented yet. A browser visual sanity check could not be completed because a stale Next dev lock prevented starting a local dev server, and no server was reachable on ports 3000 or 3001.
+
+### 2026-05-25 21:58 WAT
+
+Task completed: Task 10 — Verify Email Flow
+
+Files changed:
+- `CONTEXT.md`
+- `src/app/(app)/(auth)/verify-email/page.tsx`
+- `src/components/auth/verify-email/verify-email-status.tsx`
+- `src/__tests__/components/auth/verify-email-status.test.tsx`
+
+Summary:
+Implemented the `/verify-email?token=` route using the shared auth shell and a focused client status component that handles missing, loading, success, and API error states accessibly. A valid token now calls the verify-email BFF once through the existing React Query hook, stores the browser-safe access token in memory, and redirects through the current authenticated destination policy. Added tests for missing token, successful verification with session creation, and invalid/expired token messaging.
+
+Important decisions:
+The page reads the email token in the server route and passes it into the client component as a prop, avoiding extra client URL parsing while preserving the App Router boundary. Because the backend/product answer for post-email-verification routing is still unresolved, success redirects to `DEFAULT_AUTHENTICATED_PATH` (`/dashboard`) as established in Task 7 rather than inventing a new risk-assessment destination.
+
+Known follow-ups:
+Confirm the intended post-verification destination with product/backend; if risk assessment or an onboarding gate is required, update `DEFAULT_AUTHENTICATED_PATH` or introduce a dedicated verified-user redirect constant in a later routing task. Browser visual QA was not run for this task; automated verification passed with the focused component test, TypeScript, and lint.
+
+### 2026-05-25 22:09 WAT
+
+Task completed: Task 11 — Login Flow
+
+Files changed:
+- `CONTEXT.md`
+- `public/assets/images/auth-login.png`
+- `src/app/(app)/(auth)/login/page.tsx`
+- `src/components/auth/login/login-form.tsx`
+- `src/__tests__/components/auth/login-form.test.tsx`
+
+Summary:
+Implemented the login page using the shared auth shell, screenshot-aligned login imagery, React Hook Form, Zod validation, the BFF-backed React Query login hook, accessible field errors, loading states, and parsed API error messaging. Successful login stores the browser-safe access token in the memory-only auth store and redirects either to a server-sanitized redirect target or the configured dashboard destination. Added focused tests for validation, successful login/session creation, safe redirect routing, invalid credential errors, and the non-submit Google action.
+
+Important decisions:
+The login route sanitizes the `redirect` query parameter on the server with `getSafeRedirectPath` before passing it to the client form, keeping open-redirect protection out of form logic. The Google sign-in control remains a non-submit placeholder because no Google OAuth endpoint or contract is documented yet.
+
+Known follow-ups:
+Visual browser QA could not be completed because the sandboxed dev server first failed with `listen EPERM`, and the approved retry then failed on the existing `.next/dev/lock`, indicating another Next dev instance or stale lock must be cleared outside this task. Later OAuth work should replace the current Google button no-op when a backend flow exists.
