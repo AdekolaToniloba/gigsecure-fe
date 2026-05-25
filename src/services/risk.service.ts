@@ -11,6 +11,8 @@ import {
 } from '@/lib/validators/risk';
 import type { RiskQuestionsResponse } from '@/types/risk-assessment';
 
+export type RiskCategory = string | { category: string };
+
 function parseOrThrow<T>(schema: { parse: (data: unknown) => T }, data: unknown, context: string): T {
   try {
     return schema.parse(data);
@@ -32,7 +34,7 @@ export const riskService = {
     return data as RiskQuestionsResponse;
   },
 
-  async getCategories(signal?: AbortSignal): Promise<any[]> {
+  async getCategories(signal?: AbortSignal): Promise<RiskCategory[]> {
     const { data } = await apiClient.get(ENDPOINTS.RISK.CATEGORIES, { signal });
     return data;
   },

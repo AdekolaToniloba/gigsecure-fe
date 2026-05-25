@@ -24,7 +24,7 @@ export default function MissionVision() {
               Our Mission
             </h2>
             <p className="font-body text-base md:text-lg text-gray-800 leading-relaxed font-medium">
-              To independently protect, sustain, and empower Africa's growing gig workforce.
+              To independently protect, sustain, and empower Africa&apos;s growing gig workforce.
             </p>
           </motion.div>
 

@@ -8,7 +8,7 @@ import { useAuthStore } from '@/store/auth-store';
 import { Check, CreditCard, AlertTriangle, Users, Clock, Heart, Info, Download} from 'lucide-react';
 import RiskReportPDF from './report/RiskReportPDF';
 import { reportColors } from '@/lib/report-theme';
-import { parseInsights } from '../_lib/parseInsights';
+import { parseInsights, type InsightBlock } from '../_lib/parseInsights';
 import { getRiskLevel } from '../_lib/getRiskLevel';
 import { renderInlineBold } from '../_lib/renderInlineBold';
 import { twMerge } from 'tailwind-merge';
@@ -19,6 +19,11 @@ const PILLAR_LABELS: Record<string, string> = {
   safety: 'Safety Net Strength',
   equipment: 'Equipment Dependency',
   health: 'Health & Lifestyle',
+};
+
+type InsightSection = {
+  header: string;
+  blocks: InsightBlock[];
 };
 
 function getInsightIcon(label: string) {
@@ -189,8 +194,8 @@ export default function ReportScreen({ data }: Props) {
       {/* ─── 2. Insight Sections (Grouped by Header) ─────────────────── */}
       <div className="flex flex-col gap-6 mb-6">
         {(() => {
-          const sections: { header: string; blocks: any[] }[] = [];
-          let current: { header: string; blocks: any[] } = { header: 'Personalized Insights', blocks: [] };
+          const sections: InsightSection[] = [];
+          let current: InsightSection = { header: 'Personalized Insights', blocks: [] };
 
           parsedInsights.forEach((block) => {
             if (block.type === 'section-header') {
@@ -374,7 +379,7 @@ export default function ReportScreen({ data }: Props) {
         <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="text-center md:text-left">
             <h4 className="font-heading text-[22px] font-bold text-white mb-1.5">
-              You're among the first freelancers shaping GigSecure
+              You&apos;re among the first freelancers shaping GigSecure
             </h4>
             <p className="font-body text-[15px] text-[#8FB3A8]">
               Be the first to compare prices, activate coverage, and access exclusive launch benefits.

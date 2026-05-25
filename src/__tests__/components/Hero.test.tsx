@@ -3,11 +3,8 @@ import { render, screen } from '@testing-library/react';
 import Hero from '@/components/home/Hero';
 
 // Mock Next.js next/image since it handles remote/optimized images differently
-vi.mock('next/image', () => ({
-  default: ({ src, alt, fill, ...props }: any) => {
-    // eslint-disable-next-line @next/next/no-img-element
-    return <img src={src} alt={alt} {...props} />;
-  },
+vi.mock('next/image', async () => ({
+  default: (await import('@/__tests__/mock-components')).MockImage,
 }));
 
 describe('Hero Component', () => {

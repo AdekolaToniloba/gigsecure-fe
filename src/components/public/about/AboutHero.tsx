@@ -16,7 +16,7 @@ export default function AboutHero() {
           transition={{ duration: 0.8, ease: 'easeOut' }}
           className="font-body text-[32px] font-semibold text-[#FFE419] leading-none text-center max-w-[908px]"
         >
-          GigSecure was created to serve a simple but overlooked reality: Nigeria's gig workers are building the economy without systems designed to protect them.
+          GigSecure was created to serve a simple but overlooked reality: Nigeria&apos;s gig workers are building the economy without systems designed to protect them.
         </motion.h1>
       </div>
 

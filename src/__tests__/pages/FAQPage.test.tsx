@@ -5,31 +5,27 @@ import FAQPage from '@/app/(public)/faq/page';
 // Mock framer-motion to bypass IntersectionObserver and render synchronously for tests
 vi.mock('framer-motion', async () => {
   const actual = await vi.importActual('framer-motion');
+  const { MockAnimatePresence, motionTag } = await import('@/__tests__/mock-components');
   return {
     ...actual,
     motion: {
-      div: ({ children, whileHover, whileInView, whileTap, viewport, transition, initial, animate, exit, variants, ...props }: any) => <div {...props}>{children}</div>,
-      h2: ({ children, whileHover, whileInView, whileTap, viewport, transition, initial, animate, exit, variants, ...props }: any) => <h2 {...props}>{children}</h2>,
-      button: ({ children, whileHover, whileInView, whileTap, viewport, transition, initial, animate, exit, variants, ...props }: any) => <button {...props}>{children}</button>,
-      path: ({ children, whileHover, whileInView, whileTap, viewport, transition, initial, animate, exit, variants, ...props }: any) => <path {...props} />,
+      div: motionTag('div'),
+      h2: motionTag('h2'),
+      button: motionTag('button'),
+      path: motionTag('path'),
     },
-    AnimatePresence: ({ children }: any) => <>{children}</>,
+    AnimatePresence: MockAnimatePresence,
   };
 });
 
 // Mock next/image to avoid issues during tests
-vi.mock('next/image', () => ({
-  default: (props: any) => {
-    // eslint-disable-next-line @next/next/no-img-element
-    return <img {...props} alt={props.alt || 'Mocked image'} />;
-  },
+vi.mock('next/image', async () => ({
+  default: (await import('@/__tests__/mock-components')).MockImage,
 }));
 
 // Mock next/link to avoid router context issues
-vi.mock('next/link', () => ({
-  default: ({ children, href, ...props }: any) => {
-    return <a href={href} {...props}>{children}</a>;
-  },
+vi.mock('next/link', async () => ({
+  default: (await import('@/__tests__/mock-components')).MockLink,
 }));
 
 describe('FAQPage', () => {

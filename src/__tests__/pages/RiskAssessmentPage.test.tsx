@@ -5,26 +5,24 @@ import RiskAssessmentPage from '@/app/(public)/risk-assessment/page';
 // Mock framer-motion to bypass IntersectionObserver and render synchronously for tests
 vi.mock('framer-motion', async () => {
   const actual = await vi.importActual('framer-motion');
+  const { MockAnimatePresence, motionTag } = await import('@/__tests__/mock-components');
   return {
     ...actual,
     motion: {
-      div: ({ children, whileHover, whileInView, whileTap, viewport, transition, initial, animate, exit, variants, ...props }: any) => <div {...props}>{children}</div>,
-      h1: ({ children, whileHover, whileInView, whileTap, viewport, transition, initial, animate, exit, variants, ...props }: any) => <h1 {...props}>{children}</h1>,
-      h2: ({ children, whileHover, whileInView, whileTap, viewport, transition, initial, animate, exit, variants, ...props }: any) => <h2 {...props}>{children}</h2>,
-      h3: ({ children, whileHover, whileInView, whileTap, viewport, transition, initial, animate, exit, variants, ...props }: any) => <h3 {...props}>{children}</h3>,
-      p: ({ children, whileHover, whileInView, whileTap, viewport, transition, initial, animate, exit, variants, ...props }: any) => <p {...props}>{children}</p>,
-      button: ({ children, whileHover, whileInView, whileTap, viewport, transition, initial, animate, exit, variants, ...props }: any) => <button {...props}>{children}</button>,
+      div: motionTag('div'),
+      h1: motionTag('h1'),
+      h2: motionTag('h2'),
+      h3: motionTag('h3'),
+      p: motionTag('p'),
+      button: motionTag('button'),
     },
-    AnimatePresence: ({ children }: any) => <>{children}</>,
+    AnimatePresence: MockAnimatePresence,
   };
 });
 
 // Mock next/image to avoid issues during tests
-vi.mock('next/image', () => ({
-  default: (props: any) => {
-    // eslint-disable-next-line @next/next/no-img-element
-    return <img {...props} alt={props.alt || 'Mocked image'} />;
-  },
+vi.mock('next/image', async () => ({
+  default: (await import('@/__tests__/mock-components')).MockImage,
 }));
 
 describe('RiskAssessmentPage Component Integrations', () => {

@@ -20,6 +20,9 @@ import {
 } from '@/lib/data/nigeriaStates';
 import StepWrapper from './StepWrapper';
 
+const GENDER_VALUES = ['male', 'female', 'other'] as const;
+const MARITAL_STATUS_VALUES = ['Married', 'Single', 'Divorced', 'Separated'] as const;
+
 const personalDetailsSchema = z
   .object({
     first_name: z.string().min(1, 'First name is required'),
@@ -51,6 +54,12 @@ const personalDetailsSchema = z
 
 type FormValues = z.infer<typeof personalDetailsSchema>;
 
+function getAllowedValue<T extends string>(value: unknown, allowedValues: readonly T[]): T | undefined {
+  return typeof value === 'string' && allowedValues.includes(value as T)
+    ? (value as T)
+    : undefined;
+}
+
 export default function StepPersonalDetails() {
   const { answers, setStepAnswers, nextStep, setSelectedCategory } = useWizardStore();
   const authFirstName = useAuthStore((s) => s.firstName);
@@ -74,11 +83,11 @@ export default function StepPersonalDetails() {
       first_name: (answers.first_name as string) || authFirstName || '',
       last_name: (answers.last_name as string) || authLastName || '',
       date_of_birth: (answers.date_of_birth as string) || '',
-      gender: (answers.gender as any) || undefined,
+      gender: getAllowedValue(answers.gender, GENDER_VALUES),
       state: (answers.state as string) || '',
       city: (answers.city as string) || '',
       occupation: (answers.occupation as string) || '',
-      marital_status: (answers.marital_status as any) || undefined,
+      marital_status: getAllowedValue(answers.marital_status, MARITAL_STATUS_VALUES),
     },
   });
 
@@ -91,8 +100,9 @@ export default function StepPersonalDetails() {
       if (profile?.city && !form.getValues('city')) form.setValue('city', profile.city, { shouldValidate: true });
       if (profile?.gender && !form.getValues('gender')) {
         const genderVal = profile.gender.toLowerCase();
-        if (['male', 'female', 'other'].includes(genderVal)) {
-          form.setValue('gender', genderVal as any, { shouldValidate: true });
+        const allowedGender = getAllowedValue(genderVal, GENDER_VALUES);
+        if (allowedGender) {
+          form.setValue('gender', allowedGender, { shouldValidate: true });
         }
       }
       setHasPrefilled(true);
@@ -292,7 +302,7 @@ export default function StepPersonalDetails() {
               <Select
                 id="occupation"
                 name={field.name}
-                options={(categories || []).map((cat: any) => {
+                options={(categories || []).map((cat) => {
                   const val = typeof cat === 'string' ? cat : cat.category;
                   return { value: val, label: val };
                 })}

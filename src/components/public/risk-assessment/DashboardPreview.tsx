@@ -130,7 +130,7 @@ export default function DashboardPreview() {
             className="flex flex-col w-full h-full lg:mt-[100px]"
           >
             <p className="font-body text-[18px] md:text-[20px] font-normal text-gray-900 mb-4">
-              What You'll Get
+              What You&apos;ll Get
             </p>
             <h2 
               className="font-heading font-bold text-[#00676E] mb-8"
