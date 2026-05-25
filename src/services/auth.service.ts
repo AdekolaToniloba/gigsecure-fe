@@ -1,17 +1,22 @@
-import { apiClient } from '@/lib/api/client';
 import { AUTH_ENDPOINTS } from '@/lib/api/endpoints';
 import {
+  messageResponseSchema,
+  registerResponseSchema,
   tokenResponseSchema,
   waitlistSignupResponseSchema,
-  type LoginRequest,
-  type RegisterRequest,
-  type WaitlistSignupRequest,
-  type ForgotPasswordRequest,
-  type ResetPasswordRequest,
-  type ChangePasswordRequest,
-  type VerifyEmailRequest,
-  type ActivateAccountRequest,
 } from '@/lib/validators/auth';
+import { useAuthStore } from '@/store/auth-store';
+import type {
+  ActivateAccountRequest,
+  ChangePasswordRequest,
+  ForgotPasswordRequest,
+  LoginRequest,
+  RegisterRequest,
+  ResendActivationRequest,
+  ResetPasswordRequest,
+  VerifyEmailRequest,
+  WaitlistSignupRequest,
+} from '@/types/auth';
 
 function parseOrThrow<T>(schema: { parse: (data: unknown) => T }, data: unknown, context: string): T {
   try {
@@ -31,83 +36,142 @@ async function safeJson(res: Response) {
   }
 }
 
+async function fetchAuth<T>(
+  endpoint: string,
+  {
+    method = 'POST',
+    payload,
+    signal,
+    schema,
+    context,
+    authorization,
+  }: {
+    method?: 'POST' | 'PUT';
+    payload?: unknown;
+    signal?: AbortSignal;
+    schema: { parse: (data: unknown) => T };
+    context: string;
+    authorization?: string | null;
+  }
+) {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'X-Requested-With': 'XMLHttpRequest',
+  };
+
+  if (authorization) {
+    headers.Authorization = `Bearer ${authorization}`;
+  }
+
+  const res = await fetch(endpoint, {
+    method,
+    headers,
+    body: payload === undefined ? undefined : JSON.stringify(payload),
+    signal,
+  });
+  const data = await safeJson(res);
+  if (!res.ok) throw data;
+  return parseOrThrow(schema, data, context);
+}
+
 /** All auth calls go through BFF routes — never directly to the backend */
 export const authService = {
   async login(payload: LoginRequest, signal?: AbortSignal) {
-    const res = await fetch(AUTH_ENDPOINTS.LOGIN, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest',
-      },
-      body: JSON.stringify(payload),
+    return fetchAuth(AUTH_ENDPOINTS.LOGIN, {
+      payload,
       signal,
+      schema: tokenResponseSchema,
+      context: 'authService.login',
     });
-    const data = await safeJson(res);
-    if (!res.ok) throw data;
-    return parseOrThrow(tokenResponseSchema, data, 'authService.login');
   },
 
   async register(payload: RegisterRequest, signal?: AbortSignal) {
-    const res = await fetch(AUTH_ENDPOINTS.REGISTER, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest',
-      },
-      body: JSON.stringify(payload),
+    return fetchAuth(AUTH_ENDPOINTS.REGISTER, {
+      payload,
       signal,
+      schema: registerResponseSchema,
+      context: 'authService.register',
     });
-    const data = await safeJson(res);
-    if (!res.ok) throw data;
-    return parseOrThrow(tokenResponseSchema, data, 'authService.register');
   },
 
   async waitlistSignup(payload: WaitlistSignupRequest, signal?: AbortSignal) {
-    const res = await fetch(AUTH_ENDPOINTS.WAITLIST, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest',
-      },
-      body: JSON.stringify(payload),
+    return fetchAuth(AUTH_ENDPOINTS.WAITLIST, {
+      payload,
       signal,
+      schema: waitlistSignupResponseSchema,
+      context: 'authService.waitlistSignup',
     });
-    const data = await safeJson(res);
-    if (!res.ok) throw data;
-    return parseOrThrow(waitlistSignupResponseSchema, data, 'authService.waitlistSignup');
   },
 
   async logout(signal?: AbortSignal) {
-    await fetch(AUTH_ENDPOINTS.LOGOUT, {
-      method: 'POST',
-      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+    return fetchAuth(AUTH_ENDPOINTS.LOGOUT, {
       signal,
+      schema: messageResponseSchema,
+      context: 'authService.logout',
+    });
+  },
+
+  async refresh(signal?: AbortSignal) {
+    return fetchAuth(AUTH_ENDPOINTS.REFRESH, {
+      signal,
+      schema: tokenResponseSchema,
+      context: 'authService.refresh',
     });
   },
 
   async forgotPassword(payload: ForgotPasswordRequest, signal?: AbortSignal) {
-    const { data } = await apiClient.post('/api/v1/auth/forgot-password', payload, { signal });
-    return data;
+    return fetchAuth(AUTH_ENDPOINTS.FORGOT_PASSWORD, {
+      payload,
+      signal,
+      schema: messageResponseSchema,
+      context: 'authService.forgotPassword',
+    });
   },
 
   async resetPassword(payload: ResetPasswordRequest, signal?: AbortSignal) {
-    const { data } = await apiClient.post('/api/v1/auth/reset-password', payload, { signal });
-    return data;
+    return fetchAuth(AUTH_ENDPOINTS.RESET_PASSWORD, {
+      payload,
+      signal,
+      schema: messageResponseSchema,
+      context: 'authService.resetPassword',
+    });
   },
 
   async changePassword(payload: ChangePasswordRequest, signal?: AbortSignal) {
-    const { data } = await apiClient.put('/api/v1/auth/change-password', payload, { signal });
-    return data;
+    return fetchAuth(AUTH_ENDPOINTS.CHANGE_PASSWORD, {
+      method: 'PUT',
+      payload,
+      signal,
+      schema: messageResponseSchema,
+      context: 'authService.changePassword',
+      authorization: useAuthStore.getState().accessToken,
+    });
   },
 
   async verifyEmail(payload: VerifyEmailRequest, signal?: AbortSignal) {
-    const { data } = await apiClient.post('/api/v1/auth/verify-email', payload, { signal });
-    return data;
+    return fetchAuth(AUTH_ENDPOINTS.VERIFY_EMAIL, {
+      payload,
+      signal,
+      schema: tokenResponseSchema,
+      context: 'authService.verifyEmail',
+    });
   },
 
   async activateAccount(payload: ActivateAccountRequest, signal?: AbortSignal) {
-    const { data } = await apiClient.post('/api/v1/auth/activate', payload, { signal });
-    return parseOrThrow(tokenResponseSchema, data, 'authService.activateAccount');
+    return fetchAuth(AUTH_ENDPOINTS.ACTIVATE, {
+      payload,
+      signal,
+      schema: tokenResponseSchema,
+      context: 'authService.activateAccount',
+    });
+  },
+
+  async resendActivation(payload: ResendActivationRequest, signal?: AbortSignal) {
+    return fetchAuth(AUTH_ENDPOINTS.RESEND_ACTIVATION, {
+      payload,
+      signal,
+      schema: messageResponseSchema,
+      context: 'authService.resendActivation',
+    });
   },
 };

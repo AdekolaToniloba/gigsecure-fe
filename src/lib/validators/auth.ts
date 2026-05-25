@@ -38,6 +38,8 @@ export const forgotPasswordRequestSchema = z.object({
   email: z.string().trim().email(),
 });
 
+export const resendActivationRequestSchema = forgotPasswordRequestSchema;
+
 export const resetPasswordRequestSchema = z.object({
   token: requiredString('Reset token is required'),
   new_password: passwordSchema,
@@ -146,6 +148,7 @@ export type LoginRequest = z.infer<typeof loginRequestSchema>;
 export type RegisterRequest = z.infer<typeof registerRequestSchema>;
 export type WaitlistSignupRequest = z.infer<typeof waitlistSignupRequestSchema>;
 export type ForgotPasswordRequest = z.infer<typeof forgotPasswordRequestSchema>;
+export type ResendActivationRequest = z.infer<typeof resendActivationRequestSchema>;
 export type ResetPasswordRequest = z.infer<typeof resetPasswordRequestSchema>;
 export type ChangePasswordRequest = z.infer<typeof changePasswordRequestSchema>;
 export type VerifyEmailRequest = z.infer<typeof verifyEmailRequestSchema>;

@@ -14,15 +14,18 @@ import type {
   registerResponseSchema,
   resetPasswordFormSchema,
   resetPasswordRequestSchema,
+  resendActivationRequestSchema,
   verifyEmailRequestSchema,
   waitlistSignupRequestSchema,
   waitlistSignupResponseSchema,
+  tokenResponseSchema,
 } from '@/lib/validators/auth';
 
 export type LoginRequest = z.infer<typeof loginRequestSchema>;
 export type RegisterRequest = z.infer<typeof registerRequestSchema>;
 export type WaitlistSignupRequest = z.infer<typeof waitlistSignupRequestSchema>;
 export type ForgotPasswordRequest = z.infer<typeof forgotPasswordRequestSchema>;
+export type ResendActivationRequest = z.infer<typeof resendActivationRequestSchema>;
 export type ResetPasswordRequest = z.infer<typeof resetPasswordRequestSchema>;
 export type ChangePasswordRequest = z.infer<typeof changePasswordRequestSchema>;
 export type VerifyEmailRequest = z.infer<typeof verifyEmailRequestSchema>;
@@ -39,6 +42,7 @@ export type ChangePasswordFormOutput = z.output<typeof changePasswordFormSchema>
 
 export type BrowserTokenResponse = z.infer<typeof browserTokenResponseSchema>;
 export type BackendTokenResponse = z.infer<typeof backendTokenResponseSchema>;
+export type TokenResponse = z.infer<typeof tokenResponseSchema>;
 export type RegisterResponse = z.infer<typeof registerResponseSchema>;
 export type MessageResponse = z.infer<typeof messageResponseSchema>;
 export type WaitlistSignupResponse = z.infer<typeof waitlistSignupResponseSchema>;

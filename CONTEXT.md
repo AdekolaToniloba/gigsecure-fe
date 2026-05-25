@@ -355,3 +355,46 @@ The silent refresh helper calls the BFF `/api/auth/refresh` route with `X-Reques
 
 Known follow-ups:
 Task 5 must add the API client refresh mutex/queue so concurrent 401s share one refresh promise and retry safely. Later route protection work must respect the new `initializing` status to avoid redirect flicker, and the backend contract question remains that refresh must be cookie-based rather than requiring browser JavaScript to send a refresh token body.
+
+### 2026-05-25 13:46 WAT
+
+Task completed: Task 5 — API Client Refresh Queue Hardening
+
+Files changed:
+- `CONTEXT.md`
+- `src/lib/api/client.ts`
+- `src/lib/api/refresh-queue.ts`
+- `src/__tests__/lib/api-refresh-queue.test.ts`
+- `src/__tests__/lib/api-client.test.ts`
+
+Summary:
+Extracted the API refresh mutex into `src/lib/api/refresh-queue.ts` so concurrent 401 responses share one active refresh promise instead of managing an inline queue in the Axios interceptor. Updated `src/lib/api/client.ts` to parse browser-safe refresh responses, set the new memory-only access token, retry original requests with the refreshed Bearer token, and preserve non-expired waitlist-token scope failures without forcing logout. Added focused tests for the queue, retry behavior, refresh failure cleanup, and waitlist-token bypass.
+
+Important decisions:
+Kept refresh calls routed through the BFF `/api/auth/refresh` endpoint with `X-Requested-With: XMLHttpRequest`, relying on the httpOnly refresh cookie rather than exposing refresh tokens to browser JavaScript. Preserved the existing redirect behavior on refresh failure while making the concurrency primitive reusable and directly testable.
+
+Known follow-ups:
+Task 6 should migrate auth services and hooks onto the corrected BFF endpoint contract and ensure auth mutations do not retry expected 4xx responses. The API-client refresh-failure test triggers jsdom's non-fatal "navigation to another Document" message because the interceptor intentionally redirects on failed refresh; this is expected until route protection and redirect policy are refined in Task 7.
+
+### 2026-05-25 13:55 WAT
+
+Task completed: Task 6 — Auth React Query Hooks and Services
+
+Files changed:
+- `CONTEXT.md`
+- `src/services/auth.service.ts`
+- `src/hooks/auth/useAuth.ts`
+- `src/hooks/auth/useSession.ts`
+- `src/lib/validators/auth.ts`
+- `src/types/auth.ts`
+- `src/__tests__/services/auth.service.test.ts`
+- `src/__tests__/hooks/auth-hooks.test.tsx`
+
+Summary:
+Migrated auth service methods onto the BFF endpoint contract so register returns only `{ message }`, token-producing flows return browser-safe access-token responses, and reset/change/forgot/resend flows use the BFF instead of direct backend auth routes. Completed React Query hooks for login, register, waitlist signup, logout, silent refresh, verify email, resend activation, forgot password, reset password, activate account, and change password, with `retry: false` for expected auth failures. Added `useSession` as a session-state hook and covered service contracts plus hook state transitions with focused tests.
+
+Important decisions:
+`changePassword` now attaches the memory-only access token to the BFF request as a Bearer header because the BFF forwards that token to the backend; no refresh token is exposed to browser JavaScript. Register intentionally does not mutate auth state, while login, verify email, activate account, waitlist signup, and silent refresh update the in-memory token according to their session semantics. The older "Current Codebase State" section still contains some stale pre-Task 4/5 descriptions, so the update log and actual source files are the current source of truth until the final documentation pass.
+
+Known follow-ups:
+Task 7 should define the route protection and redirect policy that consumes these hooks, including where verified and activated users land after token-producing flows. UI tasks must keep reset password and change password separate and avoid sending password confirmation fields to these service methods.
