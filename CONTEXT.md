@@ -398,3 +398,35 @@ Important decisions:
 
 Known follow-ups:
 Task 7 should define the route protection and redirect policy that consumes these hooks, including where verified and activated users land after token-producing flows. UI tasks must keep reset password and change password separate and avoid sending password confirmation fields to these service methods.
+
+### 2026-05-25 14:03 WAT
+
+Task completed: Task 7 — Route Protection and Redirect Policy
+
+Files changed:
+- `CONTEXT.md`
+- `src/middleware.ts`
+- `src/app/(app)/layout.tsx`
+- `src/app/(app)/(auth)/layout.tsx`
+- `src/app/(app)/(auth)/login/page.tsx`
+- `src/app/(app)/(auth)/register/page.tsx`
+- `src/app/(app)/(auth)/check-inbox/page.tsx`
+- `src/app/(app)/(auth)/verify-email/page.tsx`
+- `src/app/(app)/(auth)/activate/page.tsx`
+- `src/app/(app)/(auth)/forgot-password/page.tsx`
+- `src/app/(app)/(auth)/reset-password/page.tsx`
+- `src/app/(app)/(auth)/change-password/page.tsx`
+- `src/components/auth/shared/auth-redirect-guard.tsx`
+- `src/components/auth/shared/protected-route.tsx`
+- `src/lib/auth/redirects.ts`
+- `src/__tests__/middleware.test.ts`
+- `src/__tests__/components/auth/route-guards.test.tsx`
+
+Summary:
+Centralized auth route policy in `src/lib/auth/redirects.ts`, updated middleware to protect app routes via the refresh cookie, and added safe redirect handling for public-only auth pages. Added client-side `ProtectedRoute` and `AuthRedirectGuard` components that respect the auth initialization state so silent refresh can settle before redirects occur. Created minimal auth route shells under `src/app/(app)/(auth)` so `/verify-email`, `/activate`, `/reset-password`, and other auth destinations exist for email links and later UI implementation.
+
+Important decisions:
+Only `/login`, `/register`, and legacy `/signup` are public-only redirect-away routes; token-link routes like `/verify-email`, `/activate`, and `/reset-password` remain reachable even without a session. Middleware continues to treat the refresh cookie as a server-side hint only, while client guards rely on the memory-token auth state after silent refresh. The newly created auth pages are intentionally minimal placeholders, not final UI screens, to avoid jumping ahead of the later flow-specific tasks.
+
+Known follow-ups:
+Tasks 8 through 15 must replace the minimal auth route shells with the real accessible UI and flow behavior. The post-verification and post-activation destination remains unresolved pending product/backend direction, so guards currently use dashboard as the authenticated default.
