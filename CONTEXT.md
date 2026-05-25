@@ -430,3 +430,29 @@ Only `/login`, `/register`, and legacy `/signup` are public-only redirect-away r
 
 Known follow-ups:
 Tasks 8 through 15 must replace the minimal auth route shells with the real accessible UI and flow behavior. The post-verification and post-activation destination remains unresolved pending product/backend direction, so guards currently use dashboard as the authenticated default.
+
+### 2026-05-25 14:25 WAT
+
+Task completed: Task 8 — Shared Auth UI Primitives
+
+Files changed:
+- `CONTEXT.md`
+- `src/components/auth/shared/auth-shell.tsx`
+- `src/components/auth/shared/form-field.tsx`
+- `src/components/auth/shared/password-field.tsx`
+- `src/components/auth/shared/password-checklist.tsx`
+- `src/components/auth/shared/auth-alert.tsx`
+- `src/components/auth/shared/auth-submit-button.tsx`
+- `src/components/auth/shared/auth-status.tsx`
+- `src/components/auth/shared/auth-divider.tsx`
+- `src/components/auth/shared/google-auth-button.tsx`
+- `src/__tests__/components/auth/shared/auth-primitives.test.tsx`
+
+Summary:
+Added reusable shared auth UI primitives matching the screenshot direction: a teal branded auth shell with optional image/quote panel, compact form panel, labeled input field, password field with visibility toggle, checklist, alert, yellow submit button, success status panel, divider, and Google auth button. The primitives use existing design tokens for primary, accent, muted primary, background, and heading/body fonts while staying generic enough for the later register, login, forgot password, reset password, activate, and change password flow tasks. Added component tests for labels, error associations, password toggle accessibility, loading state, status messaging, and shell landmarks.
+
+Important decisions:
+The auth shell accepts image and copy props instead of hardcoding screenshot photos, so later page-specific tasks can plug in the exact imagery without duplicating layout. These components do not perform API calls, redirects, or token handling, keeping Task 8 focused on reusable accessible UI building blocks.
+
+Known follow-ups:
+Tasks 9 through 15 must wire these primitives into the actual auth pages and flow-specific forms, replacing the minimal route shells from Task 7. The exact auth photos from the screenshots are not yet part of the repo assets, so later UI tasks should add or reference approved image assets before pixel-perfect page work.
