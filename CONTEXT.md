@@ -456,3 +456,28 @@ The auth shell accepts image and copy props instead of hardcoding screenshot pho
 
 Known follow-ups:
 Tasks 9 through 15 must wire these primitives into the actual auth pages and flow-specific forms, replacing the minimal route shells from Task 7. The exact auth photos from the screenshots are not yet part of the repo assets, so later UI tasks should add or reference approved image assets before pixel-perfect page work.
+
+### 2026-05-25 21:49 WAT
+
+Task completed: Task 9 — Register and Check Inbox Flow
+
+Files changed:
+- `CONTEXT.md`
+- `public/assets/images/auth-register.png`
+- `src/app/(app)/(auth)/register/page.tsx`
+- `src/app/(app)/(auth)/check-inbox/page.tsx`
+- `src/components/auth/register/register-form.tsx`
+- `src/components/auth/check-inbox/check-inbox-panel.tsx`
+- `src/components/auth/check-inbox/resend-activation-form.tsx`
+- `src/components/auth/shared/auth-alert.tsx`
+- `src/__tests__/components/auth/register-form.test.tsx`
+- `src/__tests__/components/auth/check-inbox.test.tsx`
+
+Summary:
+Implemented the register page using the shared auth shell, screenshot-aligned imagery, React Hook Form, Zod validation, React Query register mutation, accessible field errors, and a UI-only password confirmation field. Register success now routes to `/check-inbox` without setting an access token or putting email/token data in the URL. Added a check-inbox page with resend activation support, loading/success/error states, and tests covering validation, API success, API failure, omitted `confirm_password`, and no session creation.
+
+Important decisions:
+The check-inbox flow does not pass the user's email through query params to avoid leaking personal context in the URL; users can enter the email again when resending activation. A cropped image asset was derived from the provided sign-up screenshot and stored in `public/assets/images/auth-register.png` so this flow can match the supplied visual direction while keeping the page implementation repo-local.
+
+Known follow-ups:
+The Google sign-up button remains a non-submit UI control because no Google OAuth endpoint or flow is documented yet. A browser visual sanity check could not be completed because a stale Next dev lock prevented starting a local dev server, and no server was reachable on ports 3000 or 3001.

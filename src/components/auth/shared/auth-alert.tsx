@@ -16,11 +16,13 @@ const icons = {
 };
 
 export function AuthAlert({
+  id,
   variant = 'info',
   title,
   children,
   className,
 }: {
+  id?: string;
   variant?: AuthAlertVariant;
   title?: string;
   children: React.ReactNode;
@@ -30,6 +32,7 @@ export function AuthAlert({
 
   return (
     <div
+      id={id}
       role={variant === 'error' ? 'alert' : 'status'}
       aria-live={variant === 'error' ? 'assertive' : 'polite'}
       className={cn('flex gap-3 rounded-lg border p-3 text-sm', variantStyles[variant], className)}
