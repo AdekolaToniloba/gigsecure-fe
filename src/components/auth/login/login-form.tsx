@@ -110,7 +110,7 @@ export default function LoginForm({ redirectTo, successMessage }: LoginFormProps
 
       <AuthSubmitButton
         isLoading={isSubmitting}
-        loadingLabel="Logging in"
+        loadingLabel="Logging in…"
         className="mt-8"
       >
         Log in

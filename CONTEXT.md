@@ -600,3 +600,32 @@ Kept change password as a separate authenticated flow rather than sharing reset-
 
 Known follow-ups:
 Local dev verification succeeded with `HEAD /change-password` returning a 307 redirect to `/login?redirect=%2Fchange-password` for an unauthenticated request, confirming the server-side guard path. No browser screenshot QA was performed because no Task 15 screenshots were supplied.
+
+### 2026-05-26 18:07 WAT
+
+Task completed: Task 16 — Accessibility, SEO, and Pixel-Perfect UI Pass
+
+Files changed:
+- `CONTEXT.md`
+- `src/components/auth/shared/auth-shell.tsx`
+- `src/components/auth/shared/form-field.tsx`
+- `src/components/auth/shared/password-field.tsx`
+- `src/components/auth/shared/auth-submit-button.tsx`
+- `src/components/auth/shared/google-auth-button.tsx`
+- `src/components/auth/shared/auth-status.tsx`
+- `src/components/auth/register/register-form.tsx`
+- `src/components/auth/login/login-form.tsx`
+- `src/components/auth/forgot-password/forgot-password-form.tsx`
+- `src/components/auth/reset-password/reset-password-form.tsx`
+- `src/components/auth/activate/activate-account-form.tsx`
+- `src/components/auth/change-password/change-password-form.tsx`
+- `src/components/auth/check-inbox/resend-activation-form.tsx`
+
+Summary:
+Polished the shared auth UI primitives so every auth page has a skip link, a semantic main landmark, stable full-height layout math for the 64px header, larger screenshot-aligned controls, stronger focus/input states, and text wrapping protection for headings and status copy. Added email-specific mobile/accessibility hints, disabled spellcheck/capitalization on email and password fields, and standardized loading labels with accessible ellipsis copy. Verified all auth pages still define metadata and that the updated primitives preserve existing auth flow behavior.
+
+Important decisions:
+Kept AuthShell centralized through the top-level `(auth)` layout work completed after Task 15, while preserving route-specific imagery through `auth-layout-shell.tsx`. Did not modify token handling, services, hooks, BFF routes, or reset/change-password flow boundaries. `RULES.md` still contains a stale file-placement rule for `src/app/(app)/(auth)`, but the current app structure intentionally uses top-level `src/app/(auth)` for pre-session pages and keeps authenticated change password under `src/app/(app)/change-password`.
+
+Known follow-ups:
+Browser screenshot QA could not be completed with a browser automation tool in this session, but the dev server started on port 3001 and HTTP checks returned 200 for `/login`, `/register`, `/forgot-password`, `/reset-password?token=test`, `/activate?token=test`, `/verify-email?token=test`, and `/check-inbox`; `/change-password` correctly returned a 307 unauthenticated redirect to login. Later visual QA should compare desktop and mobile screenshots once a browser automation path is available.

@@ -12,7 +12,7 @@ const AuthSubmitButton = forwardRef<HTMLButtonElement, AuthSubmitButtonProps>(
     {
       children,
       isLoading = false,
-      loadingLabel = 'Please wait',
+      loadingLabel = 'Please wait…',
       disabled,
       className,
       type = 'submit',
@@ -30,9 +30,9 @@ const AuthSubmitButton = forwardRef<HTMLButtonElement, AuthSubmitButtonProps>(
         aria-disabled={isDisabled}
         aria-busy={isLoading}
         className={cn(
-          'inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-accent px-4 text-sm font-bold text-slate-950 shadow-sm transition',
+          'inline-flex h-12 w-full items-center justify-center gap-2 rounded-md bg-accent px-4 text-sm font-bold text-slate-950 shadow-sm transition-colors duration-150',
           'hover:bg-accent-alt focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-alt focus-visible:ring-offset-2',
-          'active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60',
+          'disabled:cursor-not-allowed disabled:opacity-60',
           className
         )}
         {...props}

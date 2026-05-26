@@ -125,7 +125,7 @@ export default function RegisterForm() {
 
       <AuthSubmitButton
         isLoading={registerMutation.isPending}
-        loadingLabel="Creating account"
+        loadingLabel="Creating account…"
         className="mt-8"
       >
         Get Started

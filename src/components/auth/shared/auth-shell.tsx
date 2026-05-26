@@ -32,9 +32,15 @@ export function AuthShell({
   className,
 }: AuthShellProps) {
   return (
-    <section className={cn('min-h-screen bg-white text-slate-900', className)}>
+    <div className={cn('min-h-screen overflow-x-hidden bg-white text-slate-900', className)}>
+      <a
+        href="#auth-main"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[60] focus:rounded-md focus:bg-accent focus:px-4 focus:py-2 focus:text-sm focus:font-bold focus:text-slate-950 focus:outline-none focus:ring-2 focus:ring-white"
+      >
+        Skip to auth form
+      </a>
       {showHeader && (
-        <header className="flex h-14 items-center justify-between bg-primary px-7 text-white sm:px-10">
+        <header className="flex h-16 items-center justify-between bg-primary px-6 text-white lg:px-10">
           <Link
             href="/"
             className="inline-flex items-center rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-primary"
@@ -63,7 +69,7 @@ export function AuthShell({
       <div
         className={cn(
           'grid lg:grid-cols-[minmax(17.5rem,38vw)_1fr]',
-          showHeader ? 'min-h-[calc(100vh-3.5rem)]' : 'min-h-screen'
+          showHeader ? 'min-h-[calc(100vh-4rem)]' : 'min-h-screen'
         )}
       >
         <aside className="relative hidden min-h-[33rem] overflow-hidden lg:block">
@@ -90,16 +96,17 @@ export function AuthShell({
           )}
         </aside>
 
-        <div
+        <main
+          id="auth-main"
           className={cn(
             'flex items-start justify-center px-6 py-12 sm:px-10 lg:items-center lg:py-10',
-            showHeader ? 'min-h-[calc(100vh-3.5rem)]' : 'min-h-screen'
+            showHeader ? 'min-h-[calc(100vh-4rem)]' : 'min-h-screen'
           )}
         >
           {children}
-        </div>
+        </main>
       </div>
-    </section>
+    </div>
   );
 }
 
@@ -115,13 +122,13 @@ export function AuthFormPanel({
   className?: string;
 }) {
   return (
-    <div className={cn('w-full max-w-[23rem]', className)}>
+    <div className={cn('w-full max-w-[23rem] min-w-0', className)}>
       <div className="mb-4">
-        <h1 className="font-heading text-2xl font-bold leading-tight text-slate-900 sm:text-[1.65rem]">
+        <h1 className="text-pretty font-heading text-2xl font-bold leading-tight text-slate-900 sm:text-[1.65rem]">
           {title}
         </h1>
         {subtitle && (
-          <p className="mt-2 text-sm leading-5 text-slate-500">{subtitle}</p>
+          <p className="mt-2 text-pretty text-sm leading-5 text-slate-500">{subtitle}</p>
         )}
       </div>
       {children}

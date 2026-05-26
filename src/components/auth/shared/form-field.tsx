@@ -54,15 +54,18 @@ const FormField = forwardRef<HTMLInputElement, FormFieldProps>(
             aria-invalid={!!error}
             aria-describedby={describedBy}
             className={cn(
-              'h-9 w-full rounded-md border border-slate-200 bg-slate-50 px-3 text-sm text-slate-900 shadow-sm outline-none transition',
-              'placeholder:text-xs placeholder:text-slate-400',
+              'h-12 w-full rounded-md border border-slate-200 bg-slate-50 px-4 text-base text-slate-900 shadow-sm outline-none transition-colors sm:text-sm',
+              'placeholder:text-slate-400',
               'focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary-muted',
               'disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400',
-              icon && 'pr-10',
+              icon && 'pr-11',
               error && 'border-red-400 focus:border-red-500 focus:ring-red-100',
               inputClassName
             )}
             {...props}
+            inputMode={props.type === 'email' ? 'email' : props.inputMode}
+            autoCapitalize={props.type === 'email' ? 'none' : props.autoCapitalize}
+            spellCheck={props.type === 'email' ? false : props.spellCheck}
           />
           {icon && (
             <span

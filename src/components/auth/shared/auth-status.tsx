@@ -24,9 +24,9 @@ export function AuthStatus({
       <div className="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-full bg-green-600 text-white">
         {icon ?? <Check aria-hidden="true" className="h-7 w-7" />}
       </div>
-      <h1 className="font-heading text-2xl font-bold text-slate-900">{title}</h1>
+      <h1 className="text-pretty font-heading text-2xl font-bold text-slate-900">{title}</h1>
       {description && (
-        <p className="mt-3 max-w-[16rem] text-sm leading-5 text-slate-500">{description}</p>
+        <p className="mt-3 max-w-[16rem] text-pretty text-sm leading-5 text-slate-500">{description}</p>
       )}
     </section>
   );

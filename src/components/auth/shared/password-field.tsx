@@ -57,14 +57,15 @@ const PasswordField = forwardRef<HTMLInputElement, PasswordFieldProps>(
             aria-invalid={!!error}
             aria-describedby={describedBy}
             className={cn(
-              'h-9 w-full rounded-md border border-slate-200 bg-slate-50 px-3 pr-10 text-sm text-slate-900 shadow-sm outline-none transition',
-              'placeholder:text-xs placeholder:text-slate-400',
+              'h-12 w-full rounded-md border border-slate-200 bg-slate-50 px-4 pr-11 text-base text-slate-900 shadow-sm outline-none transition-colors sm:text-sm',
+              'placeholder:text-slate-400',
               'focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary-muted',
               'disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400',
               error && 'border-red-400 focus:border-red-500 focus:ring-red-100',
               inputClassName
             )}
             {...props}
+            autoCapitalize="none"
           />
           <button
             type="button"
@@ -72,7 +73,7 @@ const PasswordField = forwardRef<HTMLInputElement, PasswordFieldProps>(
             aria-label={isVisible ? 'Hide password' : 'Show password'}
             aria-pressed={isVisible}
             onClick={() => setIsVisible((value) => !value)}
-            className="absolute inset-y-0 right-2 inline-flex w-7 items-center justify-center rounded text-slate-400 transition hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-muted disabled:cursor-not-allowed disabled:opacity-50"
+            className="absolute inset-y-0 right-2 inline-flex w-8 items-center justify-center rounded text-slate-400 transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-muted disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isVisible ? (
               <EyeOff aria-hidden="true" className="h-4 w-4" />

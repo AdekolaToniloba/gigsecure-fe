@@ -124,7 +124,7 @@ export default function ActivateAccountForm({ token }: ActivateAccountFormProps)
 
         <AuthSubmitButton
           isLoading={isSubmitting}
-          loadingLabel="Activating account"
+          loadingLabel="Activating account…"
           className="mt-8"
         >
           Activate account

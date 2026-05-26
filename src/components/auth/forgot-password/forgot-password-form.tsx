@@ -60,7 +60,7 @@ export default function ForgotPasswordForm() {
   return (
     <AuthFormPanel
       title="Forgot Password"
-      subtitle="Forgot your password? It happens we'll help you get back in."
+      subtitle="Forgot your password? It happens. We'll help you get back in."
       className="max-w-[27.75rem] lg:self-start lg:mt-16"
     >
       <form
@@ -90,7 +90,7 @@ export default function ForgotPasswordForm() {
 
         <AuthSubmitButton
           isLoading={isSubmitting}
-          loadingLabel="Sending"
+          loadingLabel="Sending…"
           className="h-12"
         >
           Submit

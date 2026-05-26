@@ -75,7 +75,7 @@ export default function ResendActivationForm() {
 
       <AuthSubmitButton
         isLoading={resendMutation.isPending}
-        loadingLabel="Sending"
+        loadingLabel="Sending…"
       >
         Resend activation email
       </AuthSubmitButton>

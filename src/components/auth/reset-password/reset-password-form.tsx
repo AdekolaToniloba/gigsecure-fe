@@ -125,7 +125,7 @@ export default function ResetPasswordForm({ token }: ResetPasswordFormProps) {
 
         <AuthSubmitButton
           isLoading={isSubmitting}
-          loadingLabel="Resetting password"
+          loadingLabel="Resetting password…"
           className="h-12"
         >
           Reset password

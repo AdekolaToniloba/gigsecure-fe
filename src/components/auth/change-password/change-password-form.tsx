@@ -118,7 +118,7 @@ export default function ChangePasswordForm() {
 
           <AuthSubmitButton
             isLoading={isSubmitting}
-            loadingLabel="Changing password"
+            loadingLabel="Changing password…"
             className="mt-8 h-12"
           >
             Change password
