@@ -19,9 +19,10 @@ import PasswordField from '@/components/auth/shared/password-field';
 
 type LoginFormProps = {
   redirectTo?: string | null;
+  successMessage?: string | null;
 };
 
-export default function LoginForm({ redirectTo }: LoginFormProps) {
+export default function LoginForm({ redirectTo, successMessage }: LoginFormProps) {
   const router = useRouter();
   const loginMutation = useLogin();
   const form = useForm<LoginRequest>({
@@ -37,6 +38,10 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
     ? parseApiError(loginMutation.error)
     : null;
   const isSubmitting = loginMutation.isPending;
+  const describedBy = [
+    successMessage ? 'login-form-success' : null,
+    parsedError ? 'login-form-error' : null,
+  ].filter(Boolean).join(' ') || undefined;
 
   async function onSubmit(values: LoginRequest) {
     try {
@@ -60,12 +65,18 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
       noValidate
       onSubmit={form.handleSubmit(onSubmit)}
       className="space-y-4"
-      aria-describedby={parsedError ? 'login-form-error' : undefined}
+      aria-describedby={describedBy}
     >
       <GoogleAuthButton type="button" disabled={isSubmitting}>
         Sign In with Google
       </GoogleAuthButton>
       <AuthDivider />
+
+      {successMessage && (
+        <AuthAlert id="login-form-success" variant="success" title="Password reset">
+          {successMessage}
+        </AuthAlert>
+      )}
 
       {parsedError && (
         <AuthAlert id="login-form-error" variant="error" title="Login failed">

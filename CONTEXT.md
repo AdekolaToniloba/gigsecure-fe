@@ -520,3 +520,83 @@ The login route sanitizes the `redirect` query parameter on the server with `get
 
 Known follow-ups:
 Visual browser QA could not be completed because the sandboxed dev server first failed with `listen EPERM`, and the approved retry then failed on the existing `.next/dev/lock`, indicating another Next dev instance or stale lock must be cleared outside this task. Later OAuth work should replace the current Google button no-op when a backend flow exists.
+
+### 2026-05-25 22:22 WAT
+
+Task completed: Task 12 — Forgot Password Flow
+
+Files changed:
+- `CONTEXT.md`
+- `public/assets/images/auth-forgot-password.png`
+- `src/app/(app)/(auth)/forgot-password/page.tsx`
+- `src/components/auth/forgot-password/forgot-password-form.tsx`
+- `src/components/auth/shared/auth-shell.tsx`
+- `src/__tests__/components/auth/forgot-password-form.test.tsx`
+
+Summary:
+Implemented the unauthenticated forgot-password page with screenshot-aligned split imagery, React Hook Form, Zod email validation, the BFF-backed React Query forgot-password hook, accessible loading/error states, and a generic success panel. The form submits only the email address, does not create or mutate session state, and shows a fixed "Email sent" message after success so the UI does not reveal whether an account exists. Added focused tests for validation, successful reset request behavior, no access-token creation, and API error messaging.
+
+Important decisions:
+Extended `AuthShell` with default-preserving options to hide the header, image overlay, and quote for this screenshot variant while leaving existing register/login behavior unchanged. The success message intentionally does not render backend-specific copy, preserving account-enumeration resistance for this unauthenticated flow.
+
+Known follow-ups:
+Visual browser QA could not be completed because `next dev` still fails on the existing `.next/dev/lock`, indicating another Next dev instance or stale lock must be cleared outside this task. Later reset-password work must keep this forgot-password request flow separate from token-based password reset.
+
+### 2026-05-26 16:06 WAT
+
+Task completed: Task 13 — Reset Password Flow
+
+Files changed:
+- `CONTEXT.md`
+- `src/app/(app)/(auth)/reset-password/page.tsx`
+- `src/app/(app)/(auth)/login/page.tsx`
+- `src/components/auth/login/login-form.tsx`
+- `src/components/auth/reset-password/reset-password-form.tsx`
+- `src/__tests__/components/auth/reset-password-form.test.tsx`
+
+Summary:
+Implemented the unauthenticated `/reset-password?token=` flow with a server-read reset token, missing-token state, React Hook Form password fields, Zod password confirmation validation, BFF-backed reset mutation, accessible loading/error states, and success redirect to `/login?reset=success`. The reset form submits only `{ token, new_password }`, never sends `confirm_password`, and does not create or mutate session state. Added a login success banner for completed resets and focused tests for missing token, validation, successful reset payload/redirect, API errors, and the post-reset login message.
+
+Important decisions:
+The reset route reads the token in the server page and passes it into the client form, matching the verify-email pattern and keeping URL parsing out of client form logic. The post-reset success message is rendered by the login form from a controlled server-derived `reset=success` flag, rather than trusting arbitrary query text.
+
+Known follow-ups:
+Visual browser QA could not be completed because `next dev` still fails on the existing `.next/dev/lock`, indicating another Next dev instance or stale lock must be cleared outside this task. Task 15 must keep authenticated change-password behavior separate from this unauthenticated token-based reset flow.
+
+### 2026-05-26 16:21 WAT
+
+Task completed: Task 14 — Activate Account Flow
+
+Files changed:
+- `CONTEXT.md`
+- `src/app/(app)/(auth)/activate/page.tsx`
+- `src/components/auth/activate/activate-account-form.tsx`
+- `src/__tests__/components/auth/activate-account-form.test.tsx`
+
+Summary:
+Implemented the `/activate?token=` waitlist activation flow with a server-read activation token, missing-token state, React Hook Form password fields, Zod password confirmation validation, BFF-backed activate mutation, accessible loading/error states, and authenticated success redirect. The activate form submits only `{ token, password }`, never sends `confirm_password`, and stores only the browser-safe access token in the memory-only auth store on success. Added focused tests for missing token, password confirmation validation, successful activation payload/session creation/redirect, and invalid/expired token errors.
+
+Important decisions:
+The activation route follows the reset/verify pattern by reading the token in the server page and passing it into the client form, keeping client URL parsing out of the form. Because the post-waitlist-activation destination is still unresolved, activation redirects to the existing `DEFAULT_AUTHENTICATED_PATH` (`/dashboard`) rather than inventing a new onboarding target.
+
+Known follow-ups:
+Confirm the intended post-waitlist-activation route with product/backend; if risk assessment or an onboarding gate is required, update the shared authenticated destination policy or introduce a dedicated activation redirect constant in a later routing task. Local dev verification succeeded with `HEAD /activate?token=test-token` returning 200 on port 3001, but no browser screenshot QA was performed in this task.
+
+### 2026-05-26 16:46 WAT
+
+Task completed: Task 15 — Change Password Flow
+
+Files changed:
+- `CONTEXT.md`
+- `src/app/(app)/(auth)/change-password/page.tsx`
+- `src/components/auth/change-password/change-password-form.tsx`
+- `src/__tests__/components/auth/change-password-form.test.tsx`
+
+Summary:
+Implemented the authenticated change-password page with React Hook Form password fields, Zod old/new/confirmation validation, BFF-backed change-password mutation, accessible loading/error states, and an in-place success state. The form submits only `{ old_password, new_password }`, never sends `confirm_password`, and preserves the existing memory-only access token after success or API errors. Added focused tests for protected unauthenticated redirects, validation, successful payload/auth header/session preservation, and API error messaging.
+
+Important decisions:
+Kept change password as a separate authenticated flow rather than sharing reset-password logic, because change password requires an existing session and old password while reset password is token-based and unauthenticated. The page relies on the existing `ProtectedRoute` and middleware policy for auth gating rather than duplicating route protection in the form component.
+
+Known follow-ups:
+Local dev verification succeeded with `HEAD /change-password` returning a 307 redirect to `/login?redirect=%2Fchange-password` for an unauthenticated request, confirming the server-side guard path. No browser screenshot QA was performed because no Task 15 screenshots were supplied.
