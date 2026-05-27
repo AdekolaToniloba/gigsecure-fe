@@ -16,12 +16,16 @@ describe('auth validator response schemas', () => {
       access_token: 'access-token',
       refresh_token: 'refresh-token',
       token_type: 'bearer',
+      kyc_verified: false,
+      risk_assessed: true,
     });
 
     expect(result).toEqual({
       access_token: 'access-token',
       refresh_token: 'refresh-token',
       token_type: 'bearer',
+      kyc_verified: false,
+      risk_assessed: true,
     });
   });
 
@@ -38,13 +42,27 @@ describe('auth validator response schemas', () => {
     const result = browserTokenResponseSchema.parse({
       access_token: 'access-token',
       token_type: 'bearer',
+      kyc_verified: true,
+      risk_assessed: false,
     });
 
     expect(result).toEqual({
       access_token: 'access-token',
       token_type: 'bearer',
+      kyc_verified: true,
+      risk_assessed: false,
     });
     expect('refresh_token' in result).toBe(false);
+  });
+
+  it('defaults missing token flags to false for backend rollout tolerance', () => {
+    const result = browserTokenResponseSchema.parse({
+      access_token: 'access-token',
+      token_type: 'bearer',
+    });
+
+    expect(result.kyc_verified).toBe(false);
+    expect(result.risk_assessed).toBe(false);
   });
 
   it('parses register responses as message-only', () => {

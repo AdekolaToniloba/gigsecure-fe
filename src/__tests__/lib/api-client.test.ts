@@ -45,6 +45,8 @@ describe('apiClient refresh handling', () => {
       jsonResponse({
         access_token: 'fresh-access-token',
         token_type: 'bearer',
+        kyc_verified: true,
+        risk_assessed: false,
       })
     );
 
@@ -68,6 +70,8 @@ describe('apiClient refresh handling', () => {
       'Bearer fresh-access-token',
     ]);
     expect(useAuthStore.getState().accessToken).toBe('fresh-access-token');
+    expect(useAuthStore.getState().kycVerified).toBe(true);
+    expect(useAuthStore.getState().riskAssessed).toBe(false);
   });
 
   it('clears auth state when refresh fails', async () => {
@@ -88,6 +92,8 @@ describe('apiClient refresh handling', () => {
     const state = useAuthStore.getState();
     expect(fetch).toHaveBeenCalledTimes(1);
     expect(state.accessToken).toBeNull();
+    expect(state.kycVerified).toBeNull();
+    expect(state.riskAssessed).toBeNull();
     expect(state.isAuthenticated).toBe(false);
     expect(state.status).toBe('unauthenticated');
   });

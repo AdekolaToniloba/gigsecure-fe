@@ -51,6 +51,8 @@ describe('authService', () => {
       jsonResponse({
         access_token: 'access-token',
         token_type: 'bearer',
+        kyc_verified: false,
+        risk_assessed: true,
       })
     );
 
@@ -62,6 +64,8 @@ describe('authService', () => {
     expect(result).toEqual({
       access_token: 'access-token',
       token_type: 'bearer',
+      kyc_verified: false,
+      risk_assessed: true,
     });
     expect('refresh_token' in result).toBe(false);
     expect(fetch).toHaveBeenCalledWith(
@@ -72,19 +76,42 @@ describe('authService', () => {
 
   it('uses BFF routes for verify email, activate account, refresh, and resend activation', async () => {
     vi.mocked(fetch)
-      .mockResolvedValueOnce(jsonResponse({ access_token: 'verified-token', token_type: 'bearer' }))
-      .mockResolvedValueOnce(jsonResponse({ access_token: 'activated-token', token_type: 'bearer' }))
-      .mockResolvedValueOnce(jsonResponse({ access_token: 'refreshed-token', token_type: 'bearer' }))
+      .mockResolvedValueOnce(jsonResponse({
+        access_token: 'verified-token',
+        token_type: 'bearer',
+        kyc_verified: false,
+        risk_assessed: false,
+      }))
+      .mockResolvedValueOnce(jsonResponse({
+        access_token: 'activated-token',
+        token_type: 'bearer',
+        kyc_verified: false,
+        risk_assessed: true,
+      }))
+      .mockResolvedValueOnce(jsonResponse({
+        access_token: 'refreshed-token',
+        token_type: 'bearer',
+        kyc_verified: true,
+        risk_assessed: true,
+      }))
       .mockResolvedValueOnce(jsonResponse({ message: 'If the email is registered, an activation link has been sent.' }));
 
     await expect(authService.verifyEmail({ token: 'verify-token' })).resolves.toMatchObject({
       access_token: 'verified-token',
+      kyc_verified: false,
+      risk_assessed: false,
     });
     await expect(
       authService.activateAccount({ token: 'activate-token', password: 'SecurePass123' })
-    ).resolves.toMatchObject({ access_token: 'activated-token' });
+    ).resolves.toMatchObject({
+      access_token: 'activated-token',
+      kyc_verified: false,
+      risk_assessed: true,
+    });
     await expect(authService.refresh()).resolves.toMatchObject({
       access_token: 'refreshed-token',
+      kyc_verified: true,
+      risk_assessed: true,
     });
     await expect(authService.resendActivation({ email: 'amaka@example.com' })).resolves.toMatchObject({
       message: 'If the email is registered, an activation link has been sent.',

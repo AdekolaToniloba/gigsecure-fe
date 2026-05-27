@@ -75,6 +75,8 @@ export function createBrowserSessionResponse(
     access_token?: unknown;
     refresh_token?: unknown;
     token_type?: unknown;
+    kyc_verified?: unknown;
+    risk_assessed?: unknown;
   };
 
   if (typeof tokenData.access_token !== 'string') {
@@ -96,6 +98,10 @@ export function createBrowserSessionResponse(
       access_token: tokenData.access_token,
       token_type:
         typeof tokenData.token_type === 'string' ? tokenData.token_type : 'bearer',
+      kyc_verified:
+        typeof tokenData.kyc_verified === 'boolean' ? tokenData.kyc_verified : false,
+      risk_assessed:
+        typeof tokenData.risk_assessed === 'boolean' ? tokenData.risk_assessed : false,
     },
     { status: options.status ?? 200 }
   );

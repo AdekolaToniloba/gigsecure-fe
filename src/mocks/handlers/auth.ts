@@ -17,6 +17,8 @@ const mockUser = {
 const mockTokenResponse = {
   access_token: 'mock-access-token-12345',
   token_type: 'bearer',
+  kyc_verified: false,
+  risk_assessed: true,
 };
 
 export const authHandlers = [
@@ -80,11 +82,21 @@ export const authHandlers = [
 
   // User
   http.get(`${BASE}/api/v1/users/me`, () =>
-    HttpResponse.json({ user: mockUser, profile: null })
+    HttpResponse.json({
+      user: mockUser,
+      profile: null,
+      kyc_verified: false,
+      risk_assessed: true,
+    })
   ),
 
   http.put(`${BASE}/api/v1/users/me`, async ({ request }) => {
     const body = await request.json();
-    return HttpResponse.json({ user: mockUser, profile: body });
+    return HttpResponse.json({
+      user: mockUser,
+      profile: body,
+      kyc_verified: false,
+      risk_assessed: true,
+    });
   }),
 ];

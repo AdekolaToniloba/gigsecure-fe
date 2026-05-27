@@ -46,6 +46,8 @@ describe('auth hooks', () => {
     vi.mocked(authService.login).mockResolvedValue({
       access_token: 'login-token',
       token_type: 'bearer',
+      kyc_verified: false,
+      risk_assessed: true,
     });
     const { result } = renderHook(() => useLogin(), { wrapper: createWrapper() });
 
@@ -57,6 +59,8 @@ describe('auth hooks', () => {
     });
 
     expect(useAuthStore.getState().accessToken).toBe('login-token');
+    expect(useAuthStore.getState().kycVerified).toBe(false);
+    expect(useAuthStore.getState().riskAssessed).toBe(true);
     expect(useAuthStore.getState().status).toBe('authenticated');
   });
 
@@ -100,20 +104,28 @@ describe('auth hooks', () => {
     expect(state.accessToken).toBe('waitlist-token');
     expect(state.firstName).toBe('Amaka');
     expect(state.lastName).toBe('Obi');
+    expect(state.kycVerified).toBeNull();
+    expect(state.riskAssessed).toBeNull();
   });
 
   it('sets access token after verify email, activate account, and silent refresh success', async () => {
     vi.mocked(authService.verifyEmail).mockResolvedValue({
       access_token: 'verified-token',
       token_type: 'bearer',
+      kyc_verified: false,
+      risk_assessed: false,
     });
     vi.mocked(authService.activateAccount).mockResolvedValue({
       access_token: 'activated-token',
       token_type: 'bearer',
+      kyc_verified: false,
+      risk_assessed: true,
     });
     vi.mocked(authService.refresh).mockResolvedValue({
       access_token: 'refreshed-token',
       token_type: 'bearer',
+      kyc_verified: true,
+      risk_assessed: true,
     });
 
     const verifyHook = renderHook(() => useVerifyEmail(), { wrapper: createWrapper() });
@@ -124,6 +136,8 @@ describe('auth hooks', () => {
       await verifyHook.result.current.mutateAsync({ token: 'verify-token' });
     });
     expect(useAuthStore.getState().accessToken).toBe('verified-token');
+    expect(useAuthStore.getState().kycVerified).toBe(false);
+    expect(useAuthStore.getState().riskAssessed).toBe(false);
 
     await act(async () => {
       await activateHook.result.current.mutateAsync({
@@ -132,11 +146,15 @@ describe('auth hooks', () => {
       });
     });
     expect(useAuthStore.getState().accessToken).toBe('activated-token');
+    expect(useAuthStore.getState().kycVerified).toBe(false);
+    expect(useAuthStore.getState().riskAssessed).toBe(true);
 
     await act(async () => {
       await refreshHook.result.current.mutateAsync();
     });
     expect(useAuthStore.getState().accessToken).toBe('refreshed-token');
+    expect(useAuthStore.getState().kycVerified).toBe(true);
+    expect(useAuthStore.getState().riskAssessed).toBe(true);
   });
 
   it('keeps change and reset-adjacent flows separate and leaves session redirects to UI', async () => {
@@ -205,6 +223,8 @@ describe('auth hooks', () => {
     vi.mocked(authService.refresh).mockResolvedValue({
       access_token: 'session-token',
       token_type: 'bearer',
+      kyc_verified: true,
+      risk_assessed: false,
     });
     const { result } = renderHook(() => useSession(), { wrapper: createWrapper() });
 
@@ -216,6 +236,8 @@ describe('auth hooks', () => {
       expect(result.current.accessToken).toBe('session-token');
     });
     expect(result.current.isAuthenticated).toBe(true);
+    expect(result.current.kycVerified).toBe(true);
+    expect(result.current.riskAssessed).toBe(false);
     expect(result.current.status).toBe('authenticated');
   });
 });

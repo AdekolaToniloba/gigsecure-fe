@@ -14,16 +14,58 @@ describe('useAuthStore', () => {
     expect(state.accessToken).toBeNull();
     expect(state.firstName).toBeNull();
     expect(state.lastName).toBeNull();
+    expect(state.kycVerified).toBeNull();
+    expect(state.riskAssessed).toBeNull();
     expect(state.isAuthenticated).toBe(false);
     expect(state.status).toBe('unauthenticated');
   });
 
   it('setAccessToken sets token and marks authenticated', () => {
-    act(() => { useAuthStore.getState().setAccessToken('test-token'); });
+    act(() => {
+      useAuthStore.getState().setSession({
+        accessToken: 'old-session-token',
+        kycVerified: true,
+        riskAssessed: true,
+      });
+      useAuthStore.getState().setAccessToken('test-token');
+    });
     const state = useAuthStore.getState();
     expect(state.accessToken).toBe('test-token');
     expect(state.isAuthenticated).toBe(true);
     expect(state.status).toBe('authenticated');
+    expect(state.kycVerified).toBeNull();
+    expect(state.riskAssessed).toBeNull();
+  });
+
+  it('setSession sets token and full-session flags', () => {
+    act(() => {
+      useAuthStore.getState().setSession({
+        accessToken: 'session-token',
+        kycVerified: false,
+        riskAssessed: true,
+      });
+    });
+    const state = useAuthStore.getState();
+    expect(state.accessToken).toBe('session-token');
+    expect(state.kycVerified).toBe(false);
+    expect(state.riskAssessed).toBe(true);
+    expect(state.isAuthenticated).toBe(true);
+    expect(state.status).toBe('authenticated');
+  });
+
+  it('setFlags updates session flags without changing the token', () => {
+    act(() => {
+      useAuthStore.getState().setSession({
+        accessToken: 'session-token',
+        kycVerified: false,
+        riskAssessed: false,
+      });
+      useAuthStore.getState().setFlags({ riskAssessed: true });
+    });
+    const state = useAuthStore.getState();
+    expect(state.accessToken).toBe('session-token');
+    expect(state.kycVerified).toBe(false);
+    expect(state.riskAssessed).toBe(true);
   });
 
   it('setAccessToken does not persist token to localStorage', () => {
@@ -48,10 +90,13 @@ describe('useAuthStore', () => {
   it('setUnauthenticated clears token and marks unauthenticated', () => {
     act(() => {
       useAuthStore.getState().setAccessToken('token');
+      useAuthStore.getState().setFlags({ kycVerified: false, riskAssessed: true });
       useAuthStore.getState().setUnauthenticated();
     });
     const state = useAuthStore.getState();
     expect(state.accessToken).toBeNull();
+    expect(state.kycVerified).toBeNull();
+    expect(state.riskAssessed).toBeNull();
     expect(state.isAuthenticated).toBe(false);
     expect(state.status).toBe('unauthenticated');
   });
@@ -72,6 +117,7 @@ describe('useAuthStore', () => {
   it('clearAuth resets everything', () => {
     act(() => {
       useAuthStore.getState().setAccessToken('token');
+      useAuthStore.getState().setFlags({ kycVerified: true, riskAssessed: true });
       useAuthStore.getState().setUserMeta('John', 'Doe');
       useAuthStore.getState().clearAuth();
     });
@@ -79,6 +125,8 @@ describe('useAuthStore', () => {
     expect(state.accessToken).toBeNull();
     expect(state.firstName).toBeNull();
     expect(state.lastName).toBeNull();
+    expect(state.kycVerified).toBeNull();
+    expect(state.riskAssessed).toBeNull();
     expect(state.isAuthenticated).toBe(false);
     expect(state.status).toBe('unauthenticated');
   });

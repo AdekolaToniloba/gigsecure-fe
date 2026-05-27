@@ -23,10 +23,17 @@ describe('refreshSession', () => {
       jsonResponse({
         access_token: 'new-access-token',
         token_type: 'bearer',
+        kyc_verified: true,
+        risk_assessed: false,
       })
     );
 
-    await expect(refreshSession(fetcher)).resolves.toBe('new-access-token');
+    await expect(refreshSession(fetcher)).resolves.toEqual({
+      access_token: 'new-access-token',
+      token_type: 'bearer',
+      kyc_verified: true,
+      risk_assessed: false,
+    });
 
     expect(fetcher).toHaveBeenCalledWith('/api/auth/refresh', {
       method: 'POST',
@@ -56,6 +63,8 @@ describe('initializeAuthSession', () => {
       jsonResponse({
         access_token: 'boot-access-token',
         token_type: 'bearer',
+        kyc_verified: false,
+        risk_assessed: true,
       })
     );
 
@@ -65,6 +74,8 @@ describe('initializeAuthSession', () => {
     const state = useAuthStore.getState();
     expect(observedStatuses).toEqual(['initializing', 'authenticated']);
     expect(state.accessToken).toBe('boot-access-token');
+    expect(state.kycVerified).toBe(false);
+    expect(state.riskAssessed).toBe(true);
     expect(state.isAuthenticated).toBe(true);
     expect(state.status).toBe('authenticated');
   });
@@ -78,6 +89,8 @@ describe('initializeAuthSession', () => {
 
     const state = useAuthStore.getState();
     expect(state.accessToken).toBeNull();
+    expect(state.kycVerified).toBeNull();
+    expect(state.riskAssessed).toBeNull();
     expect(state.isAuthenticated).toBe(false);
     expect(state.status).toBe('unauthenticated');
   });
@@ -88,6 +101,8 @@ describe('initializeAuthSession', () => {
       jsonResponse({
         access_token: 'boot-access-token',
         token_type: 'bearer',
+        kyc_verified: false,
+        risk_assessed: false,
       })
     );
 

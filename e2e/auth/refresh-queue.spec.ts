@@ -30,6 +30,8 @@ test('concurrent expired authenticated requests share one refresh and retry with
     return jsonResponse({
       access_token: 'fresh-access-token',
       token_type: 'bearer',
+      kyc_verified: true,
+      risk_assessed: true,
     });
   };
 
@@ -57,6 +59,8 @@ test('concurrent expired authenticated requests share one refresh and retry with
     'Bearer fresh-access-token',
   ]);
   expect(useAuthStore.getState().accessToken).toBe('fresh-access-token');
+  expect(useAuthStore.getState().kycVerified).toBe(true);
+  expect(useAuthStore.getState().riskAssessed).toBe(true);
 });
 
 function unauthorized(config: InternalAxiosRequestConfig) {

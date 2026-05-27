@@ -1,10 +1,11 @@
 import { AUTH_ENDPOINTS } from '@/lib/api/endpoints';
 import { browserTokenResponseSchema } from '@/lib/validators/auth';
 import { useAuthStore } from '@/store/auth-store';
+import type { BrowserTokenResponse } from '@/types/auth';
 
 type Fetcher = typeof fetch;
 
-export async function refreshSession(fetcher: Fetcher = fetch): Promise<string> {
+export async function refreshSession(fetcher: Fetcher = fetch): Promise<BrowserTokenResponse> {
   const res = await fetcher(AUTH_ENDPOINTS.REFRESH, {
     method: 'POST',
     headers: {
@@ -18,7 +19,7 @@ export async function refreshSession(fetcher: Fetcher = fetch): Promise<string> 
   }
 
   const data: unknown = await res.json();
-  return browserTokenResponseSchema.parse(data).access_token;
+  return browserTokenResponseSchema.parse(data);
 }
 
 export async function initializeAuthSession(fetcher: Fetcher = fetch): Promise<void> {
@@ -26,8 +27,12 @@ export async function initializeAuthSession(fetcher: Fetcher = fetch): Promise<v
   authStore.setAuthInitializing();
 
   try {
-    const accessToken = await refreshSession(fetcher);
-    useAuthStore.getState().setAccessToken(accessToken);
+    const session = await refreshSession(fetcher);
+    useAuthStore.getState().setSession({
+      accessToken: session.access_token,
+      kycVerified: session.kyc_verified,
+      riskAssessed: session.risk_assessed,
+    });
   } catch {
     useAuthStore.getState().setUnauthenticated();
   }

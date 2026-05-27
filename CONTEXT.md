@@ -793,3 +793,71 @@ No feature code was changed during this final task because QA did not expose an 
 
 Known follow-ups:
 `npm run lint`, `npm test -- --run`, `npx tsc --noEmit`, `npm run test:e2e -- --project=chromium`, and `npm run build` pass. The first sandboxed build failed because `next/font` could not fetch Google Fonts without network access; rerunning with network access passed. Remaining non-blocking follow-ups are backend logout invalidation, final refresh-cookie domain/rotation policy, product confirmation for post-verification/activation routing, existing dependency audit findings, and Next.js middleware-to-proxy migration.
+
+### 2026-05-27 22:29 WAT
+
+Task completed: Task 1 — KYC Codebase Audit and Contract Lock
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/KYC_EPICS.md`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+
+Summary:
+Locked the KYC implementation contract by adding a codebase audit summary to `KYC_EPICS.md` before any KYC feature code was introduced. The audit records the current auth store, BFF token response behavior, refresh queue, user profile hook/service, endpoint constants, middleware protection, dashboard placeholder state, risk recommendations path, MSW coverage, and local OpenAPI drift. This gives Task 2 a precise starting point for user flag integration and avoids inventing duplicate session/profile plumbing.
+
+Important decisions:
+Confirmed KYC verify/status should use the existing direct `apiClient` path because it already attaches the memory-only access token, sends `X-Requested-With`, and participates in the refresh queue. Confirmed `setSession`, `setFlags`, `kycVerified`, and `riskAssessed` do not yet exist in the auth store and must be added in Task 2 rather than silently worked around. Updated the KYC plan wording to keep the frontend strictly NIN-only without exposing alternate document types in future types, schemas, labels, mocks, UI, or tests.
+
+Known follow-ups:
+Task 2 must add flag fields and shared session/flag actions to the auth store, BFF token schemas, auth hooks, refresh flow, and auth mocks. Task 3 must sync `GET /users/me` profile-sourced flags and introduce the reusable profile/flag hooks. Task 4 must add `ENDPOINTS.KYC`, KYC validators/types, and MSW handlers because the local `openapi.json` and generated `src/types/schema.d.ts` are stale for the KYC endpoints and flag fields.
+
+### 2026-05-27 23:35 WAT
+
+Task completed: Task 1 — KYC Codebase Audit and Contract Lock
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/openapi.json`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/types/schema.d.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+
+Summary:
+Updated the stale local OpenAPI contract found during the KYC audit by adding `/api/v1/kyc/verify`, `/api/v1/kyc/status`, and `/api/v1/kyc/callback`. Added the missing KYC request, response, status, and callback schemas, then regenerated `src/types/schema.d.ts` through the project codegen script instead of editing the generated file by hand. The generated types now include KYC schemas plus `kyc_verified` and `risk_assessed` on token and user/profile responses.
+
+Important decisions:
+`src/types/schema.d.ts` is now the generated source for KYC TypeScript API types, with Task 4 still responsible for adding runtime Zod validators on top. `WaitlistSignupResponse` was intentionally left without `kyc_verified` or `risk_assessed` because the provided schema does not include them and waitlist tokens are scoped differently from full authenticated sessions. No auth BFF routes, services, hooks, stores, or components were changed in this maintenance task.
+
+Known follow-ups:
+Task 2 must wire the newly generated flag fields into the auth BFF/session flow. Task 4 must add `src/lib/validators/kyc.ts` and KYC MSW handlers as the runtime validation and test layer on top of the generated API types. `npx tsc --noEmit` passed, and `npm run lint` passed with 18 pre-existing warnings unrelated to this schema update.
+
+### 2026-05-27 23:45 WAT
+
+Task completed: Task 2 — User Flags in Auth Session Contract
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/store/auth-store.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/lib/validators/auth.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/api/auth/_bff-utils.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/lib/api/refresh-queue.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/lib/api/client.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/lib/auth/session.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/hooks/auth/useAuth.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/hooks/auth/useSession.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/mocks/handlers/auth.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/store/auth-store.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/lib/auth-validators.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/api/auth-bff-routes.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/hooks/auth-hooks.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/services/auth.service.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/lib/api-client.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/lib/auth-session.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/e2e/auth/refresh-queue.spec.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+
+Summary:
+Added memory-only `kycVerified` and `riskAssessed` flags to the auth store with shared `setSession` and `setFlags` actions for future KYC and risk features. Updated browser-safe token validation, BFF session response shaping, silent refresh, auth hooks, session initialization, and refresh-queue retry handling so login, refresh, verify email, and activate account can synchronize flags while refresh tokens remain cookie-only. Updated MSW auth/user mocks and focused tests to assert flag forwarding, clearing, and waitlist flag isolation.
+
+Important decisions:
+Token schemas default missing flags to `false` so auth keeps working during backend rollout, while store state starts as `null` until a full-session response arrives to make unknown vs known false explicit. `setAccessToken` remains for waitlist and test compatibility but clears flags to `null`, while full authenticated sessions use `setSession`; `setFlags` is reserved for non-token syncs such as `/users/me`, KYC success, and later risk completion. No KYC BFF route, KYC service, KYC UI, route protection, or profile hydration work was added in this task.
+
+Known follow-ups:
+Task 3 must synchronize `/users/me` response flags into the same store actions and introduce the reusable user profile/flag hooks. `npx tsc --noEmit`, the full Vitest suite, focused auth/session tests, and `npm run lint` pass; lint still reports 18 pre-existing warnings. The focused Playwright refresh-queue spec could not be rerun in this session because the sandboxed run could not bind port 3100 and the escalated rerun found an existing `.next/dev/lock`, indicating another Next dev instance or stale lock must be cleared before rerunning e2e.

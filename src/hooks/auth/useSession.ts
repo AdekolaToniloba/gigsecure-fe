@@ -6,6 +6,8 @@ export function useSession() {
   const firstName = useAuthStore((s) => s.firstName);
   const lastName = useAuthStore((s) => s.lastName);
   const user = useAuthStore((s) => s.user);
+  const kycVerified = useAuthStore((s) => s.kycVerified);
+  const riskAssessed = useAuthStore((s) => s.riskAssessed);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const status = useAuthStore((s) => s.status);
   const refreshMutation = useSilentRefresh();
@@ -15,6 +17,8 @@ export function useSession() {
     firstName,
     lastName,
     user,
+    kycVerified,
+    riskAssessed,
     isAuthenticated,
     status,
     isInitializing: status === 'initializing' || refreshMutation.isPending,

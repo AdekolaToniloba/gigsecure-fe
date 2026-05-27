@@ -118,6 +118,8 @@ export const changePasswordFormSchema = changePasswordRequestSchema
 export const browserTokenResponseSchema = z.object({
   access_token: requiredString('Access token is required'),
   token_type: z.string().default('bearer'),
+  kyc_verified: z.boolean().default(false),
+  risk_assessed: z.boolean().default(false),
 });
 
 export const backendTokenResponseSchema = browserTokenResponseSchema.extend({

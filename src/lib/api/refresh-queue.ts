@@ -1,4 +1,5 @@
 import { browserTokenResponseSchema } from '@/lib/validators/auth';
+import type { BrowserTokenResponse } from '@/types/auth';
 
 export type RefreshTokenFetcher = () => Promise<string>;
 
@@ -19,7 +20,11 @@ export function resetRefreshQueueForTests() {
 }
 
 export function parseAccessTokenResponse(data: unknown) {
-  return browserTokenResponseSchema.parse(data).access_token;
+  return parseBrowserSessionResponse(data).access_token;
+}
+
+export function parseBrowserSessionResponse(data: unknown): BrowserTokenResponse {
+  return browserTokenResponseSchema.parse(data);
 }
 
 export function shouldSkipRefreshForWaitlistToken(token: string | null, now = Date.now()) {

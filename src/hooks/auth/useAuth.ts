@@ -14,13 +14,17 @@ import type {
 } from '@/types/auth';
 
 export function useLogin() {
-  const setAccessToken = useAuthStore((s) => s.setAccessToken);
+  const setSession = useAuthStore((s) => s.setSession);
 
   return useMutation({
     mutationFn: (payload: LoginRequest) => authService.login(payload),
     retry: false,
     onSuccess: (data) => {
-      setAccessToken(data.access_token);
+      setSession({
+        accessToken: data.access_token,
+        kycVerified: data.kyc_verified,
+        riskAssessed: data.risk_assessed,
+      });
     },
   });
 }
@@ -60,7 +64,7 @@ export function useLogout() {
 }
 
 export function useSilentRefresh() {
-  const setAccessToken = useAuthStore((s) => s.setAccessToken);
+  const setSession = useAuthStore((s) => s.setSession);
   const setAuthInitializing = useAuthStore((s) => s.setAuthInitializing);
   const setUnauthenticated = useAuthStore((s) => s.setUnauthenticated);
 
@@ -71,7 +75,11 @@ export function useSilentRefresh() {
       setAuthInitializing();
     },
     onSuccess: (data) => {
-      setAccessToken(data.access_token);
+      setSession({
+        accessToken: data.access_token,
+        kycVerified: data.kyc_verified,
+        riskAssessed: data.risk_assessed,
+      });
     },
     onError: () => {
       setUnauthenticated();
@@ -108,25 +116,33 @@ export function useChangePassword() {
 }
 
 export function useVerifyEmail() {
-  const setAccessToken = useAuthStore((s) => s.setAccessToken);
+  const setSession = useAuthStore((s) => s.setSession);
 
   return useMutation({
     mutationFn: (payload: VerifyEmailRequest) => authService.verifyEmail(payload),
     retry: false,
     onSuccess: (data) => {
-      setAccessToken(data.access_token);
+      setSession({
+        accessToken: data.access_token,
+        kycVerified: data.kyc_verified,
+        riskAssessed: data.risk_assessed,
+      });
     },
   });
 }
 
 export function useActivateAccount() {
-  const setAccessToken = useAuthStore((s) => s.setAccessToken);
+  const setSession = useAuthStore((s) => s.setSession);
 
   return useMutation({
     mutationFn: (payload: ActivateAccountRequest) => authService.activateAccount(payload),
     retry: false,
     onSuccess: (data) => {
-      setAccessToken(data.access_token);
+      setSession({
+        accessToken: data.access_token,
+        kycVerified: data.kyc_verified,
+        riskAssessed: data.risk_assessed,
+      });
     },
   });
 }
@@ -144,6 +160,8 @@ export function useAuthState() {
   const firstName = useAuthStore((s) => s.firstName);
   const lastName = useAuthStore((s) => s.lastName);
   const status = useAuthStore((s) => s.status);
+  const kycVerified = useAuthStore((s) => s.kycVerified);
+  const riskAssessed = useAuthStore((s) => s.riskAssessed);
 
   return {
     isAuthenticated,
@@ -152,5 +170,7 @@ export function useAuthState() {
     firstName,
     lastName,
     status,
+    kycVerified,
+    riskAssessed,
   };
 }

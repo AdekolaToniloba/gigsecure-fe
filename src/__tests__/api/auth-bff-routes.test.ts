@@ -76,6 +76,8 @@ describe('auth BFF routes', () => {
         access_token: 'access-token',
         refresh_token: 'refresh-token',
         token_type: 'bearer',
+        kyc_verified: false,
+        risk_assessed: true,
       })
     );
 
@@ -93,6 +95,8 @@ describe('auth BFF routes', () => {
     await expect(response.json()).resolves.toEqual({
       access_token: 'access-token',
       token_type: 'bearer',
+      kyc_verified: false,
+      risk_assessed: true,
     });
     expect(response.headers.get('set-cookie')).toEqual(
       expect.stringContaining('gs_refresh_token=refresh-token')
@@ -106,6 +110,8 @@ describe('auth BFF routes', () => {
       jsonResponse({
         access_token: 'fresh-access-token',
         token_type: 'bearer',
+        kyc_verified: true,
+        risk_assessed: true,
       })
     );
 
@@ -120,6 +126,8 @@ describe('auth BFF routes', () => {
     await expect(response.json()).resolves.toEqual({
       access_token: 'fresh-access-token',
       token_type: 'bearer',
+      kyc_verified: true,
+      risk_assessed: true,
     });
     expect(fetch).toHaveBeenCalledWith('http://localhost:8000/api/v1/auth/refresh', {
       method: 'POST',
@@ -127,6 +135,37 @@ describe('auth BFF routes', () => {
       body: JSON.stringify({ refresh_token: 'refresh-token' }),
     });
     expect(response.headers.get('set-cookie')).toBeNull();
+  });
+
+  it('defaults missing login flags to false while keeping refresh tokens cookie-only', async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      jsonResponse({
+        access_token: 'access-token',
+        refresh_token: 'refresh-token',
+        token_type: 'bearer',
+      })
+    );
+
+    const response = await loginPost(
+      createRequest({
+        method: 'POST',
+        body: {
+          email: 'amaka@example.com',
+          password: 'SecurePass123',
+        },
+        withCsrf: true,
+      })
+    );
+
+    await expect(response.json()).resolves.toEqual({
+      access_token: 'access-token',
+      token_type: 'bearer',
+      kyc_verified: false,
+      risk_assessed: false,
+    });
+    expect(response.headers.get('set-cookie')).toEqual(
+      expect.stringContaining('gs_refresh_token=refresh-token')
+    );
   });
 
   it('expires current and legacy refresh cookie paths on logout', async () => {

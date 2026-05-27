@@ -3,7 +3,7 @@ import axiosRetry from 'axios-retry';
 import { useAuthStore } from '@/store/auth-store';
 import { AUTH_ENDPOINTS } from './endpoints';
 import {
-  parseAccessTokenResponse,
+  parseBrowserSessionResponse,
   refreshAccessTokenOnce,
   shouldSkipRefreshForWaitlistToken,
 } from './refresh-queue';
@@ -107,7 +107,11 @@ async function refreshAccessTokenFromBff() {
   if (!res.ok) throw new Error('Refresh failed');
 
   const data: unknown = await res.json();
-  const newToken = parseAccessTokenResponse(data);
-  useAuthStore.getState().setAccessToken(newToken);
-  return newToken;
+  const session = parseBrowserSessionResponse(data);
+  useAuthStore.getState().setSession({
+    accessToken: session.access_token,
+    kycVerified: session.kyc_verified,
+    riskAssessed: session.risk_assessed,
+  });
+  return session.access_token;
 }
