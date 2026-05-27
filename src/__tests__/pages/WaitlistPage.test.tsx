@@ -4,10 +4,8 @@ import userEvent from '@testing-library/user-event';
 import WaitlistPage from '@/app/(wizard)/waitlist/page';
 import { renderWithProviders, mockRouter, mockSearchParams } from '../test-utils';
 import { useAuthStore } from '@/store/auth-store';
-import { http, HttpResponse } from 'msw';
+import { delay, http, HttpResponse } from 'msw';
 import { server } from '@/mocks/index';
-
-const BASE = 'http://localhost:8000';
 
 vi.mock('next/navigation', () => ({
   useRouter: () => mockRouter,
@@ -28,11 +26,9 @@ describe('WaitlistPage', () => {
     renderWithProviders(<WaitlistPage />);
     
     const btn = screen.getByRole('button', { name: /start my assessment/i });
-    console.log('Button disabled?', btn.hasAttribute('disabled'));
     
     await user.click(btn);
     
-    console.log('DOM after click:', document.body.innerHTML);
     expect(await screen.findAllByText(/First name is required/i)).toHaveLength(1); // first name
   });
 
@@ -90,6 +86,18 @@ describe('WaitlistPage', () => {
   });
 
   it('submit button disabled while pending', async () => {
+    server.use(
+      http.post('/api/auth/waitlist', async () => {
+        await delay(250);
+        return HttpResponse.json({
+          message: 'Successfully joined the waitlist!',
+          user_id: 'user-id',
+          access_token: 'mock-waitlist-token',
+          token_type: 'bearer',
+        });
+      })
+    );
+
     const user = userEvent.setup();
     renderWithProviders(<WaitlistPage />);
     

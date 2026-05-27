@@ -6,11 +6,9 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { motion } from 'framer-motion';
 import { ShieldAlert, Check, Lock, Info } from 'lucide-react';
-import Image from 'next/image';
-import Link from 'next/link';
 import { useWaitlistSignup } from '@/hooks/auth/useAuth';
 import { waitlistSignupRequestSchema, type WaitlistSignupRequest } from '@/lib/validators/auth';
-import { assetUrl, ASSETS } from '@/lib/assets';
+import { parseApiError } from '@/lib/api/errors';
 
 const BENEFITS = [
   "Results saved to your profile",
@@ -67,7 +65,7 @@ export default function WaitlistPage() {
 
       router.push('/assessment');
     } catch (error: unknown) {
-      setFormError(error instanceof Error ? error.message : 'Something went wrong. Please try again.');
+      setFormError(parseApiError(error).message);
     }
   };
 

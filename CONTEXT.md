@@ -243,6 +243,110 @@ Gaps:
 - Reset password and change password are separate flows.
 - Use only NIN for KYC for now, despite markdown saying BVN is supported.
 
+## Final Auth Implementation Map
+
+### Routes
+
+- `src/app/(auth)/layout.tsx`
+  - Top-level pre-session auth layout. Wraps public auth pages in the shared auth shell without inheriting app chrome.
+- `src/app/(auth)/register/page.tsx`
+  - Public registration route. Register success goes to `/check-inbox` and does not create a session.
+- `src/app/(auth)/login/page.tsx`
+  - Public login route. Supports safe redirect parameters and reset-success messaging.
+- `src/app/(auth)/check-inbox/page.tsx`
+  - Post-registration holding page with resend activation support.
+- `src/app/(auth)/verify-email/page.tsx`
+  - Email verification token route. Verifies through the BFF, stores the browser-safe access token in memory, and redirects to the authenticated destination.
+- `src/app/(auth)/forgot-password/page.tsx`
+  - Public forgot-password request route with generic email-sent success state.
+- `src/app/(auth)/reset-password/page.tsx`
+  - Public token-based reset route. Requires `?token=`, validates password confirmation, and returns to login with a success message.
+- `src/app/(auth)/activate/page.tsx`
+  - Public waitlist activation route. Requires `?token=`, sets a password, creates a memory-only session, and redirects to the authenticated destination.
+- `src/app/(app)/change-password/page.tsx`
+  - Protected authenticated change-password route. Keeps the user signed in and shows an in-place success state.
+
+### BFF and Session Boundary
+
+- `src/app/api/auth/_bff-utils.ts`
+  - Shared BFF utilities for backend forwarding, CSRF header checks, browser-safe token shaping, and httpOnly refresh-cookie management.
+- `src/app/api/auth/register/route.ts`
+  - Register proxy. Returns `{ message }` only and never sets auth cookies.
+- `src/app/api/auth/login/route.ts`
+  - Login proxy. Stores backend refresh token in an httpOnly cookie and returns only browser-safe session data.
+- `src/app/api/auth/verify-email/route.ts`
+  - Email verification proxy. Handles token-producing backend response behind the BFF boundary.
+- `src/app/api/auth/activate/route.ts`
+  - Waitlist activation proxy. Handles token-producing backend response behind the BFF boundary.
+- `src/app/api/auth/refresh/route.ts`
+  - Silent refresh proxy. Reads the httpOnly cookie, sends the backend refresh request, and returns only the new access token.
+- `src/app/api/auth/logout/route.ts`
+  - Local logout route. Clears current and legacy refresh-cookie paths; backend invalidation remains pending a backend endpoint.
+- `src/app/api/auth/forgot-password/route.ts`, `src/app/api/auth/reset-password/route.ts`, `src/app/api/auth/resend-activation/route.ts`, `src/app/api/auth/change-password/route.ts`, and `src/app/api/auth/waitlist/route.ts`
+  - Remaining auth BFF routes with CSRF checks on state-changing requests.
+
+### Client Auth Architecture
+
+- `src/store/auth-store.ts`
+  - Zustand memory-only auth store with explicit initialization/authenticated/unauthenticated state.
+- `src/lib/auth/session.ts`
+  - Silent refresh session bootstrap helpers.
+- `src/lib/auth/redirects.ts`
+  - Safe auth redirect helpers and default authenticated/unauthenticated destinations.
+- `src/lib/api/client.ts`
+  - Shared Axios client that attaches memory access tokens and delegates 401 recovery to the refresh queue.
+- `src/lib/api/refresh-queue.ts`
+  - Refresh mutex implementation so concurrent 401 responses share one refresh request.
+- `src/lib/api/errors.ts`
+  - Reusable API error parser for string details, validation arrays, and message-shaped errors.
+- `src/lib/validators/auth.ts`
+  - Zod schemas for API payloads, browser-safe token responses, backend token responses, and UI-only password confirmation flows.
+- `src/types/auth.ts`
+  - Auth-specific reusable TypeScript types.
+- `src/services/auth.service.ts`
+  - BFF-backed auth service methods for register, login, logout, refresh, verify, resend, forgot, reset, activate, waitlist, and change password.
+- `src/hooks/auth/useAuth.ts` and `src/hooks/auth/useSession.ts`
+  - React Query auth mutations and session initialization hooks.
+
+### Auth UI Components
+
+- `src/components/auth/shared/*`
+  - Shared auth shell, layout shell, field primitives, alerts, status panels, submit/loading button, password input/checklist, redirect guard, and protected route wrapper.
+- `src/components/auth/register/register-form.tsx`
+  - Register form with confirmation validation and check-inbox redirect.
+- `src/components/auth/login/login-form.tsx`
+  - Login form with safe redirect handling and reset-success status.
+- `src/components/auth/check-inbox/*`
+  - Check-inbox panel and resend activation form.
+- `src/components/auth/verify-email/verify-email-status.tsx`
+  - Token verification status controller.
+- `src/components/auth/forgot-password/forgot-password-form.tsx`
+  - Forgot-password request form and generic success state.
+- `src/components/auth/reset-password/reset-password-form.tsx`
+  - Token reset form that sends only `{ token, new_password }`.
+- `src/components/auth/activate/activate-account-form.tsx`
+  - Waitlist activation form that sends only `{ token, password }`.
+- `src/components/auth/change-password/change-password-form.tsx`
+  - Authenticated change-password form that sends only `{ old_password, new_password }`.
+
+### Tests and QA
+
+- `src/__tests__/lib/*`, `src/__tests__/store/auth-store.test.ts`, `src/__tests__/services/auth.service.test.ts`, `src/__tests__/hooks/auth-hooks.test.tsx`, `src/__tests__/components/auth/*`, and `src/__tests__/api/auth-bff-routes.test.ts`
+  - Unit and integration coverage for validators, error parsing, token/session helpers, refresh queue, store behavior, services, hooks, forms, guards, shared UI, and BFF routes.
+- `e2e/auth/auth-flows.spec.ts` and `e2e/auth/refresh-queue.spec.ts`
+  - Playwright coverage for complete auth flows and concurrent refresh behavior.
+- `playwright.config.ts`
+  - E2E runner configuration.
+- `vitest.config.ts`
+  - Unit/integration runner configuration, with `e2e/**` excluded so Playwright specs run under Playwright.
+
+## Remaining Open Questions
+
+- Backend logout invalidation is still unavailable in the documented API. Frontend logout clears only local session state and refresh cookies.
+- Backend/product should confirm the final refresh-cookie domain policy and whether refresh tokens are intended to rotate on every refresh.
+- Product should confirm whether post-email-verification and post-waitlist-activation should stay on `/dashboard` or move to risk assessment/onboarding.
+- Next.js now warns that the `middleware` file convention is deprecated in favor of `proxy`; migration is outside this auth epic.
+
 ## Files Created During This Planning Task
 
 - `AUTH_EPICS.md`
@@ -629,3 +733,63 @@ Kept AuthShell centralized through the top-level `(auth)` layout work completed 
 
 Known follow-ups:
 Browser screenshot QA could not be completed with a browser automation tool in this session, but the dev server started on port 3001 and HTTP checks returned 200 for `/login`, `/register`, `/forgot-password`, `/reset-password?token=test`, `/activate?token=test`, `/verify-email?token=test`, and `/check-inbox`; `/change-password` correctly returned a 307 unauthenticated redirect to login. Later visual QA should compare desktop and mobile screenshots once a browser automation path is available.
+
+### 2026-05-26 18:17 WAT
+
+Task completed: Task 17 — Unit and Integration Test Completion
+
+Files changed:
+- `CONTEXT.md`
+- `src/__tests__/api/auth-bff-routes.test.ts`
+- `src/__tests__/components/auth/shared/auth-layout-shell.test.tsx`
+- `src/app/(wizard)/waitlist/page.tsx`
+- `src/__tests__/pages/WaitlistPage.test.tsx`
+
+Summary:
+Added route-handler coverage for the auth BFF security contract, including CSRF header enforcement across all state-changing auth routes, register staying unauthenticated, login keeping refresh tokens in httpOnly cookies, refresh using the cookie-backed token, and logout clearing both current and legacy cookie paths. Added centralized auth layout shell coverage so the shared header and Cancel link remain uniform across top-level auth routes after the route-group restructure. Full test execution exposed a waitlist error-handling bug, so the waitlist page now parses service rejections through the shared API error parser and its pending-state test uses a delayed MSW response to assert real loading behavior.
+
+Important decisions:
+Kept tests behavior-focused around user-visible states and security constraints rather than implementation snapshots. The waitlist fix reuses the existing `parseApiError` utility so BFF/service errors shaped as `{ message }`, `{ detail }`, or validation arrays display correctly without changing the waitlist signup flow or token handling. The top-level `(auth)` route structure remains an intentional divergence from the stale `RULES.md` file-placement line, already documented in Task 16.
+
+Known follow-ups:
+`npm test -- --run` passes, but jsdom still prints a non-fatal "navigation to another Document" message from an existing redirect path; the suite exits successfully. `npm run lint` passes with warnings only, mostly pre-existing unused imports and a React Compiler warning in wizard assessment code. Task 18 should handle e2e tooling and full browser-flow coverage.
+
+### 2026-05-27 18:17 WAT
+
+Task completed: Task 18 — E2E Test Setup and Auth Flow Coverage
+
+Files changed:
+- `CONTEXT.md`
+- `package.json`
+- `package-lock.json`
+- `playwright.config.ts`
+- `vitest.config.ts`
+- `e2e/auth/auth-flows.spec.ts`
+- `e2e/auth/refresh-queue.spec.ts`
+
+Summary:
+Added Playwright as the project e2e runner with scripts for running the browser suite, opening UI mode, and installing Chromium. Created auth e2e coverage for register-to-check-inbox, login success/error, forgot password, reset password token flow, activate account token flow, verify email, silent refresh from an httpOnly cookie, authenticated change password, and concurrent expired requests sharing one refresh. Updated Vitest to exclude the top-level `e2e/**` folder so unit/integration tests and Playwright tests run under their intended runners.
+
+Important decisions:
+Kept e2e specs in a top-level `e2e/auth` folder because Playwright convention separates browser-flow tests from `src/__tests__`, while `vitest.config.ts` now explicitly enforces that separation. The browser tests assert security behavior directly: state-changing auth requests include `X-Requested-With`, confirmation password fields are never sent to the API, refresh cookies are httpOnly-only from the browser perspective, and sensitive token names do not appear in localStorage or readable cookies.
+
+Known follow-ups:
+Playwright browser installation required `npm run test:e2e:install` before the first run, and `npm install` reported existing dependency audit issues that were not addressed in this auth task. `npm run test:e2e -- --project=chromium`, `npm test -- --run`, `npx tsc --noEmit`, and `npm run lint` all pass; lint still reports the pre-existing warning-only set documented in Task 17.
+
+### 2026-05-27 18:36 WAT
+
+Task completed: Task 19 — Final QA and Documentation Update
+
+Files changed:
+- `AUTH_EPICS.md`
+- `CONTEXT.md`
+- `RULES.md`
+
+Summary:
+Completed the final authentication epic QA pass and updated the planning/context documentation for handoff. `AUTH_EPICS.md` now records the epic as complete, marks backend questions as resolved, partially resolved, or unresolved, and captures final QA status. `CONTEXT.md` now includes a final implementation map covering routes, BFF boundaries, client auth architecture, UI components, tests, and remaining open questions.
+
+Important decisions:
+No feature code was changed during this final task because QA did not expose an auth acceptance issue. `RULES.md` was updated to reflect the current intentional route structure: public auth pages live under top-level `src/app/(auth)`, while authenticated auth-adjacent pages such as change password live in the protected app route tree.
+
+Known follow-ups:
+`npm run lint`, `npm test -- --run`, `npx tsc --noEmit`, `npm run test:e2e -- --project=chromium`, and `npm run build` pass. The first sandboxed build failed because `next/font` could not fetch Google Fonts without network access; rerunning with network access passed. Remaining non-blocking follow-ups are backend logout invalidation, final refresh-cookie domain/rotation policy, product confirmation for post-verification/activation routing, existing dependency audit findings, and Next.js middleware-to-proxy migration.

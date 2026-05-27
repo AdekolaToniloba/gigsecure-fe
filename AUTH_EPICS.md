@@ -6,7 +6,7 @@ Created: 2026-05-22 18:02 WAT
 
 Implement the complete GigSecure authentication experience in Next.js App Router with TypeScript, Zustand, React Query, secure token handling, accessible UI, and meaningful test coverage.
 
-Planning status: implementation must not begin until `AUTH_EPICS.md`, `CONTEXT.md`, and `RULES.md` exist.
+Planning status: complete. Tasks 1 through 19 have been implemented and verified.
 
 ## Audit Summary
 
@@ -35,16 +35,32 @@ Important gaps and mismatches:
 - Middleware public paths do not include all auth routes and cannot rely on in-memory access tokens.
 - No Playwright e2e setup is present in `package.json`; e2e tooling must be added or explicitly documented before e2e tests are written.
 
-## Open Backend Questions
+## Backend Questions
 
-1. Is there or will there be a logout endpoint that invalidates the refresh token?
-2. Should `/auth/refresh` read refresh token from an httpOnly cookie instead of request body?
-3. What cookie name, domain, path, SameSite, Secure, and expiry should be used?
-4. Should refresh tokens rotate on every refresh?
-5. What is the intended post-email-verification route: risk assessment, dashboard, or onboarding gate?
-6. What is the intended post-waitlist-activation route?
-7. Should authenticated users be redirected away from login/register pages?
-8. Are admin auth routes in scope or explicitly out of scope?
+1. Unresolved: Is there or will there be a logout endpoint that invalidates the refresh token?
+   - Current frontend behavior: `/api/auth/logout` clears the in-memory session and expires the httpOnly refresh cookie locally. Backend invalidation should be added when an endpoint exists.
+2. Unresolved backend contract mismatch: Should `/auth/refresh` read refresh token from an httpOnly cookie instead of request body?
+   - Current frontend behavior: the browser calls the BFF `/api/auth/refresh`; the BFF reads the httpOnly cookie and sends `{ refresh_token }` to the documented backend endpoint. Browser JavaScript never reads or sends the refresh token directly.
+3. Partially resolved in frontend: What cookie name, domain, path, SameSite, Secure, and expiry should be used?
+   - Current frontend behavior: cookie name `gs_refresh_token`, path `/`, `HttpOnly`, `SameSite=Strict`, `Secure` in production, max age 7 days. Backend/product should confirm final domain policy.
+4. Partially resolved in frontend: Should refresh tokens rotate on every refresh?
+   - Current frontend behavior: refresh rotation is optional. If the backend returns a new `refresh_token`, the BFF rotates the cookie; if not, it keeps the existing cookie.
+5. Unresolved product decision: What is the intended post-email-verification route: risk assessment, dashboard, or onboarding gate?
+   - Current frontend behavior: email verification routes to `/dashboard` through `DEFAULT_AUTHENTICATED_PATH`.
+6. Unresolved product decision: What is the intended post-waitlist-activation route?
+   - Current frontend behavior: account activation routes to `/dashboard` through `DEFAULT_AUTHENTICATED_PATH`.
+7. Resolved in frontend: Should authenticated users be redirected away from login/register pages?
+   - Current frontend behavior: middleware and client guards redirect authenticated users away from public auth routes.
+8. Resolved for this epic: Are admin auth routes in scope or explicitly out of scope?
+   - Current frontend behavior: admin auth routes are out of scope for this user authentication epic.
+
+## Final QA Status
+
+- `npm run lint` passes with warning-only output from pre-existing non-auth areas.
+- `npm test -- --run` passes: 53 files, 307 tests.
+- `npm run test:e2e -- --project=chromium` passes: 10 tests.
+- `npx tsc --noEmit` passes.
+- `npm run build` passes when network access is available for `next/font` to fetch Google Fonts.
 
 ## Epic Tasks
 

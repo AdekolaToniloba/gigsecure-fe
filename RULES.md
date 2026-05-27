@@ -57,7 +57,7 @@ These rules are mandatory for the GigSecure authentication epic.
 
 ## File Placement
 
-1. Auth route pages must live under `src/app/(app)/(auth)/`.
+1. Public auth route pages must live under `src/app/(auth)/`; authenticated auth-adjacent pages, such as change password, must live in the protected app route tree.
 2. Auth components must live under `src/components/auth/<feature-name>/`.
 3. Shared auth UI primitives must live under `src/components/auth/shared/`.
 4. Reusable auth types must live in `src/types`.
