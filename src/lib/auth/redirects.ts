@@ -9,7 +9,7 @@ export const AUTH_LINK_PATHS = [
   '/forgot-password',
   '/reset-password',
 ] as const;
-export const PROTECTED_APP_PATHS = ['/dashboard', '/app', '/change-password'] as const;
+export const PROTECTED_APP_PATHS = ['/dashboard', '/app', '/change-password', '/kyc'] as const;
 
 export function isPathMatch(pathname: string, paths: readonly string[]) {
   return paths.some((path) => pathname === path || pathname.startsWith(`${path}/`));

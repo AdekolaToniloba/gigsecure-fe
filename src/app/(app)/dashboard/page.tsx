@@ -1,6 +1,11 @@
+import { KycDashboardBanner } from '@/components/kyc/dashboard/kyc-dashboard-banner';
+import { KycRecommendationsAction } from '@/components/kyc/dashboard/kyc-recommendations-action';
+
 export default function DashboardPage() {
   return (
     <div className="mx-auto max-w-7xl">
+      <KycDashboardBanner />
+
       <div className="mb-8">
         <h1 className="font-heading text-3xl font-bold text-primary">
           Dashboard
@@ -9,6 +14,8 @@ export default function DashboardPage() {
           Welcome back — here&apos;s an overview of your account.
         </p>
       </div>
+
+      <KycRecommendationsAction />
 
       {/* Placeholder card grid */}
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

@@ -22,6 +22,20 @@ describe('middleware auth routing', () => {
     expect(res.headers.get('location')).toBeNull();
   });
 
+  it('protects the KYC route with the refresh-cookie session hint', () => {
+    const withoutCookie = middleware(request('https://app.gigsecure.test/kyc'));
+    const withCookie = middleware(
+      request('https://app.gigsecure.test/kyc', 'gs_refresh_token=refresh-token')
+    );
+
+    expect(withoutCookie.status).toBe(307);
+    expect(withoutCookie.headers.get('location')).toBe(
+      'https://app.gigsecure.test/login?redirect=%2Fkyc'
+    );
+    expect(withCookie.status).toBe(200);
+    expect(withCookie.headers.get('location')).toBeNull();
+  });
+
   it('redirects authenticated users away from public-only auth pages', () => {
     const res = middleware(
       request('https://app.gigsecure.test/login?redirect=%2Fdashboard', 'gs_refresh_token=refresh-token')

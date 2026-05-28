@@ -27,6 +27,10 @@ export const ENDPOINTS = {
   USERS: {
     ME: '/api/v1/users/me',
   },
+  KYC: {
+    VERIFY: '/api/v1/kyc/verify',
+    STATUS: '/api/v1/kyc/status',
+  },
   RISK: {
     CATEGORIES: '/api/v1/risk/categories',
     QUESTIONS: '/api/v1/risk/questions',

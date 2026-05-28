@@ -24,6 +24,9 @@ export const QUERY_KEYS = {
   RISK_HISTORY: ['risk', 'history'] as const,
   RISK_RECOMMENDATIONS: ['risk', 'recommendations'] as const,
 
+  // KYC
+  KYC_STATUS: ['kyc', 'status'] as const,
+
   // Products
   PRODUCTS: ['products'] as const,
   PRODUCTS_FEATURED: ['products', 'featured'] as const,

@@ -32,6 +32,8 @@ export const userResponseSchema = z.object({
 export const userWithProfileResponseSchema = z.object({
   user: userResponseSchema,
   profile: userProfileResponseSchema.nullable().optional(),
+  kyc_verified: z.boolean().default(false),
+  risk_assessed: z.boolean().default(false),
 });
 
 // ─── Update Profile Request ────────────────────────────────────────

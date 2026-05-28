@@ -861,3 +861,134 @@ Token schemas default missing flags to `false` so auth keeps working during back
 
 Known follow-ups:
 Task 3 must synchronize `/users/me` response flags into the same store actions and introduce the reusable user profile/flag hooks. `npx tsc --noEmit`, the full Vitest suite, focused auth/session tests, and `npm run lint` pass; lint still reports 18 pre-existing warnings. The focused Playwright refresh-queue spec could not be rerun in this session because the sandboxed run could not bind port 3100 and the escalated rerun found an existing `.next/dev/lock`, indicating another Next dev instance or stale lock must be cleared before rerunning e2e.
+
+### 2026-05-28 00:08 WAT
+
+Task completed: Task 3 — User Profile Hydration and Flag Sync
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/lib/validators/user.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/hooks/user/useUser.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/hooks/user/useUserProfile.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/hooks/auth/useUserFlags.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/lib/user-validators.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/services/user.service.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/hooks/user-profile.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+
+Summary:
+Added runtime `/users/me` validation for `kyc_verified` and `risk_assessed`, then wired profile fetches and profile updates to sync those flags through the shared auth store `setFlags` action. Introduced `useUserProfile` as the public profile hydration hook and `useUserFlags` as the store-safe flag reader for future KYC gates, banners, and dashboard actions. Added MSW-backed service and hook coverage plus validator tests for profile, empty profile, and flag default behavior.
+
+Important decisions:
+Reused the existing `useCurrentUser` and `userService` plumbing instead of creating duplicate profile fetch paths; `useUserProfile` is an alias so future consumers get the established authenticated-query behavior. `/users/me` is treated as an allowed source for setting `kycVerified` because the KYC contract explicitly permits confirmed profile syncs, while waitlist-scoped tokens continue to skip profile hydration. Missing profile flags default to `false` at the validation boundary for backend rollout tolerance, matching the Task 2 token schema approach.
+
+Known follow-ups:
+Task 4 must add KYC-specific API constants, runtime validators, service types, and MSW handlers without duplicating the profile flag plumbing introduced here. Task 6 and later UI tasks should consume `useUserFlags` rather than importing the raw auth store. `npx tsc --noEmit`, the full Vitest suite, focused Task 3 tests, `npm run lint`, and `git diff --check` pass; lint still reports 18 pre-existing warnings unrelated to this task.
+
+### 2026-05-28 00:12 WAT
+
+Task completed: Task 4 — KYC Types, Schemas, Endpoints, and Mocks
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/types/kyc.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/lib/validators/kyc.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/lib/api/endpoints.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/mocks/handlers/kyc.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/mocks/browser.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/mocks/server.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/lib/kyc-validators.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+
+Summary:
+Added the KYC frontend contract layer: hand-maintained TypeScript types, runtime Zod validators, backend endpoint constants, and MSW handlers for verify and status states. The request schema enforces the NIN-only document contract and exactly 11 numeric digits, while response schemas cover verified, rejected, failed, pending, and no-attempt status states. Registered the KYC handlers in both browser and Node MSW setup so future service and hook tests can use the same mock contract.
+
+Important decisions:
+Kept the webhook callback out of frontend types/services/mocks because the frontend must not call it. The MSW verify handler uses deterministic document numbers to return verified, rejected, and failed responses, and the status handler uses a test-only `status` query parameter to exercise every status state without adding service code in this task. No auth store, profile hook, KYC service, React Query hook, UI, route, or BFF route was added.
+
+Known follow-ups:
+Task 5 must add `src/services/kyc.service.ts` and `src/hooks/kyc/useKyc.ts` using `ENDPOINTS.KYC`, the new validators, direct `apiClient`, and `retry: false` for verification mutations. Later UI tasks must continue using the NIN-only schema and distinct rejected versus failed copy. `npm test -- --run src/__tests__/lib/kyc-validators.test.ts`, `npx tsc --noEmit`, `npm test -- --run`, `npm run lint`, and `git diff --check` pass; lint still reports 18 pre-existing warnings unrelated to this task.
+
+### 2026-05-28 00:19 WAT
+
+Task completed: Task 5 — KYC Service and React Query Hooks
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/services/kyc.service.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/hooks/kyc/useKyc.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/lib/constants.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/services/kyc.service.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/hooks/kyc-hooks.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+
+Summary:
+Added `kycService.verify` and `kycService.getStatus` using the shared `apiClient`, `ENDPOINTS.KYC`, and the Task 4 runtime validators. Added `useVerifyKyc` and `useKycStatus` React Query hooks with parsed API errors exposed to consumers, `retry: false` on verification mutations, and KYC status query cache keys. Verified responses now set `kycVerified: true` immediately and invalidate user/profile plus KYC status queries, while rejected and failed responses leave auth flags unchanged.
+
+Important decisions:
+Kept KYC calls direct through `apiClient` and did not add a BFF route because the endpoints do not issue or consume refresh tokens. The hook uses the shared `setFlags` action from Task 2 only on synchronous verified responses, matching the resolved product decision; rejected and failed responses are returned as data for future UI copy/cooldown handling. Errors are parsed with `parseApiError` at the hook boundary through a `parsedError` property instead of changing service return shapes.
+
+Known follow-ups:
+Task 6 should build reusable KYC gates and modal UI on top of `useUserFlags`, `useVerifyKyc`, and `useKycStatus` without importing the raw auth store. Later status-polling UI must add the 3s-to-10s backoff and 5-minute stop behavior; this task only exposes the status query primitive. `npm test -- --run src/__tests__/services/kyc.service.test.ts src/__tests__/hooks/kyc-hooks.test.tsx src/__tests__/lib/kyc-validators.test.ts`, `npx tsc --noEmit`, `npm test -- --run`, `npm run lint`, and `git diff --check` pass; lint still reports 18 pre-existing warnings unrelated to this task.
+
+### 2026-05-28 08:40 WAT
+
+Task completed: Task 6 — Reusable KYC Gates and Required Modal
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/hooks/kyc/useKycGate.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/kyc/shared/kyc-status-gate.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/kyc/shared/kyc-required-modal.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/kyc/kyc-status-gate.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/kyc/kyc-required-modal.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+
+Summary:
+Added `useKycGate` as the reusable KYC/risk flag reader on top of `useUserFlags`, plus `KycStatusGate` for composable verified, unverified, and loading branches. Added `KycRequiredModal` as an accessible dialog that can be opened from any action, dismissed by button, Escape, or backdrop, traps focus, and routes users to `/kyc` with optional safe redirect preservation. Component tests cover gate states, hook output, modal ARIA semantics, focus behavior, dismissal paths, and CTA navigation.
+
+Important decisions:
+Kept feature pages insulated from raw auth store imports by routing gate state through `useKycGate` and `useUserFlags`. Built a small local focus trap instead of adding a dialog dependency, because Task 6 only needs one focused reusable modal and the behavior is covered by tests. No route, dashboard consumer, service, status polling, KYC form, store mutation, cooldown storage, or BFF work was added in this task.
+
+Known follow-ups:
+Task 7 should use these primitives when adding `/kyc` route protection and verified-user redirects. Task 8 should use `KycRequiredModal` for the dashboard recommendations action and can pass an intended destination when needed. `npm test -- --run src/__tests__/components/kyc/kyc-status-gate.test.tsx src/__tests__/components/kyc/kyc-required-modal.test.tsx`, `npx tsc --noEmit`, `npm test -- --run`, `npm run lint`, and `git diff --check` pass; lint still reports 18 pre-existing warnings unrelated to this task.
+
+### 2026-05-28 08:44 WAT
+
+Task completed: Task 7 — KYC Route Protection and Redirect Policy
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(app)/kyc/page.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/kyc/kyc-route-controller.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/lib/auth/redirects.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/middleware.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/kyc/kyc-route-controller.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+
+Summary:
+Added the protected `/kyc` route under the app route tree with page metadata and app-chrome-compatible placeholder content. Added `KycRouteController` to wait for auth initialization plus profile/flag resolution, render the route for authenticated unverified users, redirect unauthenticated users to login with a safe return path, and redirect verified users to `/dashboard`. Added `/kyc` to the shared protected app path list so middleware and `ProtectedRoute` use the existing refresh-cookie/session-boot policy.
+
+Important decisions:
+Kept middleware limited to the server-visible refresh cookie because KYC flags and access tokens remain memory-only. Final verified/unverified decisions live in the client controller after silent refresh and `/users/me` profile sync, matching the KYC route-protection plan. This task intentionally did not build the KYC form, status polling UI, dashboard banner, or any new API/store behavior.
+
+Known follow-ups:
+Task 8 should add the dashboard KYC banner and the first real `KycRequiredModal` consumer. Task 9 should replace the `/kyc` placeholder content with the NIN-only verification form, and Task 10 should compose in the status/polling UI. `npm test -- --run src/__tests__/middleware.test.ts src/__tests__/components/kyc/kyc-route-controller.test.tsx src/__tests__/components/auth/route-guards.test.tsx`, `npx tsc --noEmit`, `npm test -- --run`, `npm run lint`, and `git diff --check` pass; lint still reports 18 pre-existing warnings unrelated to this task.
+
+### 2026-05-28 08:50 WAT
+
+Task completed: Task 8 — Dashboard KYC Banner
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(app)/dashboard/page.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/kyc/dashboard/kyc-dashboard-banner.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/kyc/dashboard/kyc-recommendations-action.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/kyc/kyc-dashboard-banner.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/kyc/kyc-recommendations-action.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/pages/dashboard.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+
+Summary:
+Added a dashboard KYC reminder banner that appears for unverified users, links to `/kyc`, and can be dismissed for the current component visit without storing dismissal state in browser storage. Added the first real KYC-gated dashboard action for coverage recommendations: unverified users see `KycRequiredModal`, while verified users call the existing `riskService.getRecommendations` endpoint on demand. Integrated both components into the dashboard above the placeholder content and added component/page tests for visible, absent, dismiss, modal, loading, success, and error states.
+
+Important decisions:
+Kept banner dismissal in local component state only so it resets naturally on a later visit when KYC is still incomplete. Used `useKycGate` and `KycRequiredModal` instead of raw auth store imports or duplicate gating logic, and used the existing direct risk recommendations service rather than adding a parallel client path. Parsed recommendation failures with `parseApiError` and did not mutate any KYC or risk flags in this dashboard task.
+
+Known follow-ups:
+Task 9 should replace the `/kyc` placeholder with the NIN-only verification form, and Task 10 should add the KYC status/polling UI. `npm test -- --run src/__tests__/components/kyc/kyc-dashboard-banner.test.tsx src/__tests__/components/kyc/kyc-recommendations-action.test.tsx src/__tests__/pages/dashboard.test.tsx`, `npx tsc --noEmit`, `npm test -- --run`, `npm run lint`, and `git diff --check` pass. The full test suite still prints the existing non-fatal jsdom navigation notice, and lint still reports the 18 pre-existing warning-only issues unrelated to this task.
