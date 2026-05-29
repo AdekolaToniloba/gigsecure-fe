@@ -992,3 +992,137 @@ Kept banner dismissal in local component state only so it resets naturally on a 
 
 Known follow-ups:
 Task 9 should replace the `/kyc` placeholder with the NIN-only verification form, and Task 10 should add the KYC status/polling UI. `npm test -- --run src/__tests__/components/kyc/kyc-dashboard-banner.test.tsx src/__tests__/components/kyc/kyc-recommendations-action.test.tsx src/__tests__/pages/dashboard.test.tsx`, `npx tsc --noEmit`, `npm test -- --run`, `npm run lint`, and `git diff --check` pass. The full test suite still prints the existing non-fatal jsdom navigation notice, and lint still reports the 18 pre-existing warning-only issues unrelated to this task.
+
+### 2026-05-28 09:00 WAT
+
+Task completed: Task 9 — KYC Verification Form
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(app)/kyc/page.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/kyc/verify/kyc-form-shell.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/kyc/verify/kyc-result-alert.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/kyc/verify/kyc-verification-form.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/ui/DatePicker.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/kyc/kyc-verification-form.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+
+Summary:
+Replaced the `/kyc` placeholder with a NIN-only verification form composed inside the existing protected KYC route controller and app chrome. The form pre-fills editable profile fields from `useUserProfile`, validates with Zod before submission, converts the DatePicker display value to backend `YYYY-MM-DD`, and submits through `useVerifyKyc`. Added visible accessible states for profile loading, API errors, verified success, rejected mismatch, failed provider/technical error, disabled submission, and a 1-hour memory-only retry cooldown for rejected or failed attempts.
+
+Important decisions:
+Kept the document type fixed as display-only text and did not introduce any selectable document-type control. Reused the Task 5 `useVerifyKyc` hook so confirmed `verified` responses set `kycVerified: true` immediately and trigger profile/status invalidation, while rejected and failed responses leave store flags unchanged. Updated the existing DatePicker trigger to receive the `id` and `aria-describedby` needed for accessible labelling instead of creating a duplicate date component.
+
+Known follow-ups:
+Task 10 should add the separate KYC status display and pending polling flow, including the 3-second to 10-second backoff and 5-minute pending timeout. `npm test -- --run src/__tests__/components/kyc/kyc-verification-form.test.tsx`, focused KYC route/page tests, `npx tsc --noEmit`, `npm test -- --run`, `npm run lint`, and `git diff --check` pass. The full test suite still prints the existing non-fatal jsdom navigation notice, and lint still reports the 18 pre-existing warning-only issues unrelated to this task.
+
+### 2026-05-28 09:10 WAT
+
+Task completed: Task 10 — KYC Status Display and Polling
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/hooks/kyc/useKyc.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/kyc/status/kyc-status-panel.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/kyc/status/kyc-pending-state.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/kyc/status/kyc-retry-panel.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/hooks/kyc-status-polling.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/kyc/kyc-status-panel.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+
+Summary:
+Added polling-aware KYC status handling on top of the existing direct `apiClient` status service and React Query hook stack. The polling policy runs pending status checks every 3 seconds for the first 10 pending polls, backs off to 10 seconds, and stops after the 5-minute maximum window. Added accessible status UI for no attempt, pending, long-running pending timeout, verified, rejected, failed, and query error states.
+
+Important decisions:
+Kept status display separate from the KYC form and did not compose it into the page yet, because Task 11 owns page-level composition. Verified status transitions update the shared `kycVerified` flag through the existing `setFlags` action and invalidate `/users/me`; rejected and failed statuses never mutate the store flag. Retry cooldown UI is memory-only and distinct copy is used for rejected user-detail mismatches versus failed technical/provider issues.
+
+Known follow-ups:
+Task 11 should compose the new status panel with the KYC form on the protected `/kyc` page and decide how the retry action should focus or reveal the form. `npm test -- --run src/__tests__/hooks/kyc-status-polling.test.tsx src/__tests__/components/kyc/kyc-status-panel.test.tsx`, `npx tsc --noEmit`, `npm test -- --run`, `npm run lint`, and `git diff --check` pass. The full test suite still prints the existing non-fatal jsdom navigation notice, and lint still reports the 18 pre-existing warning-only issues unrelated to this task.
+
+### 2026-05-28 20:59 WAT
+
+Task completed: Task 11 — KYC Page Composition, Accessibility, SEO, and Visual QA
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(app)/kyc/page.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/kyc/kyc-page.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/ui/DatePicker.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/pages/kyc-page.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+
+Summary:
+Composed the protected `/kyc` page into a dedicated `KycPageContent` container that renders both the status panel and verification form inside the existing app-chrome shell. Updated page metadata description to reflect the NIN-verified operational KYC flow and added focused page tests that assert route-controller composition and metadata presence. Completed visual QA layering by raising the DatePicker portal stacking order so calendar overlays render above lower page chrome (including footer overlap scenarios).
+
+Important decisions:
+Kept Task 11 scoped to composition, accessibility flow, and visual polish only: no new service/store/refetch logic and no route-policy changes beyond existing Task 7 behavior. The status panel `onRetry` callback now uses in-page focus/scroll targeting of the document-number field through composed page content, preserving keyboard-friendly recovery without duplicating form state. DatePicker overlay now uses a high fixed z-index in the body portal so KYC overlay controls remain fully visible on constrained viewports.
+
+Known follow-ups:
+Task 12 should broaden unit/integration coverage across all KYC modules, including any additional composed interaction assertions desired between status retry and form focus behavior. `npm test -- --run src/__tests__/pages/kyc-page.test.tsx src/__tests__/components/kyc/kyc-status-panel.test.tsx src/__tests__/components/kyc/kyc-verification-form.test.tsx`, `npx tsc --noEmit`, and `npm run lint` pass; lint still reports the same 18 pre-existing warning-only issues unrelated to KYC Task 11.
+
+### 2026-05-28 21:04 WAT
+
+Task completed: Follow-up — KYC Verified State UX on `/kyc`
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/kyc/kyc-route-controller.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/kyc/kyc-page.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/kyc/kyc-route-controller.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/kyc/kyc-page.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+
+Summary:
+Updated `/kyc` so authenticated users with verified KYC can stay on the page instead of being redirected to `/dashboard`. Added a verified summary section with explicit success copy, a visible `Verified` status, and user details hydrated from `GET /users/me`. The verification form is now hidden for already-verified users while status and profile information remain visible.
+
+Important decisions:
+This follow-up intentionally changes the earlier redirect policy to match UX feedback: verified users can view their KYC state and identity details directly on `/kyc`. The user information section uses existing `useUserProfile` data instead of creating a duplicate endpoint call path.
+
+Known follow-ups:
+If product wants verified users to re-open the form for support/debug flows, add an explicit “Start a new verification” control with a guarded backend policy. `npm test -- --run src/__tests__/components/kyc/kyc-route-controller.test.tsx src/__tests__/components/kyc/kyc-page.test.tsx`, `npx tsc --noEmit`, and `npm run lint` pass; lint still reports the existing 18 warning-only issues unrelated to this follow-up.
+
+### 2026-05-28 21:08 WAT
+
+Task completed: Task 12 — Unit and Integration Test Completion
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+
+Summary:
+Completed the Task 12 KYC test completion pass by validating the existing KYC unit/integration suite coverage against the epic acceptance criteria and running the full test suite. Current KYC coverage already includes validators, service + MSW behavior, hooks (including polling and mutation behavior), store flag semantics, and UI/component/page states for form, banner, modal, gates, route/controller, and composed KYC page. No additional test code changes were required because all targeted KYC tests and the full project test run passed.
+
+Important decisions:
+Kept this task strictly scoped to verification and gap-checking instead of adding redundant tests that duplicate already-covered acceptance criteria. Preserved existing patterns (MSW-backed tests, React Query `retry: false` semantics, NIN-only contracts, and flag-update constraints) and did not alter feature behavior.
+
+Known follow-ups:
+Task 13 should proceed with Playwright KYC e2e flow coverage only. Validation commands for this task passed: `npm test -- --run` (70 files, 390 tests), `npx tsc --noEmit`, and `npm run lint`; lint still reports the existing 18 warning-only issues unrelated to KYC Task 12.
+
+### 2026-05-28 21:24 WAT
+
+Task completed: Task 13 — KYC E2E Flow Coverage
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/e2e/kyc/kyc-flow.spec.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+
+Summary:
+Added a dedicated Playwright KYC flow suite at `e2e/kyc/kyc-flow.spec.ts` covering route protection, verified-profile view on `/kyc`, successful NIN verification, rejected/failed outcomes with distinct copy, pending status behavior, dashboard banner visibility, KYC-required modal flow, and verified recommendations fetch flow. The spec uses route-level deterministic API mocks for auth/login, refresh, `/users/me`, KYC status/verify, and risk recommendations so the scenarios remain backend-independent. Also added CORS/preflight-safe response fulfillment in the test helper to support cross-origin API-base setups used by the frontend Axios client.
+
+Important decisions:
+Kept the e2e assertions aligned with the latest implemented UX decision from the prior follow-up: verified users remain on `/kyc` and see verified copy + profile details, instead of being redirected to `/dashboard` as older Task 13 text stated. Reused the auth epic’s Playwright pattern of route-level API mocking and did not add any KYC feature runtime code or new API routes.
+
+Known follow-ups:
+`npm run test:e2e -- --project=chromium e2e/kyc/kyc-flow.spec.ts` is currently failing in this environment: only the unauthenticated redirect assertion passes; remaining scenarios fail due the app staying in unresolved KYC page state (`Checking your verification status...`) and subsequent dev-server instability (`ERR_CONNECTION_REFUSED`) during the same run. This requires a follow-up debugging pass focused on Playwright runtime/session bootstrap behavior for `/kyc` and `/dashboard` in dev mode (without changing KYC feature logic). Validation commands `npx tsc --noEmit` and `npm run lint` pass; lint still reports the existing 18 warning-only issues unrelated to Task 13.
+
+### 2026-05-29 21:12 WAT
+
+Task completed: Follow-up — KYC E2E Harness Fix
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/e2e/kyc/kyc-flow.spec.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+
+Summary:
+Fixed the KYC Playwright harness without changing application code. The JSON route helper now echoes the actual request origin and includes credentialed CORS headers for both normal responses and OPTIONS preflights, which matches the app's credentialed Axios client. The authenticated helper now establishes a stable refresh-cookie session before navigating to protected routes, and the route mocks are registered before any navigation that can trigger them.
+
+Important decisions:
+Kept the fix entirely in the e2e spec and avoided touching KYC runtime code. Updated mock payloads to match frontend validators, including a valid UUID for `/users/me` and the array shape expected by the recommendations service. The pending polling assertion advances fake time in smaller intervals so React Query can process each scheduled refetch before the timeout state assertion.
+
+Known follow-ups:
+`npm run test:e2e -- --project=chromium e2e/kyc/kyc-flow.spec.ts` now passes all 8 tests. The run still prints non-fatal Next.js development warnings about the deprecated `middleware` convention, future `allowedDevOrigins` configuration, and `NO_COLOR` being ignored because `FORCE_COLOR` is set.

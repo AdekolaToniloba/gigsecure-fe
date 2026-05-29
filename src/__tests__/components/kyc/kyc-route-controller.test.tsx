@@ -92,7 +92,7 @@ describe('KycRouteController', () => {
     expect(navigation.replace).not.toHaveBeenCalled();
   });
 
-  it('redirects authenticated verified users to dashboard after profile flag sync', async () => {
+  it('renders KYC content for authenticated verified users after profile flag sync', async () => {
     server.use(
       http.get(`${baseUrl}/api/v1/users/me`, () =>
         HttpResponse.json({
@@ -130,9 +130,9 @@ describe('KycRouteController', () => {
     );
 
     await waitFor(() => {
-      expect(navigation.replace).toHaveBeenCalledWith('/dashboard');
+      expect(screen.getByText('KYC content')).toBeInTheDocument();
     });
-    expect(screen.queryByText('KYC content')).not.toBeInTheDocument();
+    expect(navigation.replace).not.toHaveBeenCalled();
   });
 });
 

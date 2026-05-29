@@ -113,7 +113,7 @@ export function KycRequiredModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 py-6 backdrop-blur-sm"
+      className="fixed inset-0 z-[140] flex items-center justify-center bg-black/60 px-4 py-6 backdrop-blur-sm"
       onMouseDown={handleBackdropClick}
       data-testid="kyc-required-backdrop"
     >
