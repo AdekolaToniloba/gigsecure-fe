@@ -108,6 +108,15 @@ export default function LoginForm({ redirectTo, successMessage }: LoginFormProps
         {...form.register('password')}
       />
 
+      <div className="flex justify-end">
+        <Link
+          href="/forgot-password"
+          className="text-sm font-semibold text-primary transition hover:text-primary-light focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-muted"
+        >
+          Forgot password?
+        </Link>
+      </div>
+
       <AuthSubmitButton
         isLoading={isSubmitting}
         loadingLabel="Logging in…"
