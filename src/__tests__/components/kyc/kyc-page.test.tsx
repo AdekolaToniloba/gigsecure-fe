@@ -7,6 +7,10 @@ vi.mock('@/hooks/kyc/useKycGate', () => ({
   useKycGate: vi.fn(),
 }));
 
+vi.mock('@/hooks/kyc/useKyc', () => ({
+  useKycStatus: vi.fn(),
+}));
+
 vi.mock('@/hooks/user/useUserProfile', () => ({
   useUserProfile: vi.fn(),
 }));
@@ -20,9 +24,11 @@ vi.mock('@/components/kyc/verify/kyc-verification-form', () => ({
 }));
 
 import { useKycGate } from '@/hooks/kyc/useKycGate';
+import { useKycStatus } from '@/hooks/kyc/useKyc';
 import { useUserProfile } from '@/hooks/user/useUserProfile';
 
 const mockedUseKycGate = vi.mocked(useKycGate);
+const mockedUseKycStatus = vi.mocked(useKycStatus);
 const mockedUseUserProfile = vi.mocked(useUserProfile);
 
 describe('KycPageContent', () => {
@@ -37,6 +43,15 @@ describe('KycPageContent', () => {
       status: 'authenticated',
       canProceed: true,
     });
+    mockedUseKycStatus.mockReturnValue({
+      data: {
+        status: 'verified',
+        document_type: 'NIN',
+        verified_at: '2026-04-24T10:00:00Z',
+        rejection_reason: null,
+      },
+      isSuccess: true,
+    } as never);
     mockedUseUserProfile.mockReturnValue({
       data: {
         user: {
@@ -94,6 +109,15 @@ describe('KycPageContent', () => {
       status: 'authenticated',
       canProceed: true,
     });
+    mockedUseKycStatus.mockReturnValue({
+      data: {
+        status: null,
+        document_type: null,
+        verified_at: null,
+        rejection_reason: null,
+      },
+      isSuccess: true,
+    } as never);
     mockedUseUserProfile.mockReturnValue({
       data: null,
       isLoading: false,
@@ -104,5 +128,64 @@ describe('KycPageContent', () => {
 
     expect(screen.getByText('KYC verification form')).toBeInTheDocument();
     expect(screen.queryByText(/KYC successfully verified/i)).not.toBeInTheDocument();
+  });
+
+  it('does not show the verification form while KYC status is loading', () => {
+    mockedUseKycGate.mockReturnValue({
+      kycVerified: false,
+      riskAssessed: true,
+      isKycVerified: false,
+      isRiskAssessed: true,
+      isLoading: false,
+      hasResolvedFlags: true,
+      status: 'authenticated',
+      canProceed: false,
+    });
+    mockedUseKycStatus.mockReturnValue({
+      data: undefined,
+      isSuccess: false,
+      isLoading: true,
+    } as never);
+    mockedUseUserProfile.mockReturnValue({
+      data: null,
+      isLoading: false,
+      error: null,
+    } as never);
+
+    render(<KycPageContent />);
+
+    expect(screen.queryByText('KYC verification form')).not.toBeInTheDocument();
+  });
+
+  it('does not show the verification form when status confirms verified before the session flag syncs', () => {
+    mockedUseKycGate.mockReturnValue({
+      kycVerified: false,
+      riskAssessed: true,
+      isKycVerified: false,
+      isRiskAssessed: true,
+      isLoading: false,
+      hasResolvedFlags: true,
+      status: 'authenticated',
+      canProceed: false,
+    });
+    mockedUseKycStatus.mockReturnValue({
+      data: {
+        status: 'verified',
+        document_type: 'NIN',
+        verified_at: '2026-04-24T10:00:00Z',
+        rejection_reason: null,
+      },
+      isSuccess: true,
+    } as never);
+    mockedUseUserProfile.mockReturnValue({
+      data: null,
+      isLoading: false,
+      error: null,
+    } as never);
+
+    render(<KycPageContent />);
+
+    expect(screen.getByText(/KYC successfully verified/i)).toBeInTheDocument();
+    expect(screen.queryByText('KYC verification form')).not.toBeInTheDocument();
   });
 });

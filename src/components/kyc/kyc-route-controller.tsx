@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { Loader2 } from 'lucide-react';
 import { useSession } from '@/hooks/auth/useSession';
 import { useKycGate } from '@/hooks/kyc/useKycGate';
 import { useUserProfile } from '@/hooks/user/useUserProfile';
@@ -42,8 +43,13 @@ export function KycRouteController({ children }: { children: React.ReactNode }) 
 
   if (isResolving || !isAuthenticated) {
     return (
-      <div role="status" aria-live="polite" className="mx-auto max-w-3xl text-sm text-primary">
-        Checking your verification status...
+      <div
+        role="status"
+        aria-live="polite"
+        className="mx-auto flex max-w-3xl items-center gap-3 rounded-lg border border-primary-muted bg-primary-muted p-4 text-sm text-primary"
+      >
+        <Loader2 aria-hidden="true" className="h-5 w-5 shrink-0 animate-spin" />
+        <span>Checking your verification status...</span>
       </div>
     );
   }

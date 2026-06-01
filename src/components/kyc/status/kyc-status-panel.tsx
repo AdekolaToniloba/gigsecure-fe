@@ -1,6 +1,6 @@
 'use client';
 
-import { CheckCircle2, CircleDashed, Info } from 'lucide-react';
+import { CheckCircle2, CircleDashed, Info, Loader2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { KycPendingState } from '@/components/kyc/status/kyc-pending-state';
 import { KycRetryPanel } from '@/components/kyc/status/kyc-retry-panel';
@@ -45,8 +45,9 @@ export function KycStatusPanel({ onRetry }: { onRetry?: () => void }) {
 
   if (statusQuery.isLoading) {
     return (
-      <div role="status" aria-live="polite" className="rounded-lg border border-primary-muted bg-primary-muted p-4 text-sm text-primary">
-        Loading KYC status...
+      <div role="status" aria-live="polite" className="flex items-center gap-3 rounded-lg border border-primary-muted bg-primary-muted p-4 text-sm text-primary">
+        <Loader2 aria-hidden="true" className="h-5 w-5 shrink-0 animate-spin" />
+        <span>Loading KYC status...</span>
       </div>
     );
   }

@@ -1165,3 +1165,24 @@ Used semantic Next.js `Link` controls with visible focus styles so both addition
 
 Known follow-ups:
 Validation passed: `npm test -- --run` (70 files, 391 tests), `npm run lint` (0 errors, 18 existing warnings), `npx tsc --noEmit`, `npm run test:e2e -- --project=chromium` (19 tests), and `git diff --check`. The in-app visual browser was unavailable in this environment; Playwright browser coverage passed for the new landing-to-login-to-forgot-password path.
+
+### 2026-06-01 11:38 WAT
+
+Task completed: Follow-up — KYC Verified Refresh Guard and Loading State
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/kyc/kyc-page.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/kyc/kyc-route-controller.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/kyc/status/kyc-status-panel.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/kyc/kyc-page.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/layout/Navbar.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+
+Summary:
+Prevented the KYC form from rendering while the authoritative KYC status request is unresolved and from reappearing when `GET /kyc/status` confirms an already verified identity before session/profile flags synchronize after a hard refresh. Added framed spinner loading states for session/profile verification checks and KYC status fetches. Extended KYC page regression coverage for loading suppression and verified-status suppression of the form.
+
+Important decisions:
+Kept store synchronization behavior intact and made the KYC page conservative at the rendering boundary: the form is mounted only after status query success and only when neither the shared session flag nor the KYC status response confirms verification. This prevents duplicate verification submission without inferring or persisting a new store flag. Also removed an unrelated navbar `aria-label` override discovered by the full suite so the yellow login CTA's accessible name matches its visible `Log in` text.
+
+Known follow-ups:
+Validation passed: `npm test -- --run` (70 files, 393 tests), `npm run lint` (0 errors, 18 existing warnings), `npx tsc --noEmit`, `npm run test:e2e -- --project=chromium e2e/kyc/kyc-flow.spec.ts` (8 tests), and `git diff --check`. If production still returns `kyc_verified: false` from refresh or `/users/me` while `/kyc/status` returns `verified`, the backend flag synchronization should also be corrected so dashboard gating is consistent outside the KYC page.
