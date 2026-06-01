@@ -86,10 +86,14 @@ describe('LoginForm', () => {
     expect(mockRouter.replace).not.toHaveBeenCalled();
   });
 
-  it('renders signup link and keeps Google action as a non-submit control', () => {
+  it('renders signup and forgot password links and keeps Google action as a non-submit control', () => {
     renderWithProviders(<LoginForm />);
 
     expect(screen.getByRole('link', { name: /Sign up/i })).toHaveAttribute('href', '/register');
+    expect(screen.getByRole('link', { name: /Forgot password/i })).toHaveAttribute(
+      'href',
+      '/forgot-password'
+    );
     expect(screen.getByRole('button', { name: /Sign In with Google/i })).toHaveAttribute(
       'type',
       'button'

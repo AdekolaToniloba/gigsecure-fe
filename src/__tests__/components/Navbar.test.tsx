@@ -55,6 +55,19 @@ describe('Navbar', () => {
     expect(screen.getAllByText('Marketplace')[0]).toBeInTheDocument();
   });
 
+  it('renders a login link for desktop and mobile navigation', async () => {
+    render(<Navbar />);
+    const user = userEvent.setup();
+
+    expect(screen.getByRole('link', { name: 'Log in' })).toHaveAttribute('href', '/login');
+
+    await user.click(screen.getByRole('button', { name: /Open main menu/i }));
+
+    const loginLinks = screen.getAllByRole('link', { name: 'Log in' });
+    expect(loginLinks).toHaveLength(2);
+    expect(loginLinks[1]).toHaveAttribute('href', '/login');
+  });
+
 
   it('toggles mobile menu when hamburger is clicked', async () => {
     render(<Navbar />);

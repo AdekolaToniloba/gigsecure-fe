@@ -1,19 +1,19 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-import { usePathname } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X } from 'lucide-react';
-import { APP_NAME, ROUTES } from '@/lib/constants';
-import { assetUrl, ASSETS } from '@/lib/assets';
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { usePathname } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
+import { Menu, X } from "lucide-react";
+import { APP_NAME, ROUTES } from "@/lib/constants";
+import { assetUrl, ASSETS } from "@/lib/assets";
 
 const NAV_LINKS = [
-  { name: 'About', href: '/about' },
-  { name: 'Blog', href: '/coming-soon' },
-  { name: 'Marketplace', href: '/coming-soon' },
-  { name: 'Risk Assessment', href: '/risk-assessment' },
+  { name: "About", href: "/about" },
+  { name: "Blog", href: "/coming-soon" },
+  { name: "Marketplace", href: "/coming-soon" },
+  { name: "Risk Assessment", href: "/risk-assessment" },
 ];
 
 export default function Navbar() {
@@ -26,8 +26,8 @@ export default function Navbar() {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
     };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   // Close mobile menu on route change
@@ -38,9 +38,9 @@ export default function Navbar() {
   // Prevent scrolling when mobile menu is open
   useEffect(() => {
     if (isMobileMenuOpen) {
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     }
   }, [isMobileMenuOpen]);
 
@@ -48,7 +48,9 @@ export default function Navbar() {
     <nav
       aria-label="Main navigation"
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 w-full ${
-        isScrolled ? 'bg-[#004E4C]/95 backdrop-blur-md shadow-md' : 'bg-[#004E4C]'
+        isScrolled
+          ? "bg-[#004E4C]/95 backdrop-blur-md shadow-md"
+          : "bg-[#004E4C]"
       }`}
     >
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6 lg:px-8">
@@ -58,10 +60,7 @@ export default function Navbar() {
           className="flex items-center gap-2 group outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-sm cursor-pointer"
           aria-label={`${APP_NAME} home`}
         >
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <Image
               src={assetUrl(ASSETS.logo)}
               alt={APP_NAME}
@@ -101,6 +100,13 @@ export default function Navbar() {
             ))}
           </ul>
 
+          <Link
+            href="/login"
+            className="inline-flex h-10 items-center justify-center rounded-md bg-accent px-5 font-body text-base font-semibold text-primary transition-colors hover:bg-[#FFE419]/90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-offset-2 focus-visible:ring-[#FFE419]/50"
+          >
+            Log in
+          </Link>
+
           {/* <motion.div
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
@@ -127,7 +133,7 @@ export default function Navbar() {
             aria-label={isMobileMenuOpen ? "Close main menu" : "Open main menu"}
           >
             <span className="sr-only">
-              {isMobileMenuOpen ? 'Close menu' : 'Open menu'}
+              {isMobileMenuOpen ? "Close menu" : "Open menu"}
             </span>
             <AnimatePresence mode="wait" initial={false}>
               {isMobileMenuOpen ? (
@@ -162,9 +168,9 @@ export default function Navbar() {
           <motion.div
             id="mobile-menu"
             initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
+            animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
             className="md:hidden overflow-hidden border-t border-white/10 bg-[#004E4C] shadow-xl"
           >
             <div className="space-y-1 px-6 pb-8 pt-4">
@@ -179,14 +185,28 @@ export default function Navbar() {
                     <Link
                       href={link.href}
                       className={`block font-body text-xl font-medium py-2 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer ${
-                        pathname === link.href ? 'text-accent' : 'text-white'
+                        pathname === link.href ? "text-accent" : "text-white"
                       }`}
                     >
                       {link.name}
                     </Link>
                   </motion.li>
                 ))}
-                
+
+                <motion.li
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.2 }}
+                  className="pt-4"
+                >
+                  <Link
+                    href="/login"
+                    className="flex h-12 w-full items-center justify-center rounded-md bg-accent font-body text-base font-semibold text-primary transition-colors hover:bg-accent-alt focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-primary"
+                  >
+                    Log in
+                  </Link>
+                </motion.li>
+
                 {/* <motion.li
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}

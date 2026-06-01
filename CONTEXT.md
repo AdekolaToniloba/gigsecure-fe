@@ -1144,3 +1144,24 @@ Kept Task 14 documentation-focused and avoided feature changes. The only test ha
 
 Known follow-ups:
 Final QA passed: `npm run lint` (0 errors, 18 existing warnings), `npm test -- --run` (70 files, 390 tests), `npx tsc --noEmit`, `npm run test:e2e -- --project=chromium` (18 tests), `npm run build`, and `git diff --check`. The first sandboxed build attempt failed because Next.js could not fetch Google Fonts with restricted network access; the escalated rerun succeeded. Non-blocking warnings remain for the deprecated Next.js `middleware` convention, future `allowedDevOrigins` config, `NO_COLOR`/`FORCE_COLOR`, and the existing lint warnings unrelated to KYC.
+
+### 2026-06-01 11:05 WAT
+
+Task completed: Follow-up — Public Login and Forgot Password Navigation
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/layout/Navbar.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/auth/login/login-form.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/Navbar.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/auth/login-form.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/e2e/auth/auth-flows.spec.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+
+Summary:
+Added a public landing-page navbar login link for desktop and mobile navigation, routing users to `/login`. Added a visible `Forgot password?` link to the login form that starts the existing `/forgot-password` flow. Extended component and Playwright coverage for both navigation paths.
+
+Important decisions:
+Used semantic Next.js `Link` controls with visible focus styles so both additions work with keyboard and assistive technology navigation without introducing client-side click handlers or duplicate auth flow logic.
+
+Known follow-ups:
+Validation passed: `npm test -- --run` (70 files, 391 tests), `npm run lint` (0 errors, 18 existing warnings), `npx tsc --noEmit`, `npm run test:e2e -- --project=chromium` (19 tests), and `git diff --check`. The in-app visual browser was unavailable in this environment; Playwright browser coverage passed for the new landing-to-login-to-forgot-password path.

@@ -13,6 +13,18 @@ test.beforeEach(async ({ page }) => {
   await mockUnauthenticatedRefresh(page);
 });
 
+test('landing navbar login link reaches the forgot password flow', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('link', { name: 'Log in' }).click();
+
+  await expect(page).toHaveURL(/\/login$/);
+
+  await page.getByRole('link', { name: 'Forgot password?' }).click();
+
+  await expect(page).toHaveURL(/\/forgot-password$/);
+  await expect(page.getByRole('heading', { name: 'Forgot Password' })).toBeVisible();
+});
+
 test('register routes to check inbox without creating a browser-readable session', async ({ page }) => {
   await page.route('**/api/auth/register', async (route) => {
     expect(route.request().headers()['x-requested-with']).toBe('XMLHttpRequest');
