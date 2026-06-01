@@ -138,6 +138,45 @@
     },
     "/api/v1/risk/history": { "get": { "tags": ["Risk Assessment"], "summary": "Get Assessment History", "operationId": "get_assessment_history", "responses": { "200": { "description": "Successful Response" } }, "security": [{ "HTTPBearer": [] }] } },
     "/api/v1/risk/recommendations": { "get": { "tags": ["Risk Assessment"], "summary": "Get Recommendations", "operationId": "get_recommendations", "responses": { "200": { "description": "Successful Response" } }, "security": [{ "HTTPBearer": [] }] } },
+    "/api/v1/kyc/verify": {
+      "post": {
+        "tags": ["KYC"],
+        "summary": "Verify Identity",
+        "description": "Submit NIN or BVN for identity verification via Smile ID.",
+        "operationId": "verify_identity_api_v1_kyc_verify_post",
+        "requestBody": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/KYCVerifyRequest" } } }, "required": true },
+        "responses": {
+          "200": { "description": "Successful Response", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/KYCVerifyResponse" } } } },
+          "422": { "description": "Validation Error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/HTTPValidationError" } } } }
+        },
+        "security": [{ "HTTPBearer": [] }]
+      }
+    },
+    "/api/v1/kyc/status": {
+      "get": {
+        "tags": ["KYC"],
+        "summary": "Get Kyc Status",
+        "description": "Get the current KYC verification status for the authenticated user.",
+        "operationId": "get_kyc_status_api_v1_kyc_status_get",
+        "responses": {
+          "200": { "description": "Successful Response", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/KYCStatusResponse" } } } }
+        },
+        "security": [{ "HTTPBearer": [] }]
+      }
+    },
+    "/api/v1/kyc/callback": {
+      "post": {
+        "tags": ["KYC"],
+        "summary": "Smile Id Callback",
+        "description": "Webhook endpoint for asynchronous Smile ID verification results.",
+        "operationId": "smile_id_callback_api_v1_kyc_callback_post",
+        "requestBody": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SmileIDCallbackPayload" } } }, "required": true },
+        "responses": {
+          "200": { "description": "Successful Response", "content": { "application/json": { "schema": {} } } },
+          "422": { "description": "Validation Error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/HTTPValidationError" } } } }
+        }
+      }
+    },
     "/api/v1/products/": { "get": { "tags": ["Marketplace"], "summary": "List Products", "operationId": "list_products", "responses": { "200": { "description": "Successful Response" } } } },
     "/api/v1/products/featured": { "get": { "tags": ["Marketplace"], "summary": "Get Featured Products", "operationId": "get_featured_products", "responses": { "200": { "description": "Successful Response" } } } },
     "/api/v1/products/{product_id}": { "get": { "tags": ["Marketplace"], "summary": "Get Product", "operationId": "get_product", "parameters": [{ "name": "product_id", "in": "path", "required": true, "schema": { "type": "string" } }], "responses": { "200": { "description": "Successful Response" } } } },
@@ -161,12 +200,59 @@
       "ChangePasswordRequest": { "properties": { "old_password": { "type": "string" }, "new_password": { "type": "string" } }, "type": "object", "required": ["old_password", "new_password"], "title": "ChangePasswordRequest" },
       "ForgotPasswordRequest": { "properties": { "email": { "type": "string", "format": "email" } }, "type": "object", "required": ["email"], "title": "ForgotPasswordRequest" },
       "HTTPValidationError": { "properties": { "detail": { "items": { "$ref": "#/components/schemas/ValidationError" }, "type": "array" } }, "type": "object", "title": "HTTPValidationError" },
+      "KYCStatusResponse": {
+        "properties": {
+          "status": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Status" },
+          "document_type": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Document Type" },
+          "verified_at": { "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }], "title": "Verified At" },
+          "rejection_reason": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Rejection Reason" }
+        },
+        "type": "object",
+        "required": ["status", "document_type", "verified_at", "rejection_reason"],
+        "title": "KYCStatusResponse"
+      },
+      "KYCVerifyRequest": {
+        "properties": {
+          "document_type": { "type": "string", "const": "NIN", "title": "Document Type" },
+          "document_number": { "type": "string", "title": "Document Number" },
+          "first_name": { "type": "string", "title": "First Name" },
+          "last_name": { "type": "string", "title": "Last Name" },
+          "date_of_birth": { "type": "string", "title": "Date Of Birth" }
+        },
+        "type": "object",
+        "required": ["document_type", "document_number", "first_name", "last_name", "date_of_birth"],
+        "title": "KYCVerifyRequest"
+      },
+      "KYCVerifyResponse": {
+        "properties": {
+          "status": { "type": "string", "title": "Status" },
+          "message": { "type": "string", "title": "Message" },
+          "smile_job_id": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Smile Job Id" }
+        },
+        "type": "object",
+        "required": ["status", "message"],
+        "title": "KYCVerifyResponse"
+      },
       "LoginRequest": { "properties": { "email": { "type": "string" }, "password": { "type": "string" } }, "type": "object", "required": ["email", "password"], "title": "LoginRequest" },
       "RefreshTokenRequest": { "properties": { "refresh_token": { "type": "string" } }, "type": "object", "required": ["refresh_token"], "title": "RefreshTokenRequest" },
       "RegisterRequest": { "properties": { "email": { "type": "string", "format": "email" }, "password": { "type": "string" }, "first_name": { "type": "string" }, "last_name": { "anyOf": [{ "type": "string" }, { "type": "null" }] } }, "type": "object", "required": ["email", "password", "first_name"], "title": "RegisterRequest" },
       "ResendActivationRequest": { "properties": { "email": { "type": "string", "format": "email" } }, "type": "object", "required": ["email"], "title": "ResendActivationRequest" },
       "ResetPasswordRequest": { "properties": { "token": { "type": "string" }, "new_password": { "type": "string" } }, "type": "object", "required": ["token", "new_password"], "title": "ResetPasswordRequest" },
-      "TokenResponse": { "properties": { "access_token": { "type": "string" }, "refresh_token": { "type": "string" }, "token_type": { "type": "string", "default": "bearer" } }, "type": "object", "required": ["access_token", "refresh_token"], "title": "TokenResponse" },
+      "SmileIDCallbackPayload": {
+        "properties": {
+          "signature": { "type": "string", "title": "Signature" },
+          "timestamp": { "type": "string", "title": "Timestamp" },
+          "SmileJobID": { "type": "string", "title": "Smilejobid" },
+          "ResultCode": { "type": "string", "title": "Resultcode" },
+          "ResultText": { "type": "string", "title": "Resulttext" },
+          "Actions": { "additionalProperties": true, "type": "object", "title": "Actions" },
+          "PartnerParams": { "additionalProperties": true, "type": "object", "title": "Partnerparams" }
+        },
+        "type": "object",
+        "required": ["signature", "timestamp", "SmileJobID", "ResultCode", "ResultText", "Actions", "PartnerParams"],
+        "title": "SmileIDCallbackPayload"
+      },
+      "TokenResponse": { "properties": { "access_token": { "type": "string" }, "refresh_token": { "type": "string" }, "token_type": { "type": "string", "default": "bearer" }, "kyc_verified": { "type": "boolean", "title": "Kyc Verified", "default": false }, "risk_assessed": { "type": "boolean", "title": "Risk Assessed", "default": false } }, "type": "object", "required": ["access_token", "refresh_token"], "title": "TokenResponse" },
       "UpdateProfileRequest": {
         "properties": {
           "first_name": { "anyOf": [{ "type": "string" }, { "type": "null" }] },
@@ -225,7 +311,7 @@
         "title": "UserResponse"
       },
       "UserWithProfileResponse": {
-        "properties": { "user": { "$ref": "#/components/schemas/UserResponse" }, "profile": { "anyOf": [{ "$ref": "#/components/schemas/UserProfileResponse" }, { "type": "null" }] } },
+        "properties": { "user": { "$ref": "#/components/schemas/UserResponse" }, "profile": { "anyOf": [{ "$ref": "#/components/schemas/UserProfileResponse" }, { "type": "null" }] }, "kyc_verified": { "type": "boolean", "title": "Kyc Verified", "default": false }, "risk_assessed": { "type": "boolean", "title": "Risk Assessed", "default": false } },
         "type": "object",
         "required": ["user"],
         "title": "UserWithProfileResponse"

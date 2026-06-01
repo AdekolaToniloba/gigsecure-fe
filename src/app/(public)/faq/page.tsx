@@ -81,7 +81,7 @@ export default function FAQPage() {
           </p>
           <div className="flex w-full justify-end mt-12 sm:mt-12">
             <h1 className="font-heading text-5xl sm:text-[56px] font-bold text-[#FFE419] leading-none m-0 pr-4 sm:pr-8">
-              FAQ'S
+              FAQ&apos;S
             </h1>
           </div>
         </div>

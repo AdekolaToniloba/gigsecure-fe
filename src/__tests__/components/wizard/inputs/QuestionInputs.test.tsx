@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { useForm, FormProvider } from 'react-hook-form';
+import { useForm, FormProvider, type Control } from 'react-hook-form';
 import SingleChoiceInput from '@/app/(wizard)/assessment/_components/questions/SingleChoiceInput';
 import MultiChoiceInput from '@/app/(wizard)/assessment/_components/questions/MultiChoiceInput';
 import BooleanInput from '@/app/(wizard)/assessment/_components/questions/BooleanInput';
@@ -9,7 +9,13 @@ import RatingInput from '@/app/(wizard)/assessment/_components/questions/RatingI
 import type { SingleChoiceQuestion, MultiChoiceQuestion, BooleanQuestion, RatingQuestion } from '@/types/risk-assessment';
 
 // Wrapper to provide RHF control
-function FormWrapper({ children, defaultValues = {} }: { children: (control: any) => React.ReactNode; defaultValues?: Record<string, unknown> }) {
+function FormWrapper({
+  children,
+  defaultValues = {},
+}: {
+  children: (control: Control<Record<string, unknown>>) => React.ReactNode;
+  defaultValues?: Record<string, unknown>;
+}) {
   const form = useForm({ defaultValues });
   return <FormProvider {...form}><form>{children(form.control)}</form></FormProvider>;
 }

@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { assertCsrfHeader, buildRefreshCookie, BACKEND_URL } from '../_bff-utils';
+import {
+  assertCsrfHeader,
+  createBrowserSessionResponse,
+  missingBackendUrlResponse,
+  safeJson,
+  BACKEND_URL,
+} from '../_bff-utils';
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const csrfErr = assertCsrfHeader(req);
   if (csrfErr) return csrfErr;
+  if (!BACKEND_URL) return missingBackendUrlResponse();
 
   const body = await req.json();
 
@@ -13,19 +20,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     body: JSON.stringify(body),
   });
 
-  const data = await backendRes.json();
+  const data = await safeJson(backendRes);
 
   if (!backendRes.ok) {
     return NextResponse.json(data, { status: backendRes.status });
   }
 
-  const { refresh_token, access_token, token_type } = data as {
-    access_token: string;
-    refresh_token: string;
-    token_type: string;
-  };
-
-  const response = NextResponse.json({ access_token, token_type });
-  response.headers.set('Set-Cookie', buildRefreshCookie(refresh_token));
-  return response;
+  return createBrowserSessionResponse(data, { requireRefreshToken: true });
 }

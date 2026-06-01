@@ -56,12 +56,15 @@ export default function ComboboxSelect({
     [options, value]
   );
 
-  useEffect(() => {
-    if (!isOpen) return;
+  const getInitialHighlightedIndex = (nextOptions: SelectOption[]) => {
+    const selectedIdx = nextOptions.findIndex((opt) => opt.value === value);
+    return selectedIdx >= 0 ? selectedIdx : nextOptions.length > 0 ? 0 : -1;
+  };
 
-    const selectedIdx = filteredOptions.findIndex((opt) => opt.value === value);
-    setHighlightedIndex(selectedIdx >= 0 ? selectedIdx : filteredOptions.length > 0 ? 0 : -1);
-  }, [filteredOptions, isOpen, value]);
+  const openMenu = () => {
+    setHighlightedIndex(getInitialHighlightedIndex(filteredOptions));
+    setIsOpen(true);
+  };
 
   useEffect(() => {
     if (!isOpen) return;
@@ -107,8 +110,19 @@ export default function ComboboxSelect({
 
     if (event.key === 'ArrowDown' || event.key === 'ArrowUp' || event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
-      setIsOpen(true);
+      openMenu();
     }
+  };
+
+  const handleQueryChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const nextQuery = event.target.value;
+    setQuery(nextQuery);
+
+    const normalizedQuery = nextQuery.trim().toLowerCase();
+    const nextOptions = normalizedQuery
+      ? options.filter((opt) => opt.label.toLowerCase().includes(normalizedQuery))
+      : options;
+    setHighlightedIndex(nextOptions.length > 0 ? 0 : -1);
   };
 
   const handleMenuKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -152,7 +166,14 @@ export default function ComboboxSelect({
           isOpen && highlightedIndex >= 0 ? `${inputId}-option-${highlightedIndex}` : undefined
         }
         disabled={disabled}
-        onClick={() => !disabled && setIsOpen((prev) => !prev)}
+        onClick={() => {
+          if (disabled) return;
+          if (isOpen) {
+            setIsOpen(false);
+          } else {
+            openMenu();
+          }
+        }}
         onKeyDown={handleTriggerKeyDown}
         onBlur={() => {
           if (!isOpen) onBlur?.();
@@ -196,7 +217,7 @@ export default function ComboboxSelect({
                   id={`${inputId}-search`}
                   ref={searchInputRef}
                   value={query}
-                  onChange={(event) => setQuery(event.target.value)}
+                  onChange={handleQueryChange}
                   onKeyDown={handleMenuKeyDown}
                   placeholder={searchPlaceholder}
                   className="w-full h-10 rounded-md border border-gray-200 pl-9 pr-3 text-sm text-gray-900 outline-none focus:border-[#004E4C] focus:ring-1 focus:ring-[#004E4C]"

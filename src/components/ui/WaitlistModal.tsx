@@ -33,11 +33,15 @@ export default function WaitlistModal() {
 
   // Reset state when modal is toggled
   useEffect(() => {
-    if (isOpen) {
+    if (!isOpen) return;
+
+    const resetTimer = window.setTimeout(() => {
       setIsSuccess(false);
       setFormError('');
       reset();
-    }
+    }, 0);
+
+    return () => window.clearTimeout(resetTimer);
   }, [isOpen, reset]);
 
   const onSubmit = async (data: WaitlistSignupRequest) => {
@@ -48,8 +52,8 @@ export default function WaitlistModal() {
       setTimeout(() => {
         closeModal();
       }, 3000);
-    } catch (error: any) {
-      setFormError(error?.message || 'Something went wrong. Please try again.');
+    } catch (error: unknown) {
+      setFormError(error instanceof Error ? error.message : 'Something went wrong. Please try again.');
     }
   };
 
@@ -97,8 +101,8 @@ export default function WaitlistModal() {
             </h2>
 
             <p className="text-white/90 font-body text-[16px] max-w-[400px] leading-relaxed">
-              You're among the first freelancers shaping GigSecure.
-              Drop your email and we'll reach out the moment coverage goes live.
+              You&apos;re among the first freelancers shaping GigSecure.
+              Drop your email and we&apos;ll reach out the moment coverage goes live.
             </p>
           </div>
 
@@ -191,7 +195,7 @@ export default function WaitlistModal() {
                 <div className="mt-6 flex items-start gap-3 px-2">
                   <Lock className="text-gray-400 mt-0.5 flex-shrink-0" size={16} />
                   <p className="text-[13px] text-gray-500 leading-tight font-body">
-                    We'll only contact you about GigSecure. No spam, no third-party sharing. 
+                    We&apos;ll only contact you about GigSecure. No spam, no third-party sharing. 
                     Unsubscribe anytime.
                   </p>
                 </div>

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports -- This maintenance script is CommonJS because the package is not configured for ESM. */
 const fs = require('fs');
 const path = require('path');
 

@@ -2,6 +2,11 @@ import axios, { AxiosError } from 'axios';
 import axiosRetry from 'axios-retry';
 import { useAuthStore } from '@/store/auth-store';
 import { AUTH_ENDPOINTS } from './endpoints';
+import {
+  parseBrowserSessionResponse,
+  refreshAccessTokenOnce,
+  shouldSkipRefreshForWaitlistToken,
+} from './refresh-queue';
 
 // ─── Create Axios Instance ─────────────────────────────────────────
 export const apiClient = axios.create({
@@ -37,21 +42,6 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
-// ─── Response Interceptor — Silent Refresh Flow ─────────────────────
-let isRefreshing = false;
-let failedQueue: Array<{
-  resolve: (token: string) => void;
-  reject: (err: unknown) => void;
-}> = [];
-
-function processQueue(error: unknown, token: string | null) {
-  failedQueue.forEach(({ resolve, reject }) => {
-    if (token) resolve(token);
-    else reject(error);
-  });
-  failedQueue = [];
-}
-
 apiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
@@ -65,35 +55,12 @@ apiClient.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // Check if token is waitlist scoped and if it is expired
-    let isWaitlist = false;
-    let isExpired = false;
     const currentToken = useAuthStore.getState().accessToken;
 
-    if (currentToken) {
-      try {
-        const base64Url = currentToken.split('.')[1];
-        if (base64Url) {
-          let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-          const pad = base64.length % 4;
-          if (pad) base64 += '='.repeat(4 - pad);
-          const payload = JSON.parse(
-            decodeURIComponent(
-              atob(base64).split('').map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')
-            )
-          );
-          isWaitlist = payload.scope === 'waitlist';
-          isExpired = payload.exp * 1000 < Date.now();
-        }
-      } catch (e) {
-        // Ignore parse errors
-      }
-    }
-
-    // If waitlist token is not expired, it's a scope/permission error from the backend, not an auth expiration. 
+    // If waitlist token is not expired, it's a scope/permission error from the backend, not an auth expiration.
     // Waitlist tokens don't have refresh tokens, so attempting a refresh is guaranteed to fail and log them out.
     // We just reject the request so the UI can gracefully handle the API failure without nuking the session.
-    if (isWaitlist && !isExpired) {
+    if (shouldSkipRefreshForWaitlistToken(currentToken)) {
       return Promise.reject(error);
     }
 
@@ -107,43 +74,15 @@ apiClient.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // Queue concurrent requests while refresh is in flight
-    if (isRefreshing) {
-      return new Promise<string>((resolve, reject) => {
-        failedQueue.push({ resolve, reject });
-      }).then((token) => {
-        originalRequest.headers = originalRequest.headers ?? {};
-        originalRequest.headers['Authorization'] = `Bearer ${token}`;
-        return apiClient(originalRequest);
-      });
-    }
-
     originalRequest._retry = true;
-    isRefreshing = true;
 
     try {
-      // Browser automatically sends the httpOnly gs_refresh_token cookie
-      const res = await fetch(AUTH_ENDPOINTS.REFRESH, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-        },
-      });
-
-      if (!res.ok) throw new Error('Refresh failed');
-
-      const data = await res.json() as { access_token: string };
-      const newToken = data.access_token;
-
-      useAuthStore.getState().setAccessToken(newToken);
-      processQueue(null, newToken);
+      const newToken = await refreshAccessTokenOnce(refreshAccessTokenFromBff);
 
       originalRequest.headers = originalRequest.headers ?? {};
       originalRequest.headers['Authorization'] = `Bearer ${newToken}`;
       return apiClient(originalRequest);
     } catch (refreshError) {
-      processQueue(refreshError, null);
       useAuthStore.getState().clearAuth();
       if (typeof window !== 'undefined') {
         // Waitlist users have no refresh cookie — send them back to waitlist, not login
@@ -151,8 +90,28 @@ apiClient.interceptors.response.use(
         window.location.href = isWizardPath ? '/waitlist?expired=true' : '/login';
       }
       return Promise.reject(refreshError);
-    } finally {
-      isRefreshing = false;
     }
   }
 );
+
+async function refreshAccessTokenFromBff() {
+  // Browser automatically sends the httpOnly gs_refresh_token cookie.
+  const res = await fetch(AUTH_ENDPOINTS.REFRESH, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
+    },
+  });
+
+  if (!res.ok) throw new Error('Refresh failed');
+
+  const data: unknown = await res.json();
+  const session = parseBrowserSessionResponse(data);
+  useAuthStore.getState().setSession({
+    accessToken: session.access_token,
+    kycVerified: session.kyc_verified,
+    riskAssessed: session.risk_assessed,
+  });
+  return session.access_token;
+}

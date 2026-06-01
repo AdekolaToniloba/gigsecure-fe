@@ -261,6 +261,66 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/kyc/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Verify Identity
+         * @description Submit NIN or BVN for identity verification via Smile ID.
+         */
+        post: operations["verify_identity_api_v1_kyc_verify_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/kyc/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Kyc Status
+         * @description Get the current KYC verification status for the authenticated user.
+         */
+        get: operations["get_kyc_status_api_v1_kyc_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/kyc/callback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Smile Id Callback
+         * @description Webhook endpoint for asynchronous Smile ID verification results.
+         */
+        post: operations["smile_id_callback_api_v1_kyc_callback_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/products/": {
         parameters: {
             query?: never;
@@ -458,6 +518,42 @@ export interface components {
         HTTPValidationError: {
             detail?: components["schemas"]["ValidationError"][];
         };
+        /** KYCStatusResponse */
+        KYCStatusResponse: {
+            /** Status */
+            status: string | null;
+            /** Document Type */
+            document_type: string | null;
+            /** Verified At */
+            verified_at: string | null;
+            /** Rejection Reason */
+            rejection_reason: string | null;
+        };
+        /** KYCVerifyRequest */
+        KYCVerifyRequest: {
+            /**
+             * Document Type
+             * @constant
+             */
+            document_type: "NIN";
+            /** Document Number */
+            document_number: string;
+            /** First Name */
+            first_name: string;
+            /** Last Name */
+            last_name: string;
+            /** Date Of Birth */
+            date_of_birth: string;
+        };
+        /** KYCVerifyResponse */
+        KYCVerifyResponse: {
+            /** Status */
+            status: string;
+            /** Message */
+            message: string;
+            /** Smile Job Id */
+            smile_job_id?: string | null;
+        };
         /** LoginRequest */
         LoginRequest: {
             email: string;
@@ -485,12 +581,43 @@ export interface components {
             token: string;
             new_password: string;
         };
+        /** SmileIDCallbackPayload */
+        SmileIDCallbackPayload: {
+            /** Signature */
+            signature: string;
+            /** Timestamp */
+            timestamp: string;
+            /** Smilejobid */
+            SmileJobID: string;
+            /** Resultcode */
+            ResultCode: string;
+            /** Resulttext */
+            ResultText: string;
+            /** Actions */
+            Actions: {
+                [key: string]: unknown;
+            };
+            /** Partnerparams */
+            PartnerParams: {
+                [key: string]: unknown;
+            };
+        };
         /** TokenResponse */
         TokenResponse: {
             access_token: string;
             refresh_token: string;
             /** @default bearer */
             token_type: string;
+            /**
+             * Kyc Verified
+             * @default false
+             */
+            kyc_verified: boolean;
+            /**
+             * Risk Assessed
+             * @default false
+             */
+            risk_assessed: boolean;
         };
         /** UpdateProfileRequest */
         UpdateProfileRequest: {
@@ -544,6 +671,16 @@ export interface components {
         UserWithProfileResponse: {
             user: components["schemas"]["UserResponse"];
             profile?: components["schemas"]["UserProfileResponse"] | null;
+            /**
+             * Kyc Verified
+             * @default false
+             */
+            kyc_verified: boolean;
+            /**
+             * Risk Assessed
+             * @default false
+             */
+            risk_assessed: boolean;
         };
         /** ValidationError */
         ValidationError: {
@@ -1008,6 +1145,92 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    verify_identity_api_v1_kyc_verify_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["KYCVerifyRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KYCVerifyResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_kyc_status_api_v1_kyc_status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KYCStatusResponse"];
+                };
+            };
+        };
+    };
+    smile_id_callback_api_v1_kyc_callback_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SmileIDCallbackPayload"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
             };
         };
     };

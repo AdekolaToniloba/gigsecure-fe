@@ -1,5 +1,13 @@
 import { describe, it, expect } from 'vitest';
-import { parseInsights } from '@/app/(wizard)/assessment/_lib/parseInsights';
+import { parseInsights, type InsightBlock } from '@/app/(wizard)/assessment/_lib/parseInsights';
+
+function findTable(blocks: InsightBlock[]) {
+  return blocks.find((block): block is Extract<InsightBlock, { type: 'table' }> => block.type === 'table');
+}
+
+function findCallout(blocks: InsightBlock[]) {
+  return blocks.find((block): block is Extract<InsightBlock, { type: 'callout' }> => block.type === 'callout');
+}
 
 // The exact format from the real API response
 const REAL_AI_INSIGHTS = `**PERSONALIZED INSIGHTS**  
@@ -53,13 +61,13 @@ describe('parseInsights — root cause fixes', () => {
 - **Health Protection – Recommended** – Your health exposure is moderate (53.8 %); a simple health cover will keep unexpected medical bills from blowing your budget.`;
 
     const result = parseInsights(input);
-    const table = result.find((b) => b.type === 'table') as any;
+    const table = findTable(result);
     
     expect(table).toBeDefined();
-    expect(table.rows[0][0]).toBe('Health Protection');            // Cover Type
-    expect(table.rows[0][1]).toBe('Recommended');                  // Level
-    expect(table.rows[0][2]).toContain('Your health exposure is moderate'); // Full description
-    expect(table.rows[0][2]).toContain('53.8 %');                  // Must NOT be truncated
+    expect(table?.rows[0][0]).toBe('Health Protection');            // Cover Type
+    expect(table?.rows[0][1]).toBe('Recommended');                  // Level
+    expect(table?.rows[0][2]).toContain('Your health exposure is moderate'); // Full description
+    expect(table?.rows[0][2]).toContain('53.8 %');                  // Must NOT be truncated
   });
 
   it('parses all four protection plan items with full descriptions', () => {
@@ -74,17 +82,17 @@ describe('parseInsights — root cause fixes', () => {
 - **Emergency Cash Cover – Recommended** – Your financial safety net is 62.5 %; a quick‑access cash buffer will give you breathing room if a client drops out.`;
 
     const result = parseInsights(input);
-    const table = result.find((b) => b.type === 'table') as any;
+    const table = findTable(result);
     
-    expect(table.rows).toHaveLength(4);
+    expect(table?.rows).toHaveLength(4);
     // Each row must have a non-empty description
-    table.rows.forEach((row: string[]) => {
+    table?.rows.forEach((row) => {
       expect(row[2].length).toBeGreaterThan(10); // must have real description text
     });
     // Spot-check "Essential" priority
-    const gadgetRow = table.rows.find((r: string[]) => r[0].includes('Gadget'));
-    expect(gadgetRow[1]).toBe('Essential for your work');
-    expect(gadgetRow[2]).toContain('75 %');
+    const gadgetRow = table?.rows.find((row) => row[0].includes('Gadget'));
+    expect(gadgetRow?.[1]).toBe('Essential for your work');
+    expect(gadgetRow?.[2]).toContain('75 %');
   });
 
   /** ── ROOT CAUSE 3: *italic* lines must be callout blocks ── */
@@ -99,10 +107,12 @@ describe('parseInsights — root cause fixes', () => {
 
   it('strips all markdown from callout text', () => {
     const result = parseInsights('*Good news – **affordable premiums** are here.*');
-    const callout = result[0] as any;
+    const callout = result[0];
     expect(callout.type).toBe('callout');
-    expect(callout.text).not.toContain('*');
-    expect(callout.text).not.toContain('**');
+    if (callout.type === 'callout') {
+      expect(callout.text).not.toContain('*');
+      expect(callout.text).not.toContain('**');
+    }
   });
 
   /** ── FULL INTEGRATION: real API response ── */
@@ -112,27 +122,27 @@ describe('parseInsights — root cause fixes', () => {
     // Section headers
     const headers = result.filter((b) => b.type === 'section-header');
     expect(headers.length).toBeGreaterThanOrEqual(2);
-    expect(headers.some((h: any) => h.text.includes('PERSONALIZED INSIGHTS'))).toBe(true);
-    expect(headers.some((h: any) => h.text.includes('PROTECTION PLAN'))).toBe(true);
+    expect(headers.some((h) => h.text.includes('PERSONALIZED INSIGHTS'))).toBe(true);
+    expect(headers.some((h) => h.text.includes('PROTECTION PLAN'))).toBe(true);
 
     // Insight items from "Personalized Insights" section  
     const insightItems = result.filter((b) => b.type === 'insight-item');
     expect(insightItems.length).toBeGreaterThanOrEqual(3);
 
     // Protection plan table
-    const table = result.find((b) => b.type === 'table') as any;
+    const table = findTable(result);
     expect(table).toBeDefined();
-    expect(table.rows).toHaveLength(4);
+    expect(table?.rows).toHaveLength(4);
     // All descriptions must be non-empty
-    table.rows.forEach((row: string[]) => {
+    table?.rows.forEach((row) => {
       expect(row[2].length).toBeGreaterThan(5);
     });
 
     // Callout at the end
-    const callout = result.find((b) => b.type === 'callout') as any;
+    const callout = findCallout(result);
     expect(callout).toBeDefined();
-    expect(callout.text).toContain('Good news');
-    expect(callout.text).not.toContain('*');
+    expect(callout?.text).toContain('Good news');
+    expect(callout?.text).not.toContain('*');
   });
 
   /** ── General helpers ── */
@@ -155,7 +165,7 @@ describe('parseInsights — root cause fixes', () => {
     // Should be treated as paragraph (no bold markers remain)
     expect(result[0].type === 'paragraph' || result[0].type === 'section-header').toBe(true);
     if (result[0].type === 'paragraph') {
-      expect((result[0] as any).text).not.toContain('**');
+      expect(result[0].text).not.toContain('**');
     }
   });
 

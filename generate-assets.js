@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports -- This maintenance script is CommonJS because the package is not configured for ESM. */
 const fs = require('fs');
 const path = require('path');
 
@@ -53,4 +54,3 @@ export const ASSETS = ${JSON.stringify(assetsMap, null, 2)};
 
 fs.writeFileSync(path.join(__dirname, 'src/lib/assets.ts'), content);
 console.log('Generated src/lib/assets.ts');
-

@@ -3,14 +3,17 @@ import { render, screen } from '@testing-library/react';
 import KnowYourRisk from '@/components/home/KnowYourRisk';
 
 // Mock framer-motion to return standard tags
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, whileHover, whileInView, whileTap, viewport, transition, initial, animate, exit, variants, ...props }: any) => <div {...props}>{children}</div>,
-    h2: ({ children, whileHover, whileInView, whileTap, viewport, transition, initial, animate, exit, variants, ...props }: any) => <h2 {...props}>{children}</h2>,
-    p: ({ children, whileHover, whileInView, whileTap, viewport, transition, initial, animate, exit, variants, ...props }: any) => <p {...props}>{children}</p>,
-    button: ({ children, whileHover, whileInView, whileTap, viewport, transition, initial, animate, exit, variants, ...props }: any) => <button {...props}>{children}</button>,
-  },
-}));
+vi.mock('framer-motion', async () => {
+  const { motionTag } = await import('@/__tests__/mock-components');
+  return {
+    motion: {
+      div: motionTag('div'),
+      h2: motionTag('h2'),
+      p: motionTag('p'),
+      button: motionTag('button'),
+    },
+  };
+});
 
 describe('KnowYourRisk Component', () => {
   it('renders the heading and paragraph text appropriately', () => {

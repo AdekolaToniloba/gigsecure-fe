@@ -3,14 +3,17 @@ import { render, screen } from '@testing-library/react';
 import BuiltAround from '@/components/home/BuiltAround';
 
 // Mock framer-motion to return standard tags, ignoring animation wrappers so elements are immediately visible to testing-library
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, whileHover, whileInView, whileTap, viewport, transition, initial, animate, exit, variants, ...props }: any) => <div {...props}>{children}</div>,
-    h2: ({ children, whileHover, whileInView, whileTap, viewport, transition, initial, animate, exit, variants, ...props }: any) => <h2 {...props}>{children}</h2>,
-    p: ({ children, whileHover, whileInView, whileTap, viewport, transition, initial, animate, exit, variants, ...props }: any) => <p {...props}>{children}</p>,
-    button: ({ children, whileHover, whileInView, whileTap, viewport, transition, initial, animate, exit, variants, ...props }: any) => <button {...props}>{children}</button>,
-  },
-}));
+vi.mock('framer-motion', async () => {
+  const { motionTag } = await import('@/__tests__/mock-components');
+  return {
+    motion: {
+      div: motionTag('div'),
+      h2: motionTag('h2'),
+      p: motionTag('p'),
+      button: motionTag('button'),
+    },
+  };
+});
 
 describe('BuiltAround Component', () => {
   it('renders the main heading text correctly', () => {

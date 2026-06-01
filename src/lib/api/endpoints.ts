@@ -6,6 +6,12 @@ export const AUTH_ENDPOINTS = {
   REFRESH: '/api/auth/refresh',
   LOGOUT: '/api/auth/logout',
   WAITLIST: '/api/auth/waitlist',
+  VERIFY_EMAIL: '/api/auth/verify-email',
+  ACTIVATE: '/api/auth/activate',
+  FORGOT_PASSWORD: '/api/auth/forgot-password',
+  RESET_PASSWORD: '/api/auth/reset-password',
+  CHANGE_PASSWORD: '/api/auth/change-password',
+  RESEND_ACTIVATION: '/api/auth/resend-activation',
 } as const;
 
 // ─── Backend endpoints (via Axios client, not BFF) ─────────────────
@@ -20,6 +26,10 @@ export const ENDPOINTS = {
   },
   USERS: {
     ME: '/api/v1/users/me',
+  },
+  KYC: {
+    VERIFY: '/api/v1/kyc/verify',
+    STATUS: '/api/v1/kyc/status',
   },
   RISK: {
     CATEGORIES: '/api/v1/risk/categories',

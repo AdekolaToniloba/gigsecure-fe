@@ -32,13 +32,23 @@ function getTokenScope(token: string | null): string | undefined {
 
 export function useCurrentUser() {
   const token = useAuthStore((s) => s.accessToken);
+  const setUser = useAuthStore((s) => s.setUser);
+  const setFlags = useAuthStore((s) => s.setFlags);
   const scope = getTokenScope(token);
   // Waitlist-scoped tokens are not authorised for /users/me — skip the call
   const isFullSession = !!token && scope !== 'waitlist';
 
   return useQuery({
     queryKey: QUERY_KEYS.USER_ME,
-    queryFn: ({ signal }) => userService.getMe(signal),
+    queryFn: async ({ signal }) => {
+      const data = await userService.getMe(signal);
+      setUser(data.user);
+      setFlags({
+        kycVerified: data.kyc_verified,
+        riskAssessed: data.risk_assessed,
+      });
+      return data;
+    },
     staleTime: 5 * 60 * 1000, // 5 minutes
     enabled: isFullSession,
   });
@@ -46,11 +56,16 @@ export function useCurrentUser() {
 
 export function useUpdateProfile() {
   const setUser = useAuthStore((s) => s.setUser);
+  const setFlags = useAuthStore((s) => s.setFlags);
 
   return useMutation({
     mutationFn: (payload: UpdateProfileRequest) => userService.updateProfile(payload),
     onSuccess: (data) => {
       setUser(data.user);
+      setFlags({
+        kycVerified: data.kyc_verified,
+        riskAssessed: data.risk_assessed,
+      });
     },
   });
 }

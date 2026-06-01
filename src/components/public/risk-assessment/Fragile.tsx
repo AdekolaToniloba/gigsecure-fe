@@ -69,7 +69,7 @@ export default function Fragile() {
               className="mb-10"
             >
               <h2 className="font-heading text-4xl md:text-[44px] lg:text-[48px] font-bold text-gray-900 leading-[1.2] tracking-tight mb-4 max-w-md">
-                Gig Work looks flexible, But it's fragile.
+                Gig Work looks flexible, But it&apos;s fragile.
               </h2>
               <p className="font-body text-base text-gray-800 font-medium">
                 This quick assessment helps you see:

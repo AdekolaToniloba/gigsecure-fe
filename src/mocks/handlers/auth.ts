@@ -17,6 +17,8 @@ const mockUser = {
 const mockTokenResponse = {
   access_token: 'mock-access-token-12345',
   token_type: 'bearer',
+  kyc_verified: false,
+  risk_assessed: true,
 };
 
 export const authHandlers = [
@@ -26,7 +28,13 @@ export const authHandlers = [
   ),
 
   http.post('/api/auth/register', () =>
-    HttpResponse.json(mockTokenResponse, { status: 201 })
+    HttpResponse.json(
+      {
+        message:
+          'Registration successful. Please check your email to verify your account.',
+      },
+      { status: 201 }
+    )
   ),
 
   http.post('/api/auth/refresh', () =>
@@ -46,26 +54,49 @@ export const authHandlers = [
     })
   ),
 
-  // Backend auth endpoints
-  http.post(`${BASE}/api/v1/auth/verify-email`, () =>
-    HttpResponse.json({ message: 'Email verified' })
+  http.post('/api/auth/verify-email', () =>
+    HttpResponse.json(mockTokenResponse)
   ),
 
-  http.post(`${BASE}/api/v1/auth/forgot-password`, () =>
+  http.post('/api/auth/activate', () =>
+    HttpResponse.json(mockTokenResponse)
+  ),
+
+  http.post('/api/auth/forgot-password', () =>
     HttpResponse.json({ message: 'Reset email sent' })
   ),
 
-  http.post(`${BASE}/api/v1/auth/reset-password`, () =>
+  http.post('/api/auth/reset-password', () =>
     HttpResponse.json({ message: 'Password reset successful' })
+  ),
+
+  http.post('/api/auth/resend-activation', () =>
+    HttpResponse.json({
+      message: 'If the email is registered, an activation link has been sent.',
+    })
+  ),
+
+  http.put('/api/auth/change-password', () =>
+    HttpResponse.json({ message: 'Password changed successfully' })
   ),
 
   // User
   http.get(`${BASE}/api/v1/users/me`, () =>
-    HttpResponse.json({ user: mockUser, profile: null })
+    HttpResponse.json({
+      user: mockUser,
+      profile: null,
+      kyc_verified: false,
+      risk_assessed: true,
+    })
   ),
 
   http.put(`${BASE}/api/v1/users/me`, async ({ request }) => {
     const body = await request.json();
-    return HttpResponse.json({ user: mockUser, profile: body });
+    return HttpResponse.json({
+      user: mockUser,
+      profile: body,
+      kyc_verified: false,
+      risk_assessed: true,
+    });
   }),
 ];

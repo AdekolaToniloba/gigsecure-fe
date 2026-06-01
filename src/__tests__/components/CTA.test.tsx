@@ -3,13 +3,16 @@ import { render, screen } from '@testing-library/react';
 import CTA from '@/components/home/CTA';
 
 // Mock framer-motion to return standard tags
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, whileHover, whileInView, whileTap, viewport, transition, initial, animate, exit, variants, ...props }: any) => <div {...props}>{children}</div>,
-    button: ({ children, whileHover, whileInView, whileTap, viewport, transition, initial, animate, exit, variants, ...props }: any) => <button {...props}>{children}</button>,
-    path: ({ children, whileHover, whileInView, whileTap, viewport, transition, initial, animate, exit, variants, ...props }: any) => <path {...props}>{children}</path>,
-  },
-}));
+vi.mock('framer-motion', async () => {
+  const { motionTag } = await import('@/__tests__/mock-components');
+  return {
+    motion: {
+      div: motionTag('div'),
+      button: motionTag('button'),
+      path: motionTag('path'),
+    },
+  };
+});
 
 describe('CTA Component', () => {
   it('renders the central card heading', () => {

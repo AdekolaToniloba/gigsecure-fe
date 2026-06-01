@@ -50,7 +50,7 @@ export default function RiskHero() {
                 ))}
               </div>
               <p className="font-body text-[14px] font-light text-white leading-[24px] max-w-[360px]">
-                Already used by thousands of gigworkers across Nigeria to understand what's actually at risk in their gigwork careers.
+                Already used by thousands of gigworkers across Nigeria to understand what&apos;s actually at risk in their gigwork careers.
               </p>
             </div>
           </motion.div>

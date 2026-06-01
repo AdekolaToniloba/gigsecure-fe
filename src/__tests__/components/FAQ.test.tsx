@@ -5,15 +5,16 @@ import FAQ from '@/components/home/FAQ';
 // Mock framer-motion to bypass IntersectionObserver and render synchronously for tests
 vi.mock('framer-motion', async () => {
   const actual = await vi.importActual('framer-motion');
+  const { MockAnimatePresence, motionTag } = await import('@/__tests__/mock-components');
   return {
     ...actual,
     motion: {
-      div: ({ children, whileHover, whileInView, whileTap, viewport, transition, initial, animate, exit, variants, ...props }: any) => <div {...props}>{children}</div>,
-      h2: ({ children, whileHover, whileInView, whileTap, viewport, transition, initial, animate, exit, variants, ...props }: any) => <h2 {...props}>{children}</h2>,
-      button: ({ children, whileHover, whileInView, whileTap, viewport, transition, initial, animate, exit, variants, ...props }: any) => <button {...props}>{children}</button>,
+      div: motionTag('div'),
+      h2: motionTag('h2'),
+      button: motionTag('button'),
     },
     // For AnimatePresence, we just render children directly in the mock
-    AnimatePresence: ({ children }: any) => <>{children}</>,
+    AnimatePresence: MockAnimatePresence,
   };
 });
 

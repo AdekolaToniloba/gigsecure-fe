@@ -33,11 +33,15 @@ const STATIC_FALLBACK_STEPS: AssessmentStep[] = [
 ];
 const HANDOFF_TIMING_KEY = 'gs_waitlist_handoff_start_ms';
 
+function getTimestampMs() {
+  return performance.timeOrigin + performance.now();
+}
+
 export default function RiskWizard() {
   const router = useRouter();
   const token = useAuthStore((s) => s.accessToken);
   const { currentStep, answers, selectedCategory, healthConsent, reset } = useWizardStore();
-  const [showResumeBanner, setShowResumeBanner] = useState(false);
+  const [showResumeBanner, setShowResumeBanner] = useState(() => currentStep > 0);
   const [submitError, setSubmitError] = useState('');
 
   const {
@@ -56,13 +60,6 @@ export default function RiskWizard() {
     }
   }, [token, router]);
 
-  // Resume banner
-  useEffect(() => {
-    if (currentStep > 0) {
-      setShowResumeBanner(true);
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
   // Focus management on step change
   useEffect(() => {
     const el = document.querySelector<HTMLElement>('[data-step-title]');
@@ -80,7 +77,7 @@ export default function RiskWizard() {
     sessionStorage.removeItem(HANDOFF_TIMING_KEY);
     if (Number.isNaN(startedAtMs)) return;
 
-    const handoffDurationMs = Date.now() - startedAtMs;
+    const handoffDurationMs = getTimestampMs() - startedAtMs;
     const gtag = (window as Window & {
       gtag?: (command: 'event', eventName: string, params?: Record<string, unknown>) => void;
     }).gtag;

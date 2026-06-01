@@ -1,34 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { assertCsrfHeader, buildRefreshCookie, BACKEND_URL } from '../_bff-utils';
+import {
+  assertCsrfHeader,
+  missingBackendUrlResponse,
+  safeJson,
+  BACKEND_URL,
+} from '../_bff-utils';
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const csrfErr = assertCsrfHeader(req);
   if (csrfErr) return csrfErr;
+  if (!BACKEND_URL) return missingBackendUrlResponse();
 
   const body = await req.json();
 
-  let backendRes;
-  try {
-    if (!BACKEND_URL) throw new Error("BACKEND_URL is perfectly undefined in Vercel environment.");
-    backendRes = await fetch(`${BACKEND_URL}/api/v1/auth/waitlist/signup`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
-  } catch (error: any) {
-    return NextResponse.json(
-      { message: 'Internal Server Error (Backend Fetch Failed)', details: error.message },
-      { status: 500 }
-    );
-  }
+  const backendRes = await fetch(`${BACKEND_URL}/api/v1/auth/waitlist/signup`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
 
-  const responseText = await backendRes.text();
-  let data;
-  try {
-    data = responseText ? JSON.parse(responseText) : {};
-  } catch {
-    data = { message: responseText || backendRes.statusText };
-  }
+  const data = await safeJson(backendRes);
 
   if (!backendRes.ok) {
     return NextResponse.json(data, { status: backendRes.status });

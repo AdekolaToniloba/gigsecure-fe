@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
+import {
+  DEFAULT_AUTHENTICATED_PATH,
+  DEFAULT_UNAUTHENTICATED_PATH,
+  buildLoginRedirect,
+  getSafeRedirectPath,
+  isProtectedAppPath,
+  isPublicOnlyAuthPath,
+} from '@/lib/auth/redirects';
 
 const COOKIE_NAME = 'gs_refresh_token';
 
-// Paths always accessible — never redirect these
-const PUBLIC_ONLY_PATHS = ['/login', '/signup', '/register'];
 const ALWAYS_ACCESSIBLE = ['/api/', '/_next/', '/favicon.ico', '/logo.png', '/assets/'];
 
 function isAlwaysAccessible(path: string): boolean {
@@ -58,23 +64,26 @@ export function middleware(req: NextRequest) {
   }
   // ====================================
 
-  // If logged in and trying to access public-only pages → redirect to dashboard
-  if (PUBLIC_ONLY_PATHS.some((p) => pathname === p || pathname.startsWith(p + '/'))) {
+  // If logged in and trying to access public-only pages, send them into the app.
+  if (isPublicOnlyAuthPath(pathname)) {
     if (hasRefreshCookie) {
       const url = req.nextUrl.clone();
-      url.pathname = '/dashboard';
+      url.pathname = getSafeRedirectPath(req.nextUrl.searchParams.get('redirect')) ?? DEFAULT_AUTHENTICATED_PATH;
+      url.search = '';
       return applySecurityHeaders(NextResponse.redirect(url));
     }
     return applySecurityHeaders(NextResponse.next());
   }
 
-  // Protected (app) routes — require refresh cookie
-  if (pathname.startsWith('/dashboard') || pathname.startsWith('/app')) {
+  // Protected app routes can only use the refresh cookie as a server-side session hint.
+  if (isProtectedAppPath(pathname)) {
     if (!hasRefreshCookie) {
       const url = req.nextUrl.clone();
-      const redirect = encodeURIComponent(pathname + req.nextUrl.search);
-      url.pathname = '/login';
-      url.search = `?redirect=${redirect}`;
+      url.pathname = DEFAULT_UNAUTHENTICATED_PATH;
+      url.search = buildLoginRedirect(pathname, req.nextUrl.search).replace(
+        DEFAULT_UNAUTHENTICATED_PATH,
+        ''
+      );
       return applySecurityHeaders(NextResponse.redirect(url));
     }
   }

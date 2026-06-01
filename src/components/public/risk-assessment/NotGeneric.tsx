@@ -23,10 +23,10 @@ export default function NotGeneric() {
                 Why This Is Different
               </p>
               <h2 className="font-heading text-[36px] font-bold text-gray-900 leading-[100%] max-w-[463px]">
-                This isn't generic financial advice.
+                This isn&apos;t generic financial advice.
               </h2>
               <p className="font-body text-[20px] text-gray-800 font-normal leading-[30px] mt-2">
-                It's built for people who:
+                It&apos;s built for people who:
               </p>
             </motion.div>
 

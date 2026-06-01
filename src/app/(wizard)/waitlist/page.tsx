@@ -6,11 +6,9 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { motion } from 'framer-motion';
 import { ShieldAlert, Check, Lock, Info } from 'lucide-react';
-import Image from 'next/image';
-import Link from 'next/link';
 import { useWaitlistSignup } from '@/hooks/auth/useAuth';
 import { waitlistSignupRequestSchema, type WaitlistSignupRequest } from '@/lib/validators/auth';
-import { assetUrl, ASSETS } from '@/lib/assets';
+import { parseApiError } from '@/lib/api/errors';
 
 const BENEFITS = [
   "Results saved to your profile",
@@ -18,6 +16,10 @@ const BENEFITS = [
   "Early access when coverage goes live"
 ];
 const HANDOFF_TIMING_KEY = 'gs_waitlist_handoff_start_ms';
+
+function getTimestampMs() {
+  return performance.timeOrigin + performance.now();
+}
 
 export default function WaitlistPage() {
   const router = useRouter();
@@ -40,7 +42,7 @@ export default function WaitlistPage() {
   });
 
   const onSubmit = async (data: WaitlistSignupRequest) => {
-    const submitStartedAtMs = Date.now();
+    const submitStartedAtMs = getTimestampMs();
 
     if (typeof window !== 'undefined') {
       sessionStorage.setItem(HANDOFF_TIMING_KEY, String(submitStartedAtMs));
@@ -51,7 +53,7 @@ export default function WaitlistPage() {
       await signup(data);
       setIsSuccess(true);
 
-      const signupLatencyMs = Date.now() - submitStartedAtMs;
+      const signupLatencyMs = getTimestampMs() - submitStartedAtMs;
       if (typeof window !== 'undefined') {
         const gtag = (window as Window & {
           gtag?: (command: 'event', eventName: string, params?: Record<string, unknown>) => void;
@@ -62,8 +64,8 @@ export default function WaitlistPage() {
       }
 
       router.push('/assessment');
-    } catch (error: any) {
-      setFormError(error?.message || 'Something went wrong. Please try again.');
+    } catch (error: unknown) {
+      setFormError(parseApiError(error).message);
     }
   };
 
@@ -85,7 +87,7 @@ export default function WaitlistPage() {
             Before it costs you.
           </h1>
           <p className="text-white/90 font-body text-[18px] lg:text-[20px] max-w-[480px] leading-relaxed">
-            Your personalised risk score is a few questions away. We'll save
+            Your personalised risk score is a few questions away. We&apos;ll save
             your results so you can revisit them anytime.
           </p>
 
@@ -208,7 +210,7 @@ export default function WaitlistPage() {
               <div className="mt-8 flex items-start gap-4 p-4 bg-gray-50 rounded-xl">
                 <Lock className="text-gray-400 mt-0.5 flex-shrink-0" size={18} />
                 <p className="text-[14px] text-gray-500 leading-relaxed font-body">
-                  We'll only contact you about GigSecure. No spam, no third-party sharing. 
+                  We&apos;ll only contact you about GigSecure. No spam, no third-party sharing. 
                   Unsubscribe anytime.
                 </p>
               </div>

@@ -6,14 +6,17 @@ import { useAuthStore } from '@/store/auth-store';
 import { mockAssessmentResponse, mockHighRiskResponse, mockLowRiskResponse } from '../../fixtures/mockAssessmentResponse';
 
 // Mock @react-pdf/renderer since it doesn't work in jsdom
-vi.mock('@react-pdf/renderer', () => ({
-  pdf: () => ({ toBlob: vi.fn().mockResolvedValue(new Blob()) }),
-  Document: ({ children }: any) => <div>{children}</div>,
-  Page: ({ children }: any) => <div>{children}</div>,
-  View: ({ children }: any) => <div>{children}</div>,
-  Text: ({ children }: any) => <span>{children}</span>,
-  StyleSheet: { create: (s: any) => s },
-}));
+vi.mock('@react-pdf/renderer', async () => {
+  const { MockAnimatePresence } = await import('@/__tests__/mock-components');
+  return {
+    pdf: () => ({ toBlob: vi.fn().mockResolvedValue(new Blob()) }),
+    Document: MockAnimatePresence,
+    Page: MockAnimatePresence,
+    View: MockAnimatePresence,
+    Text: MockAnimatePresence,
+    StyleSheet: { create: <T,>(styles: T) => styles },
+  };
+});
 
 // Mock clipboard
 Object.assign(navigator, {
