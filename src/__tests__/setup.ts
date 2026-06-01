@@ -3,10 +3,12 @@ import { vi } from 'vitest';
 import { setupMSW } from '@/mocks/index';
 import { useWizardStore } from '@/store/wizard-store';
 import { useAuthStore } from '@/store/auth-store';
-import { mockRouter } from './test-utils';
+import { mockPathname, mockRouter, mockSearchParams } from './test-utils';
 
 vi.mock('next/navigation', () => ({
+  usePathname: () => mockPathname.value,
   useRouter: () => mockRouter,
+  useSearchParams: () => mockSearchParams,
 }));
 
 class IntersectionObserverMock {
@@ -52,4 +54,3 @@ beforeEach(() => {
 
 // Start MSW for all tests
 setupMSW();
-

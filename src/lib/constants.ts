@@ -27,7 +27,13 @@ export const QUERY_KEYS = {
   // KYC
   KYC_STATUS: ['kyc', 'status'] as const,
 
-  // Products
+  // Marketplace
+  MARKETPLACE_PRODUCTS: (filters: object) => ['marketplace', 'products', filters] as const,
+  MARKETPLACE_PRODUCT: (id: string) => ['marketplace', 'products', id] as const,
+  MARKETPLACE_RECOMMENDATIONS: (perCategory: number) =>
+    ['marketplace', 'recommendations', perCategory] as const,
+
+  // Legacy products
   PRODUCTS: ['products'] as const,
   PRODUCTS_FEATURED: ['products', 'featured'] as const,
   PRODUCT: (id: string) => ['products', id] as const,

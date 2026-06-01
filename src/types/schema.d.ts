@@ -321,7 +321,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/products/": {
+    "/api/v1/marketplace/products": {
         parameters: {
             query?: never;
             header?: never;
@@ -329,7 +329,7 @@ export interface paths {
             cookie?: never;
         };
         /** List Products */
-        get: operations["list_products"];
+        get: operations["list_products_api_v1_marketplace_products_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -338,15 +338,15 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/products/featured": {
+    "/api/v1/marketplace/recommendations": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Get Featured Products */
-        get: operations["get_featured_products"];
+        /** Get Recommendations */
+        get: operations["get_recommendations_api_v1_marketplace_recommendations_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -355,7 +355,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/products/{product_id}": {
+    "/api/v1/marketplace/products/{product_id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -363,7 +363,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get Product */
-        get: operations["get_product"];
+        get: operations["get_product_api_v1_marketplace_products__product_id__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -372,7 +372,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/policies/": {
+    "/api/v1/policies": {
         parameters: {
             query?: never;
             header?: never;
@@ -380,10 +380,27 @@ export interface paths {
             cookie?: never;
         };
         /** List Policies */
-        get: operations["list_policies"];
+        get: operations["list_policies_api_v1_policies_get"];
         put?: never;
         /** Create Policy */
-        post: operations["create_policy"];
+        post: operations["create_policy_api_v1_policies_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/policies/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Policy Summary */
+        get: operations["policy_summary_api_v1_policies_summary_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -398,7 +415,58 @@ export interface paths {
             cookie?: never;
         };
         /** Get Policy */
-        get: operations["get_policy"];
+        get: operations["get_policy_api_v1_policies__policy_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/policies/{policy_id}/pay": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mock Pay */
+        post: operations["mock_pay_api_v1_policies__policy_id__pay_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/policies/{policy_id}/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Policy Report */
+        get: operations["policy_report_api_v1_policies__policy_id__report_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/dashboard/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Dashboard Overview */
+        get: operations["get_dashboard_overview_api_v1_dashboard_overview_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -601,6 +669,96 @@ export interface components {
             PartnerParams: {
                 [key: string]: unknown;
             };
+        };
+        /** DashboardOverviewResponse */
+        DashboardOverviewResponse: {
+            /** @default 0 */
+            premiums_bought: number;
+            monthly_income_band?: string | null;
+            safety_buffer?: string | null;
+            /** @default 0 */
+            recommended_plans_count: number;
+            income_stability?: components["schemas"]["IncomeStabilityPattern"] | null;
+            /** @default false */
+            has_assessment: boolean;
+        };
+        /** IncomeStabilityPattern */
+        IncomeStabilityPattern: {
+            score: number;
+            classification: string;
+            graph_points: number[];
+        };
+        /** PolicyCreate */
+        PolicyCreate: {
+            product_id: string;
+        };
+        /** PolicyListResponse */
+        PolicyListResponse: {
+            items: components["schemas"]["PolicyOut"][];
+        };
+        /** PolicyOut */
+        PolicyOut: {
+            id: string;
+            status: string;
+            display_status: string;
+            coverage_amount: string;
+            premium_amount: string;
+            premium_currency: string;
+            renewal_frequency: string;
+            start_date?: string | null;
+            end_date?: string | null;
+            purchased_at?: string | null;
+            external_policy_id?: string | null;
+            /** Format: date-time */
+            created_at: string;
+            product: components["schemas"]["PolicyProductSummary"];
+        };
+        /** PolicyProductSummary */
+        PolicyProductSummary: {
+            id: string;
+            name: string;
+            category: string;
+            provider_name: string;
+            provider_slug: string;
+        };
+        /** PolicySummary */
+        PolicySummary: {
+            total_coverage: string;
+            active_count: number;
+            due_soon_count: number;
+        };
+        /** ProductListResponse */
+        ProductListResponse: {
+            items: components["schemas"]["ProductOut"][];
+            total: number;
+            limit: number;
+            offset: number;
+        };
+        /** ProductOut */
+        ProductOut: {
+            id: string;
+            name: string;
+            category: string;
+            description: string;
+            premium_amount: string;
+            premium_currency: string;
+            coverage_amount: string;
+            renewal_frequency: string;
+            risk_level?: string | null;
+            is_active: boolean;
+            provider: components["schemas"]["ProviderRef"];
+        };
+        /** ProviderRef */
+        ProviderRef: {
+            id: string;
+            slug: string;
+            name: string;
+            logo_url?: string | null;
+        };
+        /** RecommendedProductsResponse */
+        RecommendedProductsResponse: {
+            recommended_categories: string[];
+            items: components["schemas"]["ProductOut"][];
         };
         /** TokenResponse */
         TokenResponse: {
@@ -1234,9 +1392,18 @@ export interface operations {
             };
         };
     };
-    list_products: {
+    list_products_api_v1_marketplace_products_get: {
         parameters: {
-            query?: never;
+            query?: {
+                category?: string[] | null;
+                provider_slug?: string[] | null;
+                risk_level?: string[] | null;
+                q?: string | null;
+                min_premium?: number | string | null;
+                max_premium?: number | string | null;
+                limit?: number;
+                offset?: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -1248,13 +1415,17 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["ProductListResponse"];
+                };
             };
         };
     };
-    get_featured_products: {
+    get_recommendations_api_v1_marketplace_recommendations_get: {
         parameters: {
-            query?: never;
+            query?: {
+                per_category?: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -1266,11 +1437,13 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["RecommendedProductsResponse"];
+                };
             };
         };
     };
-    get_product: {
+    get_product_api_v1_marketplace_products__product_id__get: {
         parameters: {
             query?: never;
             header?: never;
@@ -1286,11 +1459,59 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["ProductOut"];
+                };
             };
         };
     };
-    list_policies: {
+    list_policies_api_v1_policies_get: {
+        parameters: {
+            query?: {
+                status_filter?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PolicyListResponse"];
+                };
+            };
+        };
+    };
+    create_policy_api_v1_policies_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PolicyCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PolicyOut"];
+                };
+            };
+        };
+    };
+    policy_summary_api_v1_policies_summary_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -1304,15 +1525,19 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["PolicySummary"];
+                };
             };
         };
     };
-    create_policy: {
+    get_policy_api_v1_policies__policy_id__get: {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                policy_id: string;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -1322,11 +1547,35 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["PolicyOut"];
+                };
             };
         };
     };
-    get_policy: {
+    mock_pay_api_v1_policies__policy_id__pay_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                policy_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PolicyOut"];
+                };
+            };
+        };
+    };
+    policy_report_api_v1_policies__policy_id__report_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -1343,6 +1592,26 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    get_dashboard_overview_api_v1_dashboard_overview_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardOverviewResponse"];
+                };
             };
         };
     };
