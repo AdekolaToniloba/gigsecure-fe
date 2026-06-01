@@ -100,26 +100,25 @@ export default function Navbar() {
             ))}
           </ul>
 
-          <Link
+          {/* <Link
             href="/login"
             className="inline-flex h-10 items-center justify-center rounded-md bg-accent px-5 font-body text-base font-semibold text-primary transition-colors hover:bg-[#FFE419]/90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-offset-2 focus-visible:ring-[#FFE419]/50"
           >
             Log in
-          </Link>
+          </Link> */}
 
-          {/* <motion.div
+          <motion.div
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             className="flex"
           >
             <Link
-              href="/risk-assessment"
-              className="flex w-[201px] h-[53px] items-center justify-center rounded-[5px] bg-[#FFE419] px-[11px] py-[17px] text-center font-body text-[18px] font-semibold tracking-tight text-[#00676E] shadow-sm transition-colors hover:bg-[#FFE419]/90 outline-none focus-visible:ring-4 focus-visible:ring-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#004E4C] cursor-pointer"
-              aria-label="Take the Assessment"
+              href="/login"
+              className="inline-flex h-10 items-center justify-center px-5 rounded-[5px] bg-[#FFE419]  py-4.25 text-center font-body text-base text-primary font-semibold tracking-tight shadow-sm transition-colors hover:bg-[#FFE419]/90 outline-none focus-visible:ring-4 focus-visible:ring-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#004E4C] cursor-pointer"
             >
-              Take the Assessment
+              Log in
             </Link>
-          </motion.div> */}
+          </motion.div>
         </div>
 
         {/* ─── Mobile Menu Toggle ──────────────────────────────────────────── */}

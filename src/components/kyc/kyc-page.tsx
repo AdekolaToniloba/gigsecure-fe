@@ -2,6 +2,7 @@
 
 import { useCallback } from 'react';
 import { useKycGate } from '@/hooks/kyc/useKycGate';
+import { useKycStatus } from '@/hooks/kyc/useKyc';
 import { useUserProfile } from '@/hooks/user/useUserProfile';
 import { KycStatusPanel } from '@/components/kyc/status/kyc-status-panel';
 import { KycFormShell } from '@/components/kyc/verify/kyc-form-shell';
@@ -9,6 +10,7 @@ import { KycVerificationForm } from '@/components/kyc/verify/kyc-verification-fo
 
 export function KycPageContent() {
   const { isKycVerified } = useKycGate();
+  const statusQuery = useKycStatus();
   const profileQuery = useUserProfile();
   const handleRetry = useCallback(() => {
     const formField = document.getElementById('kyc-document-number');
@@ -18,11 +20,13 @@ export function KycPageContent() {
 
   const user = profileQuery.data?.user;
   const profile = profileQuery.data?.profile;
+  const isVerified = isKycVerified || statusQuery.data?.status === 'verified';
+  const canShowVerificationForm = statusQuery.isSuccess && !isVerified;
 
   return (
     <KycFormShell>
       <div className="space-y-6">
-        {isKycVerified ? (
+        {isVerified ? (
           <section
             aria-label="KYC verified summary"
             className="rounded-lg border border-green-200 bg-green-50 p-4 text-green-900"
@@ -74,7 +78,7 @@ export function KycPageContent() {
         <section aria-label="KYC status">
           <KycStatusPanel onRetry={handleRetry} />
         </section>
-        {!isKycVerified ? (
+        {canShowVerificationForm ? (
           <section aria-label="KYC verification form">
             <KycVerificationForm />
           </section>
