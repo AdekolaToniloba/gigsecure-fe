@@ -1126,3 +1126,21 @@ Kept the fix entirely in the e2e spec and avoided touching KYC runtime code. Upd
 
 Known follow-ups:
 `npm run test:e2e -- --project=chromium e2e/kyc/kyc-flow.spec.ts` now passes all 8 tests. The run still prints non-fatal Next.js development warnings about the deprecated `middleware` convention, future `allowedDevOrigins` configuration, and `NO_COLOR` being ignored because `FORCE_COLOR` is set.
+
+### 2026-05-29 21:34 WAT
+
+Task completed: Task 14 — Final QA and Documentation Update
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/KYC_EPICS.md`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/e2e/kyc/kyc-flow.spec.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+
+Summary:
+Completed the final KYC epic QA pass and updated the epic documentation with the implemented file map, final security/UX decisions, and final QA status. Reconciled the documented redirect policy with the post-Task 11 product follow-up: verified users can now visit `/kyc` to see successful verification copy and profile details from `/users/me`. Tightened the pending-status e2e clock advance so the full Playwright suite passes reliably under parallel load.
+
+Important decisions:
+Kept Task 14 documentation-focused and avoided feature changes. The only test harness adjustment was to wait for the actual long-running pending UI while advancing fake time, preserving the intended 3-second to 10-second polling behavior without relying on a brittle fixed number of event-loop turns. Documented that the generated OpenAPI description still mentions BVN in backend wording, while frontend-facing KYC schemas, UI, mocks, and tests remain NIN-only.
+
+Known follow-ups:
+Final QA passed: `npm run lint` (0 errors, 18 existing warnings), `npm test -- --run` (70 files, 390 tests), `npx tsc --noEmit`, `npm run test:e2e -- --project=chromium` (18 tests), `npm run build`, and `git diff --check`. The first sandboxed build attempt failed because Next.js could not fetch Google Fonts with restricted network access; the escalated rerun succeeded. Non-blocking warnings remain for the deprecated Next.js `middleware` convention, future `allowedDevOrigins` config, `NO_COLOR`/`FORCE_COLOR`, and the existing lint warnings unrelated to KYC.

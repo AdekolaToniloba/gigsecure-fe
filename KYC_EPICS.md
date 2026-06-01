@@ -167,12 +167,34 @@ No KYC planning questions are currently unresolved. Resolved decisions:
 
 - Pending status polling uses a responsive-to-conservative backoff: 3 seconds for the first 30 seconds, then 10 seconds until a 5-minute maximum.
 - Post-verification routing goes to `/dashboard`.
+- Verified users who later visit `/kyc` remain on the page and see the successfully verified state plus `/users/me` profile details. This supersedes the earlier Task 7/13 redirect-away wording and matches the UX follow-up completed after Task 11.
 - `rejected` and `failed` are both retryable after a 1-hour memory-only cooldown, but they must use different user-facing explanations.
 - `kycVerified` is set immediately on synchronous `status: "verified"` from `POST /kyc/verify`, followed by background `GET /users/me` refetch.
 - `riskAssessed` and `kycVerified` updates must share the same session/flag store utilities so future risk work does not create a parallel state model.
 - The first reusable KYC modal consumer is the dashboard recommendations action backed by `GET /api/v1/risk/recommendations`.
 - KYC verify/status use direct Axios through `apiClient`; no KYC BFF route is planned because no refresh token is involved.
 - All KYC tasks must include appropriate loading states and specific, user-friendly error states for validation, rejection, provider failure, long-running pending, auth/session failure, and unexpected server errors.
+
+## Final Implementation Map
+
+Task 14 final QA confirms the implemented KYC flow is complete with the current product decisions above.
+
+- Auth/session flags: `src/store/auth-store.ts`, `src/lib/validators/auth.ts`, auth BFF routes, `src/services/auth.service.ts`, and `src/hooks/auth/useAuth.ts` keep `kyc_verified` and `risk_assessed` memory-only and browser-safe.
+- Profile flag sync: `src/services/user.service.ts`, `src/hooks/user/useUser.ts`, `src/hooks/user/useUserProfile.ts`, and `src/hooks/auth/useUserFlags.ts` hydrate `/users/me` and sync flags through `setFlags`.
+- KYC contract/runtime layer: `openapi.json`, `src/types/schema.d.ts`, `src/types/kyc.ts`, `src/lib/validators/kyc.ts`, `src/lib/api/endpoints.ts`, and `src/mocks/handlers/kyc.ts` cover NIN-only verify/status contracts and test fixtures.
+- KYC data hooks: `src/services/kyc.service.ts` and `src/hooks/kyc/useKyc.ts` use direct authenticated `apiClient`, parse responses, expose user-facing errors, update the verified flag only on confirmed verified responses, and poll pending status with the resolved backoff policy.
+- Gates and dashboard consumers: `src/hooks/kyc/useKycGate.ts`, `src/components/kyc/shared/*`, `src/components/kyc/dashboard/*`, and `src/app/(app)/dashboard/page.tsx` provide the reusable KYC gate, required modal, unverified dashboard banner, and gated recommendations action.
+- Protected KYC page: `src/app/(app)/kyc/page.tsx`, `src/components/kyc/kyc-route-controller.tsx`, `src/components/kyc/kyc-page.tsx`, `src/components/kyc/verify/*`, and `src/components/kyc/status/*` compose the authenticated app-chrome KYC experience with verified profile display, NIN-only form, status display, retry cooldown, and accessible async states.
+- Route protection: `src/middleware.ts`, `src/lib/auth/redirects.ts`, and `src/components/auth/shared/protected-route.tsx` protect `/kyc` using the refresh-cookie session hint and client-side memory-only session initialization.
+- Test coverage: `src/__tests__/...` covers validators, services, hooks, store/session behavior, route guards, page composition, status polling, form states, dashboard banner/action, modal/gate behavior, and `e2e/kyc/kyc-flow.spec.ts` covers the full KYC user flow.
+
+## Final QA Status
+
+- KYC security requirements are met: access tokens remain memory-only, refresh tokens remain httpOnly-cookie-only through auth BFF routes, KYC verify/status use direct Bearer-authenticated `apiClient`, and no KYC BFF route was added.
+- NIN-only behavior is enforced in validators, UI, mocks, and tests. The generated OpenAPI description still contains backend wording that mentions BVN, but frontend-facing types, schemas, labels, mocks, and tests expose only `NIN`.
+- `kyc_verified` and `risk_assessed` are synchronized from login, refresh, and `/users/me`; KYC status/verify set `kycVerified` only on confirmed `verified` outcomes.
+- No KYC product questions remain unresolved. The only documented policy change is the verified-user `/kyc` behavior noted above.
+- Final QA passed on 2026-05-29: `npm run lint`, `npm test -- --run`, `npx tsc --noEmit`, `npm run test:e2e -- --project=chromium`, `npm run build`, and `git diff --check`.
 
 ## Epic Tasks
 
@@ -421,7 +443,7 @@ Acceptance criteria:
 
 - `/kyc` exists under `src/app/(app)/kyc/page.tsx`.
 - Route requires authentication and redirects unauthenticated users to login with a safe redirect back to `/kyc`.
-- Route redirects already verified users to `/dashboard`.
+- Route allows already verified users to view their successful KYC state and `/users/me` profile details on `/kyc`.
 - Route waits for auth initialization and user flag/profile resolution before deciding verified vs unverified.
 - Page defines appropriate Next.js metadata.
 - Route uses app chrome, not AuthShell.
@@ -648,7 +670,7 @@ Files likely touched/created:
 Acceptance criteria:
 
 - Unauthenticated user is redirected away from `/kyc` to login.
-- Already verified user is redirected away from `/kyc`.
+- Already verified user sees verified KYC state and profile details on `/kyc`.
 - Successful NIN verification works end-to-end and updates the `kyc_verified` flag behavior.
 - Rejected verification shows rejection copy and allows retry.
 - Failed verification shows technical/provider copy and respects retry cooldown.

@@ -158,18 +158,20 @@ test('pending status shows waiting state and long-running timeout state', async 
   await page.clock.install();
   await loginAs(page, { kycVerified: false, riskAssessed: true }, '/kyc');
   await expect(page.getByText('Verification in progress')).toBeVisible();
+  const longRunningStatus = page.getByText('Verification is taking longer than expected');
 
   for (let count = 0; count < 10; count += 1) {
     await page.clock.fastForward(3_000);
     await page.waitForTimeout(0);
   }
 
-  for (let count = 0; count < 30; count += 1) {
+  for (let count = 0; count < 50; count += 1) {
     await page.clock.fastForward(10_000);
     await page.waitForTimeout(0);
+    if (await longRunningStatus.isVisible().catch(() => false)) break;
   }
 
-  await expect(page.getByText('Verification is taking longer than expected')).toBeVisible();
+  await expect(longRunningStatus).toBeVisible();
   await expect(page.getByText(/stopped polling for now/i)).toBeVisible();
   expect(statusRequestCount).toBeGreaterThan(10);
 });
