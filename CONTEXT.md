@@ -1377,3 +1377,82 @@ The route exports metadata from a server page file and delegates the interactive
 
 Known follow-ups:
 Task 9 should add end-to-end coverage for the public marketplace route, including anonymous catalog browsing and the unauthenticated recommendation redirect from within the composed page. A later marketplace data-layer enhancement should introduce an infinite-query or equivalent pagination pattern before re-enabling true Load More accumulation at the page level. Validation passed: focused marketplace page suite (6 files, 32 tests), `npx tsc --noEmit`, `npm run lint` (0 errors, 18 existing warnings), and `git diff --check`.
+
+### 2026-06-24 20:31 WAT
+
+Task completed: Marketplace mobile responsiveness fix
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/marketplace/marketplace-page.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/marketplace/filter-sidebar/filter-sidebar-shell.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/marketplace/marketplace-navbar.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/marketplace/risk-level-filter.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/marketplace/product-card.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/marketplace/product-grid.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/marketplace/recommendations/marketplace-recommendations-action.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/pages/MarketplacePage.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+
+Summary:
+Fixed the public marketplace layout on phone and very small screen widths. The marketplace now stacks the filter sidebar above the content on mobile, keeps the screenshot-matched left sidebar only from the large breakpoint upward, and tightens navbar controls, risk filters, card typography, grid tracks, and recommendation CTA behavior so the page no longer forces horizontal scrolling.
+
+Important decisions:
+Desktop keeps the upside-down L layout via `lg:flex-row` and `lg:w-72`, while mobile uses a full-width filter panel and horizontally scrollable compact control rows where that is the safest interaction. Product cards now use smaller mobile headings and truncation for provider/money labels to avoid text-driven overflow on narrow devices.
+
+Known follow-ups:
+The public `(public)` layout still wraps `/marketplace` with the shared site navbar/footer; a future standalone marketplace shell can remove that chrome if the design requires exact screenshot parity. Validation passed: focused marketplace tests (5 files, 30 tests), `npx tsc --noEmit`, `npm run lint` (0 errors, 18 existing warnings), `git diff --check`, and a Playwright viewport overflow check at 320, 360, and 390px with no horizontal overflow.
+
+### 2026-06-25 00:58 WAT
+
+Task completed: Marketplace mobile filter sheet refinement
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/marketplace/marketplace-page.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/marketplace/filter-sidebar/filter-sidebar-shell.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/marketplace/marketplace-navbar.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/marketplace/marketplace-controls.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/pages/MarketplacePage.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+
+Summary:
+Adjusted the mobile marketplace controls so the top navbar shows only the search bar, followed by a compact `Filters +` trigger. The mobile filter trigger opens a bottom sheet containing risk-level controls, categories, premium, provider filters, Apply, and Clear all; applied filters show as `Filters(x)`.
+
+Important decisions:
+The desktop sidebar and desktop risk row remain intact from the large breakpoint upward. On mobile, the standalone risk row is hidden and the risk controls live inside the bottom sheet so filtering is consolidated in one place.
+
+Known follow-ups:
+If future mobile designs add more marketplace controls, keep them inside the bottom sheet rather than growing the top navbar. Validation passed: focused marketplace tests (2 files, 13 tests), `npx tsc --noEmit`, `npm run lint` (0 errors, 18 existing warnings), `git diff --check`, and a Playwright mobile check confirming the sheet exposes All, Low Risk, Moderate Risk, and High Risk with no horizontal overflow.
+
+### 2026-06-25 01:18 WAT
+
+Task completed: Task 9 — Unit, Integration, and E2E Completion
+
+Files changed:
+- /Users/naijaghost/Desktop/projects/gigsecure-fe/e2e/marketplace/marketplace-flow.spec.ts
+- /Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md
+
+Summary:
+Added a focused Playwright marketplace flow spec covering anonymous catalog browsing, public list/detail requests without Bearer tokens, desktop pending filter application, mobile search-first/filter-sheet behavior, public detail panel dismissal, and all recommendation access branches. Existing marketplace unit and integration coverage already handled validators, services, hooks, controls, grid, panel, page composition, and component-level pagination, so production code was left untouched for this test-completion task.
+
+Important decisions:
+The required exact E2E command could not start its own Next server because PID 68156 already held `.next/dev/lock`; the spec was rerun successfully against the existing reachable dev server on `http://127.0.0.1:3000` using `E2E_BASE_URL`. Page-level Load More pagination remains deferred from Task 8, so Task 9 pagination coverage is currently the existing `ProductGrid` unit/integration behavior rather than a route-level E2E flow.
+
+Known follow-ups:
+When page-level catalog accumulation is implemented, add E2E coverage for the visible Load More path. The lint suite still reports 18 pre-existing warnings outside the marketplace files, but no lint errors.
+
+### 2026-06-25 01:28 WAT
+
+Task completed: Task 10 — Final QA and Documentation Update
+
+Files changed:
+- /Users/naijaghost/Desktop/projects/gigsecure-fe/MARKETPLACE_EPICS.md
+- /Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md
+
+Summary:
+Recorded the final public marketplace file map, access boundary, verification output, and remaining backend/product questions in `MARKETPLACE_EPICS.md`. Confirmed in the epic documentation that marketplace browsing and product detail are public, while recommendations remain authenticated and risk-assessment gated through the existing auth/session flag flow.
+
+Important decisions:
+No production feature code changed for this final QA task. The exact E2E command remains blocked when Playwright tries to start a new Next dev server because PID 68156 holds `.next/dev/lock`; the marketplace E2E passed against the existing reachable dev server on `http://127.0.0.1:3000` using `E2E_BASE_URL`. The first sandboxed build failed on Google Fonts fetch, and the escalated `npm run build` rerun passed.
+
+Known follow-ups:
+Remaining follow-ups are documented in the epic: define the real public product-detail CTA in a future purchase epic, add structured coverage benefits and payout labels from the backend, consider backend facet metadata, decide whether `/marketplace` needs a standalone public shell, and implement route-level Load More once an infinite-query or equivalent pagination pattern is introduced.

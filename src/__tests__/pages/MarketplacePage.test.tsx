@@ -37,8 +37,8 @@ describe('MarketplacePage', () => {
 
     renderWithProviders(<MarketplaceRoute />);
 
-    expect(screen.getByRole('heading', { name: 'Filters' })).toBeInTheDocument();
     expect(screen.getByRole('searchbox', { name: 'Search marketplace plans' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Filters +' })).toBeInTheDocument();
     expect(
       screen.getByRole('heading', { name: 'Recommended plans' })
     ).toBeInTheDocument();
@@ -57,6 +57,27 @@ describe('MarketplacePage', () => {
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
+  });
+
+  it('uses a stacked mobile-first marketplace shell before the desktop sidebar layout', async () => {
+    mockPathname.value = '/marketplace';
+    mockRouter.push.mockReset();
+    mockRouter.replace.mockReset();
+    [...mockSearchParams.keys()].forEach((key) => mockSearchParams.delete(key));
+
+    const { container } = renderWithProviders(<MarketplaceRoute />);
+
+    expect(await screen.findByRole('button', {
+      name: 'Open details for Income Shield for Gig Workers',
+    })).toBeInTheDocument();
+
+    const shell = container.querySelector('.flex.min-h-screen.w-full');
+    expect(shell?.className).toContain('flex-col');
+    expect(shell?.className).toContain('lg:flex-row');
+
+    const sidebar = screen.getByRole('complementary');
+    expect(sidebar.className).toContain('hidden');
+    expect(sidebar.className).toContain('w-72');
   });
 
   it('keeps browsing public while recommendation access routes anonymous users to login', async () => {

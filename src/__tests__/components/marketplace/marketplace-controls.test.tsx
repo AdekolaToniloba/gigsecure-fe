@@ -2,7 +2,10 @@ import React from 'react';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { FilterSidebarShell } from '@/components/marketplace/filter-sidebar/filter-sidebar-shell';
+import {
+  FilterSidebarShell,
+  MobileFilterSheet,
+} from '@/components/marketplace/filter-sidebar/filter-sidebar-shell';
 import { MarketplaceNavbar } from '@/components/marketplace/marketplace-navbar';
 import { RiskLevelFilter } from '@/components/marketplace/risk-level-filter';
 import { marketplaceProducts } from '@/mocks/handlers/marketplace';
@@ -128,6 +131,33 @@ describe('FilterSidebarShell', () => {
     rerender(<FilterSidebarShell products={marketplaceProducts} />);
 
     expect(screen.queryByRole('heading', { name: 'Need Help Choosing' })).not.toBeInTheDocument();
+  });
+});
+
+describe('MobileFilterSheet', () => {
+  it('shows the default Filters + trigger and opens filter options from the bottom sheet', async () => {
+    const user = userEvent.setup();
+    render(<MobileFilterSheet products={marketplaceProducts} />);
+
+    await user.click(screen.getByRole('button', { name: 'Filters +' }));
+
+    expect(screen.getByRole('dialog', { name: 'Filters' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'All' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Low Risk' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Moderate Risk' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'High Risk' })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: 'Income Protection' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Apply Filters' })).toBeInTheDocument();
+  });
+
+  it('shows the applied filter count in the mobile trigger', () => {
+    mockSearchParams.append('category', 'Income Protection');
+    mockSearchParams.append('provider_slug', 'axa-mansard');
+    mockSearchParams.set('max_premium', '10000');
+
+    render(<MobileFilterSheet products={marketplaceProducts} />);
+
+    expect(screen.getByRole('button', { name: 'Filters(3)' })).toBeInTheDocument();
   });
 });
 

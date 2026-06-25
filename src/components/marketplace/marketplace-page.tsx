@@ -1,7 +1,10 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { FilterSidebarShell } from '@/components/marketplace/filter-sidebar/filter-sidebar-shell';
+import {
+  FilterSidebarShell,
+  MobileFilterSheet,
+} from '@/components/marketplace/filter-sidebar/filter-sidebar-shell';
 import { MarketplaceNavbar } from '@/components/marketplace/marketplace-navbar';
 import { ProductDetailPanel } from '@/components/marketplace/product-detail-panel';
 import { ProductGrid } from '@/components/marketplace/product-grid';
@@ -29,18 +32,22 @@ export function MarketplacePage() {
   const selectedProductId = selectedProduct?.id ?? null;
 
   return (
-    <div className="w-full bg-[#FCFCF8]">
-      <div className="flex min-h-screen w-full">
+    <div className="w-full overflow-x-hidden bg-[#FCFCF8]">
+      <div className="flex min-h-screen w-full flex-col lg:flex-row">
         <FilterSidebarShell products={visibleProducts} />
 
         <div className="flex min-w-0 flex-1 flex-col">
           <MarketplaceNavbar />
 
-          <main className="flex-1 px-6 pb-10 pt-8 sm:px-8 lg:px-10">
+          <main className="min-w-0 flex-1 px-4 pb-10 pt-5 sm:px-6 sm:pt-6 lg:px-10 lg:pt-8">
             <h1 className="sr-only">GigSecure Marketplace</h1>
 
-            <div className="space-y-6">
-              <RiskLevelFilter />
+            <div className="space-y-5 sm:space-y-6">
+              <MobileFilterSheet products={visibleProducts} />
+
+              <div className="hidden lg:block">
+                <RiskLevelFilter />
+              </div>
 
               <MarketplaceRecommendationsAction />
 

@@ -40,19 +40,19 @@ export function ProductCard({ product, onOpen }: ProductCardProps) {
       aria-label={`Open details for ${product.name}`}
       onClick={() => onOpen(product)}
       onKeyDown={handleKeyDown}
-      className="rounded-2xl border border-primary/15 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition hover:border-primary/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+      className="min-w-0 rounded-2xl border border-primary/15 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition hover:border-primary/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
     >
-      <div className="space-y-4 p-5">
-        <span className="flex h-14 w-14 items-center justify-center rounded-xl bg-[#F8EBCB] text-primary">
-          <ShieldPlus aria-hidden="true" className="h-7 w-7" />
+      <div className="space-y-4 p-4 sm:p-5">
+        <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#F8EBCB] text-primary sm:h-14 sm:w-14">
+          <ShieldPlus aria-hidden="true" className="h-6 w-6 sm:h-7 sm:w-7" />
         </span>
 
         <div className="space-y-3">
-          <h2 className="font-heading text-[2rem] leading-8 font-bold text-primary sm:text-[1.85rem]">
+          <h2 className="font-heading text-xl font-bold leading-6 text-primary sm:text-2xl sm:leading-7 xl:text-[1.85rem] xl:leading-8">
             {product.name}
           </h2>
 
-          <div className="flex items-center gap-3">
+          <div className="flex min-w-0 items-center gap-3">
             {hasProviderLogo ? (
               // Provider logos are partner-hosted and not yet configured for next/image.
               // eslint-disable-next-line @next/next/no-img-element
@@ -70,7 +70,9 @@ export function ProductCard({ product, onOpen }: ProductCardProps) {
                 {getProviderInitials(product.provider.name)}
               </span>
             )}
-            <span className="text-sm font-medium text-primary">{product.provider.name}</span>
+            <span className="min-w-0 truncate text-sm font-medium text-primary">
+              {product.provider.name}
+            </span>
           </div>
 
           <p className="min-h-12 text-sm leading-6 text-primary-light [display:-webkit-box] overflow-hidden [-webkit-box-orient:vertical] [-webkit-line-clamp:2]">
@@ -79,15 +81,17 @@ export function ProductCard({ product, onOpen }: ProductCardProps) {
         </div>
       </div>
 
-      <div className="border-t border-primary/10 px-5 py-4">
+      <div className="border-t border-primary/10 px-4 py-4 sm:px-5">
         <dl className="grid grid-cols-2 gap-4 text-sm">
-          <div>
+          <div className="min-w-0">
             <dt className="text-primary-light">Coverage</dt>
-            <dd className="mt-2 font-semibold text-primary">{formatAmount(product.coverage_amount)}</dd>
+            <dd className="mt-2 truncate font-semibold text-primary">
+              {formatAmount(product.coverage_amount)}
+            </dd>
           </div>
-          <div>
+          <div className="min-w-0">
             <dt className="text-primary-light">From</dt>
-            <dd className="mt-2 font-semibold text-primary">
+            <dd className="mt-2 truncate font-semibold text-primary">
               {formatAmount(product.premium_amount)}
               <span className="ml-1 text-sm font-medium text-primary">/month</span>
             </dd>

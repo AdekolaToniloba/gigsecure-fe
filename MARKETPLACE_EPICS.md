@@ -352,3 +352,90 @@ Acceptance criteria:
 Dependencies/blockers:
 
 - Tasks 1 through 9.
+
+## Final QA Snapshot
+
+Completed: 2026-06-25 01:28 WAT
+
+### Final Public Marketplace File Map
+
+Contracts and API foundation:
+
+- `openapi.json`
+- `src/types/schema.d.ts`
+- `src/types/marketplace.ts`
+- `src/lib/validators/marketplace.ts`
+- `src/lib/api/endpoints.ts`
+- `src/lib/constants.ts`
+- `src/mocks/handlers/marketplace.ts`
+- `src/services/marketplace.service.ts`
+- `src/hooks/marketplace/useMarketplace.ts`
+- `src/hooks/marketplace/useMarketplaceRecommendationsGate.ts`
+- `src/hooks/marketplace/useMarketplaceFilters.ts`
+
+Route and page composition:
+
+- `src/app/(public)/marketplace/page.tsx`
+- `src/components/marketplace/marketplace-page.tsx`
+
+Controls and layout:
+
+- `src/components/marketplace/marketplace-navbar.tsx`
+- `src/components/marketplace/risk-level-filter.tsx`
+- `src/components/marketplace/filter-sidebar/filter-sidebar-shell.tsx`
+- `src/components/marketplace/filter-sidebar/category-filter.tsx`
+- `src/components/marketplace/filter-sidebar/price-range-filter.tsx`
+- `src/components/marketplace/filter-sidebar/provider-filter.tsx`
+- `src/components/marketplace/filter-sidebar/apply-filters-button.tsx`
+- `src/components/marketplace/filter-sidebar/risk-assessment-prompt.tsx`
+- `src/components/marketplace/recommendations/marketplace-recommendations-action.tsx`
+
+Catalog and detail UI:
+
+- `src/components/marketplace/product-card.tsx`
+- `src/components/marketplace/product-card-skeleton.tsx`
+- `src/components/marketplace/product-grid.tsx`
+- `src/components/marketplace/product-detail-panel.tsx`
+
+Tests:
+
+- `src/__tests__/lib/marketplace-validators.test.ts`
+- `src/__tests__/services/marketplace.service.test.ts`
+- `src/__tests__/hooks/marketplace-recommendations-gate.test.tsx`
+- `src/__tests__/components/marketplace/marketplace-recommendations-action.test.tsx`
+- `src/__tests__/components/marketplace/marketplace-controls.test.tsx`
+- `src/__tests__/components/marketplace/product-grid.test.tsx`
+- `src/__tests__/components/marketplace/product-detail-panel.test.tsx`
+- `src/__tests__/pages/MarketplacePage.test.tsx`
+- `e2e/marketplace/marketplace-flow.spec.ts`
+
+### Final Access Boundary
+
+- Public browsing is confirmed: `/marketplace`, `GET /api/v1/marketplace/products`, and `GET /api/v1/marketplace/products/{product_id}` do not require authentication and are not added to protected route checks.
+- Public catalog requests use the dedicated public Axios client in `marketplace.service.ts`, so no memory Bearer token or refresh behavior is attached to list/detail requests.
+- Recommendations are confirmed authenticated: `GET /api/v1/marketplace/recommendations` uses `apiClient`.
+- Recommendation action behavior is confirmed:
+  - unauthenticated users route to `/login?redirect=%2Fmarketplace`;
+  - authenticated users with `risk_assessed = false` route to `/assessment`;
+  - authenticated users with `risk_assessed = true` fetch recommendations.
+
+### Final Verification Output
+
+- `npx tsc --noEmit` passed.
+- Focused marketplace Vitest slice passed: 8 files, 41 tests.
+- `npm test -- --run` passed: 78 files, 434 tests. The suite still prints the existing non-fatal jsdom navigation notice.
+- `npm run lint` passed with 0 errors and 18 pre-existing warnings outside the marketplace work.
+- `git diff --check` passed.
+- `npm run test:e2e -- --project=chromium e2e/marketplace/marketplace-flow.spec.ts` was attempted, but the local Next dev lock was already held by PID 68156.
+- `E2E_BASE_URL=http://127.0.0.1:3000 npm run test:e2e -- --project=chromium e2e/marketplace/marketplace-flow.spec.ts` passed against the existing reachable dev server: 5 tests.
+- `npm run build` failed in the sandbox because `next/font` could not fetch Google Fonts; the escalated rerun passed and generated `/marketplace` as a static public route.
+
+### Remaining Questions and Follow-Ups
+
+1. Public product-detail CTA: it currently renders as disabled coming-soon copy because policy purchase is outside this epic. A future purchase epic should define the real action.
+2. Structured coverage benefits: backend should provide structured benefit lines so the panel can stop deriving bullets from product description text.
+3. Payout type: backend should provide a product-authored payout label if the derived renewal-frequency fallback is not accurate enough.
+4. Facets: backend should consider category/provider facet metadata so filters do not depend only on the currently loaded product page.
+5. Public shell parity: `/marketplace` still lives in the shared public route group; a future standalone marketplace shell can remove the shared public navbar/footer if exact screenshot parity is required.
+6. Page-level pagination: `ProductGrid` supports offset-style Load More and has component coverage, but route-level accumulation remains deferred until the marketplace hook adopts an infinite-query or equivalent pattern.
+7. Bell, premiums, and Take A Tour remain accessible non-functional placeholders for this public marketplace MVP.

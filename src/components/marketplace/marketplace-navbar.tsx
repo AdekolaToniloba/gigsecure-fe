@@ -35,8 +35,8 @@ function MarketplaceNavbarContent({
   }, [searchValue, updateSearch]);
 
   return (
-    <header className="flex min-h-24 items-center gap-4 border-b border-primary/10 bg-white px-8 shadow-sm">
-      <label className="relative max-w-md flex-1">
+    <header className="sticky top-0 z-30 flex min-h-20 flex-col gap-3 border-b border-primary/10 bg-white px-4 py-4 shadow-sm sm:min-h-24 sm:flex-row sm:items-center sm:gap-4 sm:px-6 lg:static lg:px-8">
+      <label className="relative w-full min-w-0 sm:max-w-md sm:flex-1">
         <span className="sr-only">Search marketplace plans</span>
         <Search
           aria-hidden="true"
@@ -51,13 +51,13 @@ function MarketplaceNavbarContent({
         />
       </label>
 
-      <div className="ml-auto flex items-center gap-3">
+      <div className="hidden w-full min-w-0 items-center gap-2 overflow-x-auto pb-1 sm:ml-auto sm:flex sm:w-auto sm:gap-3 sm:overflow-visible sm:pb-0">
         <button
           type="button"
           disabled
           aria-label="Notifications coming soon"
           title="Notifications coming soon"
-          className="flex h-9 w-9 items-center justify-center rounded-full border border-primary/15 text-primary disabled:cursor-not-allowed disabled:opacity-70"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-primary/15 text-primary disabled:cursor-not-allowed disabled:opacity-70"
         >
           <Bell aria-hidden="true" className="h-4 w-4" />
         </button>
@@ -66,7 +66,7 @@ function MarketplaceNavbarContent({
           disabled
           aria-label="Premiums coming soon"
           title="Premiums coming soon"
-          className="flex h-10 items-center gap-3 rounded-sm border border-primary/20 px-3 text-sm text-primary disabled:cursor-not-allowed disabled:opacity-70"
+          className="flex h-10 shrink-0 items-center gap-2 rounded-sm border border-primary/20 px-3 text-sm text-primary disabled:cursor-not-allowed disabled:opacity-70 sm:gap-3"
         >
           <WalletCards aria-hidden="true" className="h-4 w-4" />
           <span>0 Premiums</span>
@@ -75,7 +75,7 @@ function MarketplaceNavbarContent({
           type="button"
           disabled
           title="Product tour coming soon"
-          className="h-10 rounded-sm bg-primary px-7 text-xs font-semibold text-accent disabled:cursor-not-allowed disabled:opacity-90"
+          className="h-10 shrink-0 rounded-sm bg-primary px-4 text-xs font-semibold text-accent disabled:cursor-not-allowed disabled:opacity-90 sm:px-7"
         >
           Take A Tour
         </button>

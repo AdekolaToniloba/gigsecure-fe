@@ -22,11 +22,11 @@ export function MarketplaceRecommendationsAction() {
       className="rounded-lg border border-primary/10 bg-white p-4"
     >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex gap-3">
+        <div className="flex min-w-0 gap-3">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary-muted text-primary">
             <Sparkles aria-hidden="true" className="h-5 w-5" />
           </span>
-          <div>
+          <div className="min-w-0">
             <h2 id="marketplace-recommendations-title" className="font-heading text-base font-bold text-primary">
               Recommended plans
             </h2>
@@ -42,7 +42,7 @@ export function MarketplaceRecommendationsAction() {
           isLoading={isLoadingRecommendations}
           disabled={isCheckingAccess}
           aria-describedby="marketplace-recommendations-status"
-          className="shrink-0"
+          className="w-full shrink-0 sm:w-auto"
         >
           {isLoadingRecommendations
             ? 'Loading recommendations...'
