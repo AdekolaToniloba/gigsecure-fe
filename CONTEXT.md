@@ -1186,3 +1186,273 @@ Kept store synchronization behavior intact and made the KYC page conservative at
 
 Known follow-ups:
 Validation passed: `npm test -- --run` (70 files, 393 tests), `npm run lint` (0 errors, 18 existing warnings), `npx tsc --noEmit`, `npm run test:e2e -- --project=chromium e2e/kyc/kyc-flow.spec.ts` (8 tests), and `git diff --check`. If production still returns `kyc_verified: false` from refresh or `/users/me` while `/kyc/status` returns `verified`, the backend flag synchronization should also be corrected so dashboard gating is consistent outside the KYC page.
+
+### 2026-06-01 12:20 WAT
+
+Task completed: Task 1 - Marketplace Audit and Contract Lock
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/MARKETPLACE_EPICS.md`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+
+Summary:
+Created the ordered marketplace epic before feature implementation. The audit records the existing memory-only auth flags, `useUserFlags`, `setFlags`, KYC gate/modal, authenticated Axios client, API error parser, app layout, dashboard placeholder, test infrastructure, stale product/policy modules, local OpenAPI drift, and the two supplied marketplace/premiums design layouts.
+
+Important decisions:
+`/marketplace` is a protected special shell that hides the persistent app sidebar and footer while retaining action-level risk and KYC gates. Other authenticated pages use the new persistent app sidebar. Filters keep pending local state until Apply Filters, except debounced search and risk-level controls. Marketplace recommendations are data-ready only until a design is supplied. Owned-policy mode keeps `Get Covered` visible but disabled, and `View Policy` deep-links to `/premiums?policy_id=...`.
+
+Known follow-ups:
+Task 2 must update `openapi.json` and regenerate `src/types/schema.d.ts` before marketplace runtime code is added. Backend follow-ups remain for report response headers, structured coverage benefits, payout type, authoritative next-payment date, catalog facet metadata, and duplicate-purchase policy.
+
+### 2026-06-01 16:24 WAT
+
+Task completed: Tasks 2 through 5 - Marketplace Contract, Data Foundation, and Risk Gate
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/openapi.json`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/types/schema.d.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/types/marketplace.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/types/policy.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/lib/validators/marketplace.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/lib/validators/policy.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/lib/validators/dashboard.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/lib/api/endpoints.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/lib/constants.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/mocks/handlers/marketplace.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/mocks/handlers/domain.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/mocks/browser.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/mocks/server.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/services/marketplace.service.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/services/policy.service.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/services/dashboard.service.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/hooks/marketplace/useMarketplace.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/hooks/policy/usePolicy.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/hooks/dashboard/useDashboard.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/hooks/risk/useRiskGate.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/risk/shared/risk-assessment-gate.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/risk/shared/risk-assessment-required-prompt.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/lib/marketplace-validators.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/services/marketplace.service.test.ts`
+
+Files removed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/services/products.service.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/services/policies.service.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/hooks/products/useProducts.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/hooks/policies/usePolicies.ts`
+
+Summary:
+Synced the stale local OpenAPI marketplace, policy, and dashboard contracts and regenerated `src/types/schema.d.ts` through `npm run generate:types`. Added runtime Zod validation, corrected endpoint/query constants, realistic MSW filtering/pagination/policy/payment/report/dashboard fixtures, authenticated services, React Query hooks, and the reusable risk-assessment gate/prompt. Removed the unused legacy product/policy wrappers so the repo has one public marketplace contract instead of two incompatible API models.
+
+Important decisions:
+Marketplace monetary fields stay decimal strings through the API/runtime validation boundary. Policy report retrieval returns a blob. Mutations use `retry: false`, and successful mock payment invalidates policy list, policy summary, and dashboard overview queries. `RiskAssessmentGate` reads the existing `useUserFlags` hook and does not create parallel state.
+
+Known follow-ups:
+Implementation intentionally stops here for review before UI work. Tasks 6 through 16 remain unstarted: persistent app shell/sidebar, marketplace controls, product cards/grid, detail slide-over, `/marketplace`, `/premiums`, dashboard presentation integration, route additions, broader component/hook/e2e coverage, and final QA documentation. Validation passed: `npm run generate:types`, `npx tsc --noEmit`, focused marketplace tests (2 files, 10 tests), `npm run lint` (0 errors, 18 existing warnings), and `git diff --check`.
+
+### 2026-06-01 16:58 WAT
+
+Task completed: Marketplace Scope Correction - Public Catalog and Product Panel Only
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/MARKETPLACE_EPICS.md`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/openapi.json`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/types/schema.d.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/lib/api/endpoints.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/lib/constants.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/services/marketplace.service.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/mocks/handlers/marketplace.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/lib/marketplace-validators.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/services/marketplace.service.test.ts`
+
+Summary:
+Corrected the marketplace epic and foundation after product clarification. The marketplace page, product list, and product detail are public. Only marketplace recommendations require authentication because they are derived from the user's risk assessment. The second supplied screenshot is now treated only as the visual reference for the marketplace card slide-over; its Premiums Bought background is not part of this epic.
+
+Important decisions:
+`GET /api/v1/marketplace/products` and `GET /api/v1/marketplace/products/{product_id}` no longer declare Bearer security in `openapi.json` and use a dedicated public Axios client without auth attachment or refresh behavior. `GET /api/v1/marketplace/recommendations` retains Bearer security and continues through the authenticated `apiClient`. Recommendation actions will route unauthenticated users to `/login?redirect=/marketplace`, authenticated unassessed users to `/assessment`, and assessed authenticated users to the recommendations query. Premiums Bought, policies, dashboard integration, authenticated app sidebar, and protected marketplace routing are deferred.
+
+Known follow-ups:
+Future implementation should continue with the corrected public-marketplace Tasks 4 through 10 in `MARKETPLACE_EPICS.md`. The earlier assessed-only risk-gate helper was removed because the future marketplace recommendations controller must explicitly distinguish unauthenticated users from authenticated unassessed users. The public product panel needs a product decision for its pre-policy `Get Covered` CTA; until then, the plan defaults to disabled or informational coming-soon behavior. Validation passed: `npm run generate:types`, `npx tsc --noEmit`, focused marketplace tests (2 files, 6 tests), `npm run lint` (0 errors, 18 existing warnings), and `git diff --check`.
+
+### 2026-06-02 00:14 WAT
+
+Task completed: Task 4 — Recommendation Access Gate
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/hooks/marketplace/useMarketplaceRecommendationsGate.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/marketplace/recommendations/marketplace-recommendations-action.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/hooks/marketplace-recommendations-gate.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/marketplace/marketplace-recommendations-action.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+
+Summary:
+Added a lazy marketplace recommendation access controller and a focused accessible CTA component. The controller composes the existing `useSession`, `useUserFlags`, authenticated recommendations query, login redirect helper, and `parseApiError`; it does not call the authenticated endpoint until an assessed signed-in user explicitly requests recommendations.
+
+Important decisions:
+Unauthenticated users route to `/login?redirect=%2Fmarketplace`, authenticated users without a completed risk assessment route to `/assessment`, and assessed authenticated users enable recommendation loading. The CTA exposes accessible checking, loading, success, and error status regions but is intentionally not mounted into a marketplace page yet because page composition belongs to later epic tasks.
+
+Known follow-ups:
+Task 5 should build the public marketplace shell and navbar without wrapping `/marketplace` in `ProtectedRoute` or adding it to middleware. A later composition task should place `MarketplaceRecommendationsAction` where the final public marketplace design calls for it. Validation passed: focused recommendation tests (2 files, 8 tests), `npx tsc --noEmit`, `npm run lint` (0 errors, 18 existing warnings), and `git diff --check`.
+
+### 2026-06-02 00:21 WAT
+
+Task completed: Task 5 — Marketplace Controls and URL Filter State
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/hooks/marketplace/useMarketplaceFilters.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/marketplace/marketplace-navbar.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/marketplace/risk-level-filter.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/marketplace/filter-sidebar/filter-sidebar-shell.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/marketplace/filter-sidebar/category-filter.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/marketplace/filter-sidebar/price-range-filter.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/marketplace/filter-sidebar/provider-filter.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/marketplace/filter-sidebar/apply-filters-button.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/marketplace/filter-sidebar/risk-assessment-prompt.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/marketplace/marketplace-controls.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/test-utils.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/setup.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+
+Summary:
+Added the public marketplace control layer from screenshot 1: the right-column navbar, URL-driven risk controls, and the full-height filter sidebar with category, premium, provider, Apply Filters, Clear all, and conditional risk-assessment prompt sections. Sidebar selections remain pending local component state until Apply Filters, while debounced search and risk-level buttons write directly to canonical URL search params and reset pagination.
+
+Important decisions:
+The premium control is a screenshot-matched 0–50,000 maximum-monthly-premium slider; selecting the full 50,000 bound omits `max_premium` from the URL as the default. URL hydration seeds keyed inner components rather than synchronously mirroring URL values into local state from effects, which satisfies React compiler guidance and keeps refresh hydration stable. Navbar bell, premiums, and tour controls render as explicitly named disabled placeholders because their behavior is out of scope.
+
+Known follow-ups:
+Task 6 should compose these controls with public product cards and the responsive grid without moving filter state into Zustand. Task 8 should mount the controls into the public `/marketplace` page and preserve the upside-down L structure. Validation passed: focused marketplace Task 4–5 tests (3 files, 15 tests), `npx tsc --noEmit`, `npm run lint` (0 errors, 18 existing warnings), and `git diff --check`.
+
+### 2026-06-02 00:27 WAT
+
+Task completed: Task 6 — Product Cards and Responsive Grid
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/marketplace/product-card.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/marketplace/product-card-skeleton.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/marketplace/product-grid.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/marketplace/product-grid.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+
+Summary:
+Added the public marketplace card and grid presentation layer from screenshot 1. The new card formats provider identity, coverage, and monthly premium with keyboard-accessible open behavior, while the grid handles responsive layout plus loading, empty, parsed-error, retry, and offset-style load-more states without pulling page or panel composition into this task.
+
+Important decisions:
+`ProductGrid` is intentionally presentational and receives products, pagination data, and callbacks from its parent rather than coupling directly to routing or panel state. Provider logos fall back to initials when a partner logo is missing or fails to load, and the card uses the screenshot’s warm beige icon tile with a public outlined `Explore Plan` CTA. Load-more visibility is driven by the current `products`, `limit`, and `total` props so Task 8 can connect it to real query pagination cleanly.
+
+Known follow-ups:
+Task 7 should connect card-open callbacks to the public detail slide-over without changing the card/grid API shape. Task 8 should mount the grid alongside the existing marketplace controls and decide whether product queries use replacement or accumulation for offset pagination. Validation passed: focused marketplace Task 4–6 tests (4 files, 23 tests), `npx tsc --noEmit`, `npm run lint` (0 errors, 18 existing warnings), and `git diff --check`.
+
+### 2026-06-02 00:34 WAT
+
+Task completed: Task 7 — Public Product Detail Slide-Over
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/marketplace/product-detail-panel.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/marketplace/product-detail-panel.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+
+Summary:
+Added the public marketplace product detail slide-over using the marketplace card visual language and the right-panel structure from the supplied reference. The panel fetches public product detail through the existing public marketplace hook, uses the clicked card data as a fallback while loading, and provides accessible loading, error, and retry states without introducing any protected purchase or policy behavior.
+
+Important decisions:
+The panel reuses the existing modal accessibility pattern from the KYC flow for focus trapping, Escape dismissal, scroll locking, and focus restoration, but stays marketplace-specific in layout and copy. Because purchase flows are still out of scope, the bottom `Get Covered` CTA remains visibly disabled with a clear coming-soon note, and policy-only sections such as timeline or document download actions are intentionally omitted from the public marketplace variant.
+
+Known follow-ups:
+Task 8 should mount this panel into the public `/marketplace` page and connect it to card selection state so the dimmed background is the marketplace grid rather than a test harness. If product marketing copy later includes structured benefits, the coverage bullet list should switch from description-line fallback parsing to the structured field. Validation passed: focused panel tests (1 file, 6 tests), `npx tsc --noEmit`, `npm run lint` (0 errors, 18 existing warnings), and `git diff --check`.
+
+### 2026-06-02 00:43 WAT
+
+Task completed: Task 8 — Public Marketplace Page Composition
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(public)/marketplace/page.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/marketplace/marketplace-page.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/pages/MarketplacePage.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+
+Summary:
+Added the public `/marketplace` route and composed the existing marketplace sidebar, navbar, risk controls, recommendation action, product grid, and public detail slide-over into one page. The page stays fully public, uses the existing public marketplace query hook for catalog data, and preserves anonymous browsing while still exposing the authenticated recommendation action from Task 4.
+
+Important decisions:
+The route exports metadata from a server page file and delegates the interactive marketplace composition to a dedicated client component, which keeps App Router metadata support intact without wrapping the route in protected auth logic. The page currently uses the existing `(public)` layout, so the shared public navbar/footer still surround the marketplace route even though screenshot 1 shows a cleaner standalone shell; that broader public-layout change is intentionally deferred rather than silently folded into this task. Offset-based accumulation was also deferred because the current marketplace hook is page-query based and the React lint rules rejected the interim effect-driven append approach.
+
+Known follow-ups:
+Task 9 should add end-to-end coverage for the public marketplace route, including anonymous catalog browsing and the unauthenticated recommendation redirect from within the composed page. A later marketplace data-layer enhancement should introduce an infinite-query or equivalent pagination pattern before re-enabling true Load More accumulation at the page level. Validation passed: focused marketplace page suite (6 files, 32 tests), `npx tsc --noEmit`, `npm run lint` (0 errors, 18 existing warnings), and `git diff --check`.
+
+### 2026-06-24 20:31 WAT
+
+Task completed: Marketplace mobile responsiveness fix
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/marketplace/marketplace-page.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/marketplace/filter-sidebar/filter-sidebar-shell.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/marketplace/marketplace-navbar.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/marketplace/risk-level-filter.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/marketplace/product-card.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/marketplace/product-grid.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/marketplace/recommendations/marketplace-recommendations-action.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/pages/MarketplacePage.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+
+Summary:
+Fixed the public marketplace layout on phone and very small screen widths. The marketplace now stacks the filter sidebar above the content on mobile, keeps the screenshot-matched left sidebar only from the large breakpoint upward, and tightens navbar controls, risk filters, card typography, grid tracks, and recommendation CTA behavior so the page no longer forces horizontal scrolling.
+
+Important decisions:
+Desktop keeps the upside-down L layout via `lg:flex-row` and `lg:w-72`, while mobile uses a full-width filter panel and horizontally scrollable compact control rows where that is the safest interaction. Product cards now use smaller mobile headings and truncation for provider/money labels to avoid text-driven overflow on narrow devices.
+
+Known follow-ups:
+The public `(public)` layout still wraps `/marketplace` with the shared site navbar/footer; a future standalone marketplace shell can remove that chrome if the design requires exact screenshot parity. Validation passed: focused marketplace tests (5 files, 30 tests), `npx tsc --noEmit`, `npm run lint` (0 errors, 18 existing warnings), `git diff --check`, and a Playwright viewport overflow check at 320, 360, and 390px with no horizontal overflow.
+
+### 2026-06-25 00:58 WAT
+
+Task completed: Marketplace mobile filter sheet refinement
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/marketplace/marketplace-page.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/marketplace/filter-sidebar/filter-sidebar-shell.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/marketplace/marketplace-navbar.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/marketplace/marketplace-controls.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/pages/MarketplacePage.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+
+Summary:
+Adjusted the mobile marketplace controls so the top navbar shows only the search bar, followed by a compact `Filters +` trigger. The mobile filter trigger opens a bottom sheet containing risk-level controls, categories, premium, provider filters, Apply, and Clear all; applied filters show as `Filters(x)`.
+
+Important decisions:
+The desktop sidebar and desktop risk row remain intact from the large breakpoint upward. On mobile, the standalone risk row is hidden and the risk controls live inside the bottom sheet so filtering is consolidated in one place.
+
+Known follow-ups:
+If future mobile designs add more marketplace controls, keep them inside the bottom sheet rather than growing the top navbar. Validation passed: focused marketplace tests (2 files, 13 tests), `npx tsc --noEmit`, `npm run lint` (0 errors, 18 existing warnings), `git diff --check`, and a Playwright mobile check confirming the sheet exposes All, Low Risk, Moderate Risk, and High Risk with no horizontal overflow.
+
+### 2026-06-25 01:18 WAT
+
+Task completed: Task 9 — Unit, Integration, and E2E Completion
+
+Files changed:
+- /Users/naijaghost/Desktop/projects/gigsecure-fe/e2e/marketplace/marketplace-flow.spec.ts
+- /Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md
+
+Summary:
+Added a focused Playwright marketplace flow spec covering anonymous catalog browsing, public list/detail requests without Bearer tokens, desktop pending filter application, mobile search-first/filter-sheet behavior, public detail panel dismissal, and all recommendation access branches. Existing marketplace unit and integration coverage already handled validators, services, hooks, controls, grid, panel, page composition, and component-level pagination, so production code was left untouched for this test-completion task.
+
+Important decisions:
+The required exact E2E command could not start its own Next server because PID 68156 already held `.next/dev/lock`; the spec was rerun successfully against the existing reachable dev server on `http://127.0.0.1:3000` using `E2E_BASE_URL`. Page-level Load More pagination remains deferred from Task 8, so Task 9 pagination coverage is currently the existing `ProductGrid` unit/integration behavior rather than a route-level E2E flow.
+
+Known follow-ups:
+When page-level catalog accumulation is implemented, add E2E coverage for the visible Load More path. The lint suite still reports 18 pre-existing warnings outside the marketplace files, but no lint errors.
+
+### 2026-06-25 01:28 WAT
+
+Task completed: Task 10 — Final QA and Documentation Update
+
+Files changed:
+- /Users/naijaghost/Desktop/projects/gigsecure-fe/MARKETPLACE_EPICS.md
+- /Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md
+
+Summary:
+Recorded the final public marketplace file map, access boundary, verification output, and remaining backend/product questions in `MARKETPLACE_EPICS.md`. Confirmed in the epic documentation that marketplace browsing and product detail are public, while recommendations remain authenticated and risk-assessment gated through the existing auth/session flag flow.
+
+Important decisions:
+No production feature code changed for this final QA task. The exact E2E command remains blocked when Playwright tries to start a new Next dev server because PID 68156 holds `.next/dev/lock`; the marketplace E2E passed against the existing reachable dev server on `http://127.0.0.1:3000` using `E2E_BASE_URL`. The first sandboxed build failed on Google Fonts fetch, and the escalated `npm run build` rerun passed.
+
+Known follow-ups:
+Remaining follow-ups are documented in the epic: define the real public product-detail CTA in a future purchase epic, add structured coverage benefits and payout labels from the backend, consider backend facet metadata, decide whether `/marketplace` needs a standalone public shell, and implement route-level Load More once an infinite-query or equivalent pagination pattern is introduced.

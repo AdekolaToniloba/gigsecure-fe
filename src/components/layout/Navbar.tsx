@@ -12,7 +12,7 @@ import { assetUrl, ASSETS } from "@/lib/assets";
 const NAV_LINKS = [
   { name: "About", href: "/about" },
   { name: "Blog", href: "/coming-soon" },
-  { name: "Marketplace", href: "/coming-soon" },
+  { name: "Marketplace", href: "/marketplace" },
   { name: "Risk Assessment", href: "/risk-assessment" },
 ];
 

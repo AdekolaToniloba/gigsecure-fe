@@ -24,6 +24,7 @@ export const mockRouter = {
 };
 
 export const mockSearchParams = new URLSearchParams();
+export const mockPathname = { value: '/' };
 
 // Wrapper providing QueryClient
 function TestWrapper({ children }: { children: React.ReactNode }) {

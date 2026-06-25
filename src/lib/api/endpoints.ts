@@ -38,6 +38,11 @@ export const ENDPOINTS = {
     HISTORY: '/api/v1/risk/history',
     RECOMMENDATIONS: '/api/v1/risk/recommendations',
   },
+  MARKETPLACE: {
+    PRODUCTS: '/api/v1/marketplace/products',
+    RECOMMENDATIONS: '/api/v1/marketplace/recommendations',
+    PRODUCT_DETAIL: (id: string) => `/api/v1/marketplace/products/${id}`,
+  },
   PRODUCTS: {
     LIST: '/api/v1/products/',
     FEATURED: '/api/v1/products/featured',
