@@ -51,6 +51,23 @@ describe('ProtectedRoute', () => {
     expect(navigation.replace).not.toHaveBeenCalled();
   });
 
+  it('renders an optional stable fallback during auth initialization', () => {
+    navigation.pathname = '/dashboard';
+    act(() => {
+      useAuthStore.getState().setAuthInitializing();
+    });
+
+    renderWithQueryClient(
+      <ProtectedRoute fallback={<p role="status">Loading protected application</p>}>
+        <p>Dashboard content</p>
+      </ProtectedRoute>
+    );
+
+    expect(screen.getByRole('status')).toHaveTextContent('Loading protected application');
+    expect(screen.queryByText('Dashboard content')).not.toBeInTheDocument();
+    expect(navigation.replace).not.toHaveBeenCalled();
+  });
+
   it('redirects unauthenticated users on protected paths with a safe return path', async () => {
     navigation.pathname = '/dashboard';
     navigation.searchParams = new URLSearchParams('tab=policies');

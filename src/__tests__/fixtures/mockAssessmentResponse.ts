@@ -1,8 +1,16 @@
 import type { AssessmentResponse } from '@/types/api';
 
 export const mockAssessmentResponse: AssessmentResponse = {
-  id: 'assess-test-001',
-  user_id: 'user-test-001',
+  applicant: {
+    first_name: 'Toni',
+    last_name: 'Adeyemi',
+    age: 31,
+    gender: 'female',
+    marital_status: 'single',
+    state: 'Lagos',
+    city: 'Ikeja',
+  },
+  category: 'tech_freelancer',
   overall_score: 68.5,
   risk_profile: 'Moderate Risk',
   pillar_scores: {

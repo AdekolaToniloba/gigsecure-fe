@@ -7,7 +7,9 @@ export default defineConfig({
   testDir: './e2e',
   fullyParallel: false,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  // A single Next dev server compiles several route groups used by these specs.
+  // Serial browser workers prevent cross-file reloads from invalidating active forms.
+  workers: 1,
   reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'list',
   use: {
     baseURL: BASE_URL,

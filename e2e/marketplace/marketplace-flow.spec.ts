@@ -162,7 +162,8 @@ test.describe('public marketplace flow', () => {
     await expect(sheet.getByRole('button', { name: 'Moderate Risk' })).toBeVisible();
     await expect(sheet.getByRole('button', { name: 'High Risk' })).toBeVisible();
 
-    await sheet.getByRole('button', { name: 'High Risk' }).click();
+    await sheet.getByRole('button', { name: 'High Risk' }).focus();
+    await page.keyboard.press('Enter');
     await expect(page).toHaveURL(/risk_level=high/);
     await sheet.getByRole('checkbox', { name: 'Liability Protection' }).check();
     await sheet.getByRole('button', { name: 'Apply Filters' }).click();

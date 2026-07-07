@@ -35,8 +35,12 @@ export const ENDPOINTS = {
     CATEGORIES: '/api/v1/risk/categories',
     QUESTIONS: '/api/v1/risk/questions',
     ASSESSMENT: '/api/v1/risk/assessment',
+    ASSESSMENT_BY_CATEGORY: (category: string) => `/api/v1/risk/assessment/${category}`,
     HISTORY: '/api/v1/risk/history',
     RECOMMENDATIONS: '/api/v1/risk/recommendations',
+  },
+  DASHBOARD: {
+    OVERVIEW: '/api/v1/dashboard/overview',
   },
   MARKETPLACE: {
     PRODUCTS: '/api/v1/marketplace/products',

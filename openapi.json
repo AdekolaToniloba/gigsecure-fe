@@ -131,13 +131,97 @@
         "security": [{ "HTTPBearer": [] }]
       }
     },
-    "/api/v1/risk/questions": { "get": { "tags": ["Risk Assessment"], "summary": "Get Assessment Questions", "operationId": "get_assessment_questions", "responses": { "200": { "description": "Successful Response" } }, "security": [{ "HTTPBearer": [] }] } },
-    "/api/v1/risk/assessment": {
-      "get": { "tags": ["Risk Assessment"], "summary": "Get Latest Assessment", "operationId": "get_latest_assessment", "responses": { "200": { "description": "Successful Response" } }, "security": [{ "HTTPBearer": [] }] },
-      "post": { "tags": ["Risk Assessment"], "summary": "Submit Assessment", "operationId": "submit_assessment", "responses": { "200": { "description": "Successful Response" } }, "security": [{ "HTTPBearer": [] }] }
+    "/api/v1/settings/notifications": {
+      "get": {
+        "tags": ["Settings"],
+        "summary": "Get Notification Prefs",
+        "description": "Get notification preferences for the current user.",
+        "operationId": "get_notification_prefs_api_v1_settings_notifications_get",
+        "responses": { "200": { "description": "Successful Response", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/NotificationPrefsResponse" } } } } },
+        "security": [{ "HTTPBearer": [] }]
+      },
+      "put": {
+        "tags": ["Settings"],
+        "summary": "Update Notification Prefs",
+        "description": "Update notification preferences (partial update).",
+        "operationId": "update_notification_prefs_api_v1_settings_notifications_put",
+        "requestBody": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UpdateNotificationPrefsRequest" } } }, "required": true },
+        "responses": {
+          "200": { "description": "Successful Response", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/NotificationPrefsResponse" } } } },
+          "422": { "description": "Validation Error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/HTTPValidationError" } } } }
+        },
+        "security": [{ "HTTPBearer": [] }]
+      }
     },
-    "/api/v1/risk/history": { "get": { "tags": ["Risk Assessment"], "summary": "Get Assessment History", "operationId": "get_assessment_history", "responses": { "200": { "description": "Successful Response" } }, "security": [{ "HTTPBearer": [] }] } },
-    "/api/v1/risk/recommendations": { "get": { "tags": ["Risk Assessment"], "summary": "Get Recommendations", "operationId": "get_recommendations", "responses": { "200": { "description": "Successful Response" } }, "security": [{ "HTTPBearer": [] }] } },
+    "/api/v1/risk/questions": {
+      "get": {
+        "tags": ["Risk Assessment"],
+        "summary": "Get assessment questions",
+        "description": "Return the structured question bank for a given assessment category.\nDefaults to `tech_freelancer`.",
+        "operationId": "get_assessment_questions_api_v1_risk_questions_get",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [{ "name": "category", "in": "query", "required": false, "schema": { "type": "string", "default": "tech_freelancer", "title": "Category" } }],
+        "responses": {
+          "200": { "description": "Successful Response", "content": { "application/json": { "schema": {} } } },
+          "422": { "description": "Validation Error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/HTTPValidationError" } } } }
+        }
+      }
+    },
+    "/api/v1/risk/categories": {
+      "get": {
+        "tags": ["Risk Assessment"],
+        "summary": "List available assessment categories",
+        "description": "Return metadata for all available risk assessment categories.",
+        "operationId": "list_categories_api_v1_risk_categories_get",
+        "responses": { "200": { "description": "Successful Response", "content": { "application/json": { "schema": {} } } } },
+        "security": [{ "HTTPBearer": [] }]
+      }
+    },
+    "/api/v1/risk/assessment/{category}": {
+      "post": {
+        "tags": ["Risk Assessment"],
+        "summary": "Submit a risk assessment",
+        "description": "Run the full scoring + AI pipeline for the given freelancer category\nand persist the result. Currently supports: `tech_freelancer`.\n\nThe `category` path parameter must match `data.occupation`.",
+        "operationId": "submit_assessment_api_v1_risk_assessment__category__post",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [{ "name": "category", "in": "path", "required": true, "schema": { "type": "string", "title": "Category" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TechAssessmentInput" } } } },
+        "responses": {
+          "201": { "description": "Successful Response", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AssessmentResponse" } } } },
+          "422": { "description": "Validation Error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/HTTPValidationError" } } } }
+        }
+      }
+    },
+    "/api/v1/risk/assessment": {
+      "get": {
+        "tags": ["Risk Assessment"],
+        "summary": "Get latest risk assessment",
+        "description": "Retrieve the most recent risk assessment for the authenticated user.",
+        "operationId": "get_latest_assessment_api_v1_risk_assessment_get",
+        "responses": { "200": { "description": "Successful Response", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AssessmentResponse" } } } } },
+        "security": [{ "HTTPBearer": [] }]
+      }
+    },
+    "/api/v1/risk/history": {
+      "get": {
+        "tags": ["Risk Assessment"],
+        "summary": "Get assessment history",
+        "description": "Return a chronological list of all past assessments for the authenticated user.",
+        "operationId": "get_assessment_history_api_v1_risk_history_get",
+        "responses": { "200": { "description": "Successful Response", "content": { "application/json": { "schema": { "items": { "$ref": "#/components/schemas/AssessmentSummary" }, "type": "array", "title": "Response Get Assessment History Api V1 Risk History Get" } } } } },
+        "security": [{ "HTTPBearer": [] }]
+      }
+    },
+    "/api/v1/risk/recommendations": {
+      "get": {
+        "tags": ["Risk Assessment"],
+        "summary": "Get product recommendations",
+        "description": "Return insurance product recommendations derived from the user's\nlatest risk assessment.",
+        "operationId": "get_recommendations_api_v1_risk_recommendations_get",
+        "responses": { "200": { "description": "Successful Response", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RecommendationsResponse" } } } } },
+        "security": [{ "HTTPBearer": [] }]
+      }
+    },
     "/api/v1/kyc/verify": {
       "post": {
         "tags": ["KYC"],
@@ -218,6 +302,53 @@
   "components": {
     "schemas": {
       "ActivateAccountRequest": { "properties": { "token": { "type": "string", "title": "Token" }, "password": { "type": "string", "title": "Password" } }, "type": "object", "required": ["token", "password"], "title": "ActivateAccountRequest" },
+      "ApplicantProfile": {
+        "properties": {
+          "first_name": { "type": "string", "title": "First Name" },
+          "last_name": { "type": "string", "title": "Last Name" },
+          "age": { "type": "integer", "title": "Age" },
+          "gender": { "type": "string", "title": "Gender" },
+          "marital_status": { "type": "string", "title": "Marital Status" },
+          "state": { "type": "string", "title": "State" },
+          "city": { "type": "string", "title": "City" }
+        },
+        "type": "object",
+        "required": ["first_name", "last_name", "age", "gender", "marital_status", "state", "city"],
+        "title": "ApplicantProfile",
+        "description": "Personal info echoed back in assessment responses."
+      },
+      "AssessmentResponse": {
+        "properties": {
+          "applicant": { "$ref": "#/components/schemas/ApplicantProfile" },
+          "category": { "type": "string", "title": "Category" },
+          "pillar_scores": { "$ref": "#/components/schemas/PillarScores" },
+          "overall_score": { "type": "number", "maximum": 100, "minimum": 0, "title": "Overall Score" },
+          "risk_profile": { "type": "string", "title": "Risk Profile" },
+          "recommendations": { "items": { "type": "string" }, "type": "array", "title": "Recommendations" },
+          "recommended_categories": { "items": { "type": "string" }, "type": "array", "title": "Recommended Categories" },
+          "ai_insights": { "type": "string", "title": "Ai Insights" }
+        },
+        "type": "object",
+        "required": ["applicant", "category", "pillar_scores", "overall_score", "risk_profile", "recommendations", "ai_insights"],
+        "title": "AssessmentResponse",
+        "description": "Full response returned after submitting a risk assessment."
+      },
+      "AssessmentSummary": {
+        "properties": {
+          "id": { "type": "string", "title": "Id" },
+          "category": { "type": "string", "title": "Category" },
+          "first_name": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "First Name" },
+          "last_name": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Last Name" },
+          "age": { "anyOf": [{ "type": "integer" }, { "type": "null" }], "title": "Age" },
+          "overall_score": { "type": "number", "maximum": 100, "minimum": 0, "title": "Overall Score" },
+          "risk_profile": { "type": "string", "title": "Risk Profile" },
+          "created_at": { "type": "string", "title": "Created At" }
+        },
+        "type": "object",
+        "required": ["id", "category", "overall_score", "risk_profile", "created_at"],
+        "title": "AssessmentSummary",
+        "description": "Lightweight summary for history listings."
+      },
       "ChangePasswordRequest": { "properties": { "old_password": { "type": "string" }, "new_password": { "type": "string" } }, "type": "object", "required": ["old_password", "new_password"], "title": "ChangePasswordRequest" },
       "ForgotPasswordRequest": { "properties": { "email": { "type": "string", "format": "email" } }, "type": "object", "required": ["email"], "title": "ForgotPasswordRequest" },
       "HTTPValidationError": { "properties": { "detail": { "items": { "$ref": "#/components/schemas/ValidationError" }, "type": "array" } }, "type": "object", "title": "HTTPValidationError" },
@@ -255,6 +386,30 @@
         "title": "KYCVerifyResponse"
       },
       "LoginRequest": { "properties": { "email": { "type": "string" }, "password": { "type": "string" } }, "type": "object", "required": ["email", "password"], "title": "LoginRequest" },
+      "NotificationPrefsResponse": {
+        "properties": {
+          "risk_score_updates": { "type": "boolean", "title": "Risk Score Updates" },
+          "premium_renewals": { "type": "boolean", "title": "Premium Renewals" },
+          "new_plan_recommendations": { "type": "boolean", "title": "New Plan Recommendations" },
+          "payment_confirmations": { "type": "boolean", "title": "Payment Confirmations" },
+          "product_updates": { "type": "boolean", "title": "Product Updates" }
+        },
+        "type": "object",
+        "required": ["risk_score_updates", "premium_renewals", "new_plan_recommendations", "payment_confirmations", "product_updates"],
+        "title": "NotificationPrefsResponse"
+      },
+      "PillarScores": {
+        "properties": {
+          "income": { "type": "number", "maximum": 100, "minimum": 0, "title": "Income" },
+          "client": { "type": "number", "maximum": 100, "minimum": 0, "title": "Client" },
+          "safety": { "type": "number", "maximum": 100, "minimum": 0, "title": "Safety" },
+          "equipment": { "type": "number", "maximum": 100, "minimum": 0, "title": "Equipment" },
+          "health": { "type": "number", "maximum": 100, "minimum": 0, "title": "Health" }
+        },
+        "type": "object",
+        "required": ["income", "client", "safety", "equipment", "health"],
+        "title": "PillarScores"
+      },
       "RefreshTokenRequest": { "properties": { "refresh_token": { "type": "string" } }, "type": "object", "required": ["refresh_token"], "title": "RefreshTokenRequest" },
       "RegisterRequest": { "properties": { "email": { "type": "string", "format": "email" }, "password": { "type": "string" }, "first_name": { "type": "string" }, "last_name": { "anyOf": [{ "type": "string" }, { "type": "null" }] } }, "type": "object", "required": ["email", "password", "first_name"], "title": "RegisterRequest" },
       "ResendActivationRequest": { "properties": { "email": { "type": "string", "format": "email" } }, "type": "object", "required": ["email"], "title": "ResendActivationRequest" },
@@ -273,6 +428,45 @@
         "required": ["signature", "timestamp", "SmileJobID", "ResultCode", "ResultText", "Actions", "PartnerParams"],
         "title": "SmileIDCallbackPayload"
       },
+      "TechAssessmentInput": {
+        "properties": {
+          "first_name": { "type": "string", "title": "First Name" },
+          "last_name": { "type": "string", "title": "Last Name" },
+          "date_of_birth": { "type": "string", "title": "Date Of Birth" },
+          "gender": { "type": "string", "title": "Gender" },
+          "state": { "type": "string", "title": "State" },
+          "city": { "type": "string", "title": "City" },
+          "occupation": { "type": "string", "title": "Occupation" },
+          "marital_status": { "type": "string", "title": "Marital Status" },
+          "age": { "anyOf": [{ "type": "integer" }, { "type": "null" }], "title": "Age" },
+          "job_type": { "type": "string", "title": "Job Type" },
+          "freelance_duration": { "type": "string", "title": "Freelance Duration" },
+          "client_geography": { "type": "string", "title": "Client Geography" },
+          "work_mode": { "type": "string", "title": "Work Mode" },
+          "weekly_hours": { "type": "string", "title": "Weekly Hours" },
+          "monthly_income_band": { "type": "string", "title": "Monthly Income Band" },
+          "income_stability": { "type": "string", "title": "Income Stability" },
+          "income_sources": { "type": "string", "title": "Income Sources" },
+          "biggest_client_loss": { "type": "string", "title": "Biggest Client Loss" },
+          "past_risks": { "items": { "type": "string" }, "type": "array", "title": "Past Risks" },
+          "top_worries": { "items": { "type": "string" }, "type": "array", "title": "Top Worries" },
+          "equipment_dependency": { "type": "string", "title": "Equipment Dependency" },
+          "pre_existing_conditions": { "type": "boolean", "title": "Pre Existing Conditions" },
+          "chronic_illness": { "type": "boolean", "title": "Chronic Illness" },
+          "smoker": { "type": "boolean", "title": "Smoker" },
+          "health_rating": { "type": "integer", "maximum": 5, "minimum": 1, "title": "Health Rating" },
+          "travel_frequency": { "type": "string", "title": "Travel Frequency" },
+          "survival_3_months": { "type": "string", "title": "Survival 3 Months" },
+          "savings_duration": { "type": "string", "title": "Savings Duration" },
+          "insurance_types": { "items": { "type": "string" }, "type": "array", "title": "Insurance Types" },
+          "insurance_claims": { "type": "string", "title": "Insurance Claims" },
+          "protection_priority": { "type": "string", "title": "Protection Priority" }
+        },
+        "type": "object",
+        "required": ["first_name", "last_name", "date_of_birth", "gender", "state", "city", "occupation", "marital_status", "job_type", "freelance_duration", "client_geography", "work_mode", "weekly_hours", "monthly_income_band", "income_stability", "income_sources", "biggest_client_loss", "past_risks", "top_worries", "equipment_dependency", "pre_existing_conditions", "chronic_illness", "smoker", "health_rating", "travel_frequency", "survival_3_months", "savings_duration", "insurance_types", "insurance_claims", "protection_priority"],
+        "title": "TechAssessmentInput",
+        "description": "Full survey payload submitted by a tech freelancer."
+      },
       "DashboardOverviewResponse": { "properties": { "premiums_bought": { "type": "integer", "default": 0 }, "monthly_income_band": { "anyOf": [{ "type": "string" }, { "type": "null" }] }, "safety_buffer": { "anyOf": [{ "type": "string" }, { "type": "null" }] }, "recommended_plans_count": { "type": "integer", "default": 0 }, "income_stability": { "anyOf": [{ "$ref": "#/components/schemas/IncomeStabilityPattern" }, { "type": "null" }] }, "has_assessment": { "type": "boolean", "default": false } }, "type": "object", "title": "DashboardOverviewResponse" },
       "IncomeStabilityPattern": { "properties": { "score": { "type": "integer" }, "classification": { "type": "string" }, "graph_points": { "type": "array", "items": { "type": "number" } } }, "type": "object", "required": ["score", "classification", "graph_points"], "title": "IncomeStabilityPattern" },
       "PolicyCreate": { "properties": { "product_id": { "type": "string", "minLength": 1 } }, "type": "object", "required": ["product_id"], "title": "PolicyCreate" },
@@ -284,7 +478,29 @@
       "ProductOut": { "properties": { "id": { "type": "string" }, "name": { "type": "string" }, "category": { "type": "string" }, "description": { "type": "string" }, "premium_amount": { "type": "string" }, "premium_currency": { "type": "string" }, "coverage_amount": { "type": "string" }, "renewal_frequency": { "type": "string" }, "risk_level": { "anyOf": [{ "type": "string" }, { "type": "null" }] }, "is_active": { "type": "boolean" }, "provider": { "$ref": "#/components/schemas/ProviderRef" } }, "type": "object", "required": ["id", "name", "category", "description", "premium_amount", "premium_currency", "coverage_amount", "renewal_frequency", "is_active", "provider"], "title": "ProductOut" },
       "ProviderRef": { "properties": { "id": { "type": "string" }, "slug": { "type": "string" }, "name": { "type": "string" }, "logo_url": { "anyOf": [{ "type": "string" }, { "type": "null" }] } }, "type": "object", "required": ["id", "slug", "name"], "title": "ProviderRef" },
       "RecommendedProductsResponse": { "properties": { "recommended_categories": { "type": "array", "items": { "type": "string" } }, "items": { "type": "array", "items": { "$ref": "#/components/schemas/ProductOut" } } }, "type": "object", "required": ["recommended_categories", "items"], "title": "RecommendedProductsResponse" },
+      "RecommendationsResponse": {
+        "properties": {
+          "recommendations": { "items": { "type": "string" }, "type": "array", "title": "Recommendations" },
+          "overall_score": { "anyOf": [{ "type": "number", "maximum": 100, "minimum": 0 }, { "type": "null" }], "title": "Overall Score" },
+          "risk_profile": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Risk Profile" }
+        },
+        "type": "object",
+        "required": ["recommendations"],
+        "title": "RecommendationsResponse",
+        "description": "Standalone recommendations response (without full assessment payload)."
+      },
       "TokenResponse": { "properties": { "access_token": { "type": "string" }, "refresh_token": { "type": "string" }, "token_type": { "type": "string", "default": "bearer" }, "kyc_verified": { "type": "boolean", "title": "Kyc Verified", "default": false }, "risk_assessed": { "type": "boolean", "title": "Risk Assessed", "default": false } }, "type": "object", "required": ["access_token", "refresh_token"], "title": "TokenResponse" },
+      "UpdateNotificationPrefsRequest": {
+        "properties": {
+          "risk_score_updates": { "anyOf": [{ "type": "boolean" }, { "type": "null" }], "title": "Risk Score Updates" },
+          "premium_renewals": { "anyOf": [{ "type": "boolean" }, { "type": "null" }], "title": "Premium Renewals" },
+          "new_plan_recommendations": { "anyOf": [{ "type": "boolean" }, { "type": "null" }], "title": "New Plan Recommendations" },
+          "payment_confirmations": { "anyOf": [{ "type": "boolean" }, { "type": "null" }], "title": "Payment Confirmations" },
+          "product_updates": { "anyOf": [{ "type": "boolean" }, { "type": "null" }], "title": "Product Updates" }
+        },
+        "type": "object",
+        "title": "UpdateNotificationPrefsRequest"
+      },
       "UpdateProfileRequest": {
         "properties": {
           "first_name": { "anyOf": [{ "type": "string" }, { "type": "null" }] },

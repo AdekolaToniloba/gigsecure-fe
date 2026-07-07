@@ -1456,3 +1456,486 @@ No production feature code changed for this final QA task. The exact E2E command
 
 Known follow-ups:
 Remaining follow-ups are documented in the epic: define the real public product-detail CTA in a future purchase epic, add structured coverage benefits and payout labels from the backend, consider backend facet metadata, decide whether `/marketplace` needs a standalone public shell, and implement route-level Load More once an infinite-query or equivalent pagination pattern is introduced.
+
+### 2026-07-06 17:08 WAT
+
+Task completed: Task 1 — Dashboard Codebase Audit and Contract Lock
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/DASHBOARD_EPICS.md`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+
+Summary:
+Revalidated the dashboard epic against the live repository before feature implementation. Confirmed that `/dashboard` remains placeholder UI plus the existing KYC banner and gated recommendations action; the protected app layout still lacks the screenshot sidebar/navbar shell; and dashboard runtime types, validators, endpoint constants, query keys, service, hook, and MSW handler remain absent. Reconfirmed the existing auth/session, user-profile, KYC, risk, marketplace, API-error, React Query, MSW, Vitest, and Playwright foundations that later tasks must reuse.
+
+Important decisions:
+Locked `GET /api/v1/dashboard/overview` as the single source for dashboard metrics and its validated `has_assessment` field as the post-query dashboard presentation branch, while the memory-only `riskAssessed` flag remains the global/pre-query gate. Kept `kycVerified` and `riskAssessed` exclusively in the existing memory-only auth store and retained `useUserProfile`, `useUserFlags`, `setSession`, and `setFlags` as the synchronization path. Confirmed that one React Query overview request must feed all dashboard widgets and that no global dashboard store is justified. Confirmed the supplied screenshots require independent KYC/risk combinations, a persistent non-dismissible KYC reminder, an accessible mobile drawer and notification modal shell, and overflow verification from 320px through 1440px and wider.
+
+Known follow-ups:
+Task 2 must synchronize `openapi.json` with the supplied contract and regenerate `src/types/schema.d.ts`. The local dashboard overview shape is semantically current, but the latest risk-assessment response lacks the supplied `AssessmentResponse`, the runtime risk validator still expects the stale `{ id, user_id, score }` shape, and notification-preference contracts are absent locally. No notification feed, unread-count, mark-read, date-filter, tour, or product-demo API exists; later tasks must not invent those contracts. Premiums Bought, Profile, and Settings destination pages remain outside this epic.
+
+### 2026-07-06 17:21 WAT
+
+Task completed: Task 2 — OpenAPI Synchronization and Generated Types
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/openapi.json`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/types/schema.d.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/DASHBOARD_EPICS.md`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+
+Summary:
+Synchronized the local OpenAPI risk-assessment contract with the supplied source, including assessment questions/categories, category-based submission, latest assessment, history, and recommendations. Added the supplied `ApplicantProfile`, `AssessmentResponse`, `AssessmentSummary`, `PillarScores`, `RecommendationsResponse`, and `TechAssessmentInput` schemas. Added the authenticated notification-preference GET/PUT contract and its response/update schemas, then regenerated `src/types/schema.d.ts` through `npm run generate:types` instead of editing it manually.
+
+Important decisions:
+Kept the existing dashboard overview and income-stability schemas semantically unchanged because they already matched the supplied contract. Removed the undocumented legacy POST operation from `/api/v1/risk/assessment` in favor of the supplied `/api/v1/risk/assessment/{category}` submission contract. Preserved marketplace access boundaries exactly: product list and product detail remain public, while recommendations retain Bearer authentication. Notification preferences remain settings booleans only and are not treated as a notification feed, unread-count source, or read-state API. Generated declarations remain type-only and add no runtime bundle cost or UI behavior.
+
+Known follow-ups:
+Task 3 must add dashboard runtime schemas/types/helpers and align `src/lib/validators/risk.ts` plus the hand-maintained risk types in `src/types/api.ts` with the generated `AssessmentResponse` and `TechAssessmentInput`. The legacy `riskService.submitAssessment` path remains runtime code but is no longer documented by the supplied OpenAPI; it must be removed or migrated in the task that updates risk runtime contracts. Notification feed/list, unread count, mark-one-as-read, and mark-all-as-read remain unavailable and must not be invented. Verification passed with OpenAPI semantic assertions, `npm run generate:types`, immediate and final `npx tsc --noEmit`, the focused dashboard/marketplace Vitest slice (3 files, 8 tests), `npm run lint` (0 errors; 18 pre-existing warnings), and `git diff --check`.
+
+### 2026-07-06 17:32 WAT
+
+Task completed: Task 3 — Dashboard Runtime Types, Validators, Endpoints, Query Keys, and Helpers
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/types/dashboard.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/types/api.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/lib/validators/dashboard.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/lib/validators/risk.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/lib/api/endpoints.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/lib/constants.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/lib/dashboard/formatters.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/lib/dashboard/chart.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/fixtures/mockAssessmentResponse.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/lib/dashboard-validators.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/lib/risk-validators.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/lib/dashboard-formatters.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+
+Summary:
+Added generated-type-backed dashboard overview and income-stability types, runtime Zod validation for nullable/unassessed and populated/assessed payloads, the dashboard overview endpoint, and one canonical dashboard overview query key. Replaced the stale latest-assessment validator and hand-maintained risk response/input types with the synchronized generated `AssessmentResponse`, `PillarScores`, and `TechAssessmentInput` contracts. Added pure locale-aware greeting/date/display/percentage/classification helpers plus O(n) SVG point normalization, line-path generation, and neutral textual chart summaries. Added focused tests for valid states, documented defaults and optional fields, malformed counts/scores/points, deterministic formatting, null safety, and chart edge cases; updated the existing report fixture so the risk submission/report path remains type-safe.
+
+Important decisions:
+Dashboard count fields enforce nonnegative integers, while income-stability score and graph values enforce only the types documented by the backend; no undocumented score range, graph unit, currency label, or classification enum was added. Latest assessment scores enforce the documented `0..100` limits and `recommended_categories` remains the only optional `AssessmentResponse` field. Formatting helpers require a supplied date for deterministic rendering, default to the product's `Africa/Lagos` time zone, and return honest unavailable/empty text instead of fabricated financial or chart values. The implementation remains dependency-free, pure, and tree-shakeable, with no service, hook, store, notification, or UI work added ahead of later tasks.
+
+Known follow-ups:
+Task 4 must add dashboard MSW fixtures/handlers using these validators without adding a notification feed route. Task 5 must create the dashboard service/query and correct the existing latest-assessment/history/submission service paths against the synchronized endpoints; the legacy undocumented `submitAssessment` path remains untouched here because service migration belongs to Task 5. Final verification passed with the required focused Vitest suite (3 files, 27 tests), the existing assessment report regression suite (11 tests), `npx tsc --noEmit`, `npm run lint` (0 errors; the same 18 pre-existing warnings), and `git diff --check`.
+
+### 2026-07-06 17:38 WAT
+
+Task completed: Task 4 — Dashboard MSW Fixtures and Contract Tests
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/mocks/fixtures/dashboard.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/mocks/fixtures/dashboard-notifications.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/mocks/handlers/dashboard.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/mocks/handlers/domain.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/mocks/handlers/index.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/mocks/browser.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/mocks/server.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/mocks/dashboard-handlers.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+
+Summary:
+Added deterministic dashboard overview fixtures for unassessed/null, assessed/populated, malformed, authenticated failure, and delayed-loading states. Added long profile/classification/copy values for later wrapping checks and explicit profile fixtures proving KYC and assessment flags are independent. Added a corrected latest-assessment fixture and replaced the stale `{ id, user_id, score }` GET response plus incomplete category-submission response in the shared domain mocks. Added a dedicated authenticated dashboard overview handler with scenario overrides on the documented endpoint and centralized the shared MSW handler composition so browser and Node registrations consume the identical dashboard handler. Added focused contract tests covering Bearer enforcement, both overview states, error/malformed/delay behavior, flag independence, corrected assessment validation, shared registration, and the absence of a dashboard notification-feed handler.
+
+Important decisions:
+Dashboard scenarios override the same documented `GET /api/v1/dashboard/overview` route rather than introducing test-only query parameters or production endpoints. The default handler requires a non-empty Bearer token and returns a documented `{ detail }` 401 when absent. Notification examples are typed component-test fixtures only and are never registered with MSW; no feed, unread-count, mark-read, or preference behavior was invented. Browser and Node mocks now import one central handler array, avoiding registration drift. Fixtures remain under `src/mocks` and are not imported by production components, services, or hooks. This task adds no UI, so keyboard, responsive, and visual state verification remains applicable only when the corresponding dashboard components are implemented.
+
+Known follow-ups:
+Task 5 must create the runtime-validating dashboard service and canonical React Query hook, assert that malformed dashboard/assessment network responses are rejected at the service boundary, and migrate the remaining latest-assessment/history/submission service behavior to the synchronized contracts. Later notification component tests may consume the component-only examples through the planned UI adapter, but production must continue making zero notification-feed requests until a backend contract exists. Verification passed with the required dashboard handler suite (1 file, 11 tests), the related dashboard/risk validator and risk wizard/report regression slice (5 files, 44 tests), `npx tsc --noEmit`, `npm run lint` (0 errors; the same 18 pre-existing warnings), and `git diff --check`.
+
+### 2026-07-06 21:23 WAT
+
+Task completed: Task 5 — Dashboard Service and React Query Hooks
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/services/dashboard.service.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/services/risk.service.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/hooks/dashboard/useDashboard.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/hooks/risk/useRisk.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/lib/api/endpoints.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/lib/validators/risk.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/types/api.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/mocks/fixtures/dashboard.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/mocks/handlers/domain.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/services/dashboard.service.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/services/risk.service.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/hooks/dashboard-hooks.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/hooks/risk-hooks.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+
+Summary:
+Added `dashboardService.getOverview` through the authenticated `apiClient`, documented endpoint constant, `AbortSignal`, and runtime dashboard schema. Added one canonical `useDashboardOverview` query with a two-minute stale time, disabled window-focus refetch, renderable error state, and no extra React Query retry layer. Corrected the existing latest-assessment service/hook in place, runtime-validated category submission responses, migrated assessment history to generated `AssessmentSummary` data, and removed the undocumented legacy assessment POST service/hook. Added focused MSW-backed tests covering authorization headers, cancellation, endpoint/payload forwarding, malformed overview/latest/submission/history responses, loading/success/error/refetch states, 4xx no-retry behavior, disabled queries, canonical cache reuse, and one-request deduplication across multiple overview/profile/assessment consumers.
+
+Important decisions:
+React Query does not add retries for dashboard or latest-assessment queries because the shared Axios client already owns transient network/5xx retries; this prevents stacked retry storms while guaranteeing expected 4xx responses are requested once. Dashboard overview uses `QUERY_KEYS.DASHBOARD_OVERVIEW` exclusively and server data is not copied into Zustand or component state. `useLatestAssessment` retains `QUERY_KEYS.RISK_ASSESSMENT`, now keeps ordinary failures in query state instead of forcing a route-level throw, and can be disabled until the dashboard controller's authenticated/pre-query gate permits it. Existing `useUserProfile` remains the only `/users/me` query path; tests prove duplicate consumers share one profile request and that profile, overview, and assessment requests start before any completes. No UI, notification, policy, KYC status, keyboard, or responsive behavior was added in this task.
+
+Known follow-ups:
+Task 6 should build the authenticated shell without changing these service/query boundaries. Later dashboard composition should call `useUserProfile`, `useDashboardOverview`, and the existing `useLatestAssessment` together, enabling assessment work only from the established authenticated flag/controller state and isolating assessment errors from overview metrics. The pre-existing risk recommendations service still reflects the older standalone consumer and should be migrated only in the task that replaces that UI against the synchronized `RecommendationsResponse`; no notification-feed service or query exists. Verification passed with the required focused service/hook suites (4 files, 16 tests), the broader dashboard/risk/wizard/KYC regression slice (8 files, 48 tests), `npx tsc --noEmit`, `npm run lint` (0 errors; 15 remaining pre-existing warnings), and `git diff --check`.
+
+### 2026-07-06 21:31 WAT
+
+Task completed: Task 6 — Authenticated App Shell Foundation
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(app)/layout.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/globals.css`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/auth/shared/protected-route.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/shell/authenticated-app-shell.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/shell/app-skip-link.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/shell/app-shell-skeleton.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/auth/route-guards.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/dashboard/authenticated-app-shell.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+
+Summary:
+Replaced the generic protected layout and public footer with a semantic authenticated shell foundation. Added a first-focusable skip link, uniquely labelled sidebar/header/main landmarks, a 298px desktop sidebar column, a content-column-only 100px desktop header, responsive mobile geometry, and named app canvas/sidebar/border tokens. Added a stable dashboard-shaped initialization skeleton through an optional `ProtectedRoute` fallback so silent refresh continues to hide protected content without collapsing the shell. Added focused tests for landmark/slot composition, keyboard focus transfer, desktop/mobile overflow contracts, footer removal, initialization behavior, and authenticated rendering of dashboard, KYC, and change-password content.
+
+Important decisions:
+Kept the shell server-renderable and static except for the small skip-link focus handler and the existing client route guard. Sidebar navigation, mobile drawer, and navbar controls remain explicit empty slots for Tasks 7 and 8 rather than being implemented early. `ProtectedRoute` redirect and authentication behavior is unchanged; its new optional fallback renders only while protected-route authentication is idle or initializing. The app shell uses `min-w-0` content tracks and clips only horizontal page overflow while preserving normal document scrolling.
+
+Known follow-ups:
+Task 7 must populate the sidebar slot and implement the accessible mobile navigation drawer; Task 8 must populate the header slot with responsive navbar controls. The documented screenshots were not available as local files, and the in-app browser connection was unavailable in this environment, so visual verification for this foundation used the recorded 298px/100px screenshot geometry plus deterministic responsive class and overflow assertions. Focused tests, TypeScript, and lint pass; lint retains the same 15 pre-existing warning-only issues outside Task 6.
+
+### 2026-07-06 21:46 WAT
+
+Task completed: Task 7 — Persistent App Sidebar and Mobile Navigation Drawer
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(app)/layout.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/shell/app-sidebar.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/shell/app-navigation.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/shell/mobile-navigation-drawer.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/shell/marketplace-promo-card.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/dashboard/app-navigation.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+
+Summary:
+Populated the Task 6 shell with the persistent desktop application sidebar and a trigger-only mobile header control that opens a full-height modal navigation drawer. Added one shared five-row navigation model and component for desktop and mobile, with screenshot-aligned active Overview styling, real Overview and Risk Assessment destinations, and visibly unavailable Premiums Bought, Profile, and Settings rows that cannot route to missing pages. Added the owned GigSecure logo with explicit dimensions and a pale-yellow marketplace promotion using lightweight existing vector icons with explicit geometry and a real public marketplace link. Added focused coverage for active routes, real and unavailable destinations, keyboard order, shared navigation composition, promo geometry, touch-target sizing, drawer announcement, focus trap/restoration, Escape/backdrop/explicit/navigation dismissal, body-scroll locking, and constrained-width classes.
+
+Important decisions:
+Kept Task 8 navbar work out of scope: the header contains only the 44px mobile drawer trigger and the complete navbar can consume or refactor that control next. The drawer mounts its navigation only while open, while desktop and mobile both consume the same navigation data and markup component. The marketplace artwork is a dependency-free CSS/Lucide vector treatment built from assets already owned by the project rather than an invented or unapproved raster file. Missing destinations are non-focusable `aria-disabled` rows with visible `Soon` labels, not fake buttons or broken links. No auth, API, query, route contract, or global state changed.
+
+Known follow-ups:
+Task 8 must replace the trigger-only header composition with the responsive dashboard navbar while preserving the drawer callback behavior. Rendered viewport QA could not run: the in-app browser connection was unavailable and the installed Playwright package had no Chromium executable; no browser download or Task 20 E2E file was added. Responsive behavior is covered in this task by deterministic width, maximum-width, hidden-breakpoint, touch-target, keyboard, focus, and scroll-lock assertions. Focused tests, TypeScript, and lint pass; lint retains the same 15 pre-existing warning-only issues outside Task 7.
+
+### 2026-07-06 22:03 WAT
+
+Task completed: Task 8 — Dashboard Navbar and Responsive Control Strategy
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(app)/layout.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/shell/dashboard-navbar.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/shell/dashboard-search.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/notifications/notification-trigger.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/dashboard/dashboard-navbar.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/dashboard/authenticated-app-shell.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+
+Summary:
+Replaced the Task 7 trigger-only header slot with the complete content-column dashboard navbar. The navbar composes the existing mobile navigation drawer, a labelled local-only search field, a lightweight notification trigger boundary, and screenshot-aligned premiums/tour placeholders. Responsive priority keeps the 44px menu, flexible search, and 44px bell visible while premiums and tour controls collapse below the `xl` breakpoint. Added focused coverage for local non-submitting search behavior, accessible notification callback/disabled states, drawer wiring, desktop placeholder semantics, mobile keyboard order, touch sizing, width contracts, and proof that the navbar remains inside the content-column header rather than the sidebar.
+
+Important decisions:
+Search state is component-local and pressing Enter is explicitly prevented from submitting; it changes no URL, query cache, service, or network state because no dashboard search contract exists. `NotificationTrigger` accepts only an optional `onOpen` callback for Task 15 and is truthfully disabled with explanatory text when no panel exists, so no invented notification behavior or unread count is exposed. Premiums and tour remain disabled desktop-only placeholders with programmatic coming-soon descriptions. No auth, API, query, notification feed, route, or global-state contract changed, and no heavy panel code is imported.
+
+Known follow-ups:
+Task 15 must supply the notification-open callback when the accessible panel shell is implemented; until then the production bell remains disabled. Task 18 owns rendered screenshot and full viewport tuning. The installed Playwright package still has no Chromium executable, so this task's mobile verification uses deterministic `min-w-0`, flexible-search, breakpoint-visibility, 44px touch-target, keyboard-order, and existing drawer overflow/focus assertions rather than adding Task 20 browser scope. Focused tests, TypeScript, and lint pass; lint retains the same 15 pre-existing warning-only issues outside Task 8.
+
+### 2026-07-06 22:17 WAT
+
+Task completed: Task 9 — Reusable Dashboard Cards and State Primitives
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/overview/dashboard-section.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/overview/metric-card.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/overview/dashboard-date.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/overview/dashboard-skeleton.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/overview/dashboard-error-state.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/overview/dashboard-empty-state.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/dashboard/dashboard-primitives.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+
+Summary:
+Added composable dashboard presentation primitives for labelled sections, metric cards and their responsive grid, semantic date display, stable overview loading geometry, retryable error output, and honest empty states. Metric cards support icon, label, value, supporting copy, and action slots; preserve numeric zero; map null, undefined, blank, and invalid numeric values through the existing truthful unavailable formatter; and protect narrow layouts from long-content overflow. The skeleton reserves heading/date, hero/prompt, four metric cards, and lower-grid geometry while disabling pulse animation under reduced motion. Added focused behavior and accessibility tests for null/zero distinction, long values, slot rendering, heading hierarchy, semantic date output, invalid-date fallback, one/two/four-column behavior, loading announcements, reduced motion, keyboard retry, and empty-state next actions.
+
+Important decisions:
+Kept all primitives static and server-compatible except `DashboardErrorState`, whose retry handler requires a small client boundary. `DashboardDate` requires an explicit `Date` and renders a non-interactive `<time>` using the Task 3 locale/time-zone formatter, so it cannot masquerade as an unsupported filter. `DashboardErrorState` requires a retry callback; `DashboardEmptyState` accepts a real caller-supplied action without inventing a destination. No dashboard route, query, service, store, API, or business-state orchestration changed, and no memoization or new dependency was added.
+
+Known follow-ups:
+Tasks 10 through 13 should compose these primitives into the unassessed/assessed heroes, charts, checklist, and action components; Task 16 will select async/data branches, and Task 17 will replace route placeholders with the final composition and route-level states. Task 18 owns rendered screenshot and full viewport tuning. Focused tests, TypeScript, and lint pass; lint retains the same 15 pre-existing warning-only issues outside Task 9.
+
+### 2026-07-07 03:24 WAT
+
+Task completed: Task 10 — Unassessed Onboarding Hero and Risk-Assessment Prompt
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/overview/unassessed-hero.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/overview/risk-assessment-prompt.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/dashboard/unassessed-overview.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+
+Summary:
+Added the complete static unassessed first-row presentation: a wide dark-teal onboarding hero, a narrow white risk-score prompt, and a responsive composition that stacks through tablet widths and uses the screenshot ratio on desktop. Both primary actions route to the existing `/assessment` wizard, long caller-supplied descriptions wrap safely, CTA controls meet the 44px target, and lightweight CSS/Lucide decoration avoids raster backgrounds and animation dependencies. Added focused tests for screenshot-owned content, route truthfulness, disabled placeholders, accessible descriptions, heading levels, keyboard focus order, responsive grid contracts, CTA wrapping, card bounds, and hostile long copy.
+
+Important decisions:
+Kept the components static and server-compatible with no hooks for server data, API calls, client state, or new global state; only explicit presentation props can change supporting copy or layout classes. The undocumented “View Product Demo” and “See what you will get” actions are real disabled buttons with coming-soon descriptions, so they cannot navigate or enter the keyboard focus order. The dashboard page remains unchanged because overview state orchestration and route composition belong to Tasks 16 and 17.
+
+Known follow-ups:
+Task 16 should render `UnassessedOverview` only after validated overview data reports `has_assessment === false`; Task 17 should place it into the final dashboard page without duplicating its responsive grid. Task 18 owns rendered screenshot comparison and final viewport tuning. This task has no async loading, error, or empty branch because the components consume no server data. Verification passed with the focused dashboard suite (2 files, 16 tests), `npx tsc --noEmit`, and `npm run lint` (0 errors; the same 15 pre-existing warnings); final whitespace verification is recorded after this documentation update.
+
+### 2026-07-07 03:37 WAT
+
+Task completed: Task 11 — Assessed Financial Snapshot and Risk-Level Visualization
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/overview/assessed-hero.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/overview/risk-level-card.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/dashboard/assessed-overview.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+
+Summary:
+Added the assessed first-row presentation with the screenshot-owned “Here’s your financial snapshot.” hero, a real `/marketplace` CTA, an honestly disabled product-demo placeholder, and a responsive hero/risk-card composition that stacks through tablet widths. Added a lightweight CSS conic-gradient risk ring driven by explicit generated `AssessmentResponse` profile/score props, visible profile and numeric score text, an accessible textual ring summary, and card-local loading and retryable error states that leave the snapshot hero available. Added focused coverage for marketplace navigation, disabled semantics, low/moderate/high-like and unknown profile strings, zero/decimal/hundred boundaries, defensive visual-only clamping, long-copy containment, reduced-motion loading, keyboard retry, error isolation, and responsive grid contracts.
+
+Important decisions:
+Kept assessment fetching, runtime validation, and query orchestration outside these presentation components; Task 16 will pass only data already validated by the existing latest-assessment service/hook. The component clamps only conic-gradient geometry to `0..100` and never rewrites the visible authoritative value; malformed network scores remain rejected by the Task 3/5 Zod boundary. Profile meaning is never inferred from a closed enum or color, and arbitrary backend-authored profile text renders outside the fixed ring so it can wrap without clipping. The assessed hero remains static, while the small risk-card client boundary exists only for its retry callback; no chart library, animation dependency, request, store, or API contract was added.
+
+Known follow-ups:
+Task 16 should select `RiskLevelCard`, `RiskLevelCardSkeleton`, or `RiskLevelCardError` from the existing `useLatestAssessment` state while keeping dashboard overview metrics rendered. Task 17 should compose `AssessedOverview` into the final route, and Task 18 owns rendered screenshot comparison and final viewport tuning. A missing/404 latest assessment has no documented successful empty payload, so it remains an error state rather than a fabricated profile or score. Verification passed with the focused dashboard/risk suite (5 files, 38 tests), `npx tsc --noEmit`, and `npm run lint` (0 errors; the same 15 pre-existing warnings); final whitespace verification is recorded after this documentation update.
+
+### 2026-07-07 03:41 WAT
+
+Task completed: Task 12 — Income-Stability Empty and Populated Visualization
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/overview/income-stability-card.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/overview/income-stability-chart.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/overview/income-stability-table.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/dashboard/income-stability.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+
+Summary:
+Added the income-stability dashboard card with truthful null, empty-series, and populated states. Null overview data now presents an assessment-required empty state without score, classification, graph points, or currency labels. Populated data uses the existing O(n) normalization/path helpers to draw every validated `graph_points` value in order in a responsive inline SVG, displays the validated classification and score, and exposes the same ordered neutral values in a compact expandable table. Empty, single-point, flat, varied, and long finite series render without invalid SVG geometry or horizontal page-width constraints.
+
+Important decisions:
+Kept the components presentational and server-compatible with no query, client state, chart package, animation dependency, memoization, or API/store changes. The visualization uses indexed observations and neutral numeric values because the API does not document point units or timestamps; the screenshot's Naira-like axis was intentionally not reproduced. SVG grid lines and point markers are supplemental, while an accessible chart summary and semantic table preserve meaning without relying on color or the visual curve.
+
+Known follow-ups:
+Task 16 should pass validated `income_stability` data into `IncomeStabilityCard`, and Task 17 should compose the card into the final dashboard route. Task 18 owns rendered screenshot comparison and final multi-viewport browser tuning; this isolated Task 12 component's responsive behavior is covered by a fixed responsive viewBox, `min-w-0`/overflow containment, wrapping table cells, and focused tests. Verification passed with the focused income-stability/helper suite (2 files, 17 tests), `npx tsc --noEmit`, and `npm run lint` (0 errors; the same 15 pre-existing warnings); final whitespace verification follows this documentation update.
+
+### 2026-07-07 03:51 WAT
+
+Task completed: Task 13 — Getting-Started and Recommended-Actions Components
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/lib/dashboard/actions.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/overview/getting-started-checklist.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/overview/recommended-actions.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/dashboard/dashboard-actions.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+
+Summary:
+Added a small pure action-model helper plus the unassessed “Lets get started” checklist and assessed “Recommended actions” card. Checklist completion derives only from the resolved `riskAssessed`, `kycVerified`, and `/users/me` `email_verified` values supplied by the future dashboard controller. Incomplete risk and KYC rows use the real `/assessment` and `/kyc` destinations, marketplace remains an explicitly available `/marketplace` action because no visited/completed state exists, and unverified email guidance remains informational because no safe general-purpose verification route exists without a token. Validated assessment recommendation strings render as semantic information, while only deterministic KYC and marketplace actions render as links.
+
+Important decisions:
+Kept both components static, server-compatible, prop-driven, and free of hooks, requests, local persistence, duplicated state, or memoization. No Profile, Settings, email-verification, “See all,” or update destination was invented. Completed and informational rows are removed from keyboard navigation, while real links have 44px minimum targets and visible focus treatment. Completion text, icon treatment, and semantic list structure provide non-color meaning; `min-w-0`, overflow containment, and anywhere wrapping preserve long backend recommendation copy on narrow screens.
+
+Known follow-ups:
+Task 16 should source checklist props from the existing `useUserFlags` and `useUserProfile` results, and pass validated latest-assessment `recommendations` into `RecommendedActions`; its existing query states own loading and error orchestration because these Task 13 components do not fetch. Task 17 should compose the correct lower-right card for assessed and unassessed dashboard branches, and Task 18 owns rendered screenshot and multi-viewport tuning. Verification passed with the focused action/primitive suite (2 files, 23 tests), `npx tsc --noEmit`, and `npm run lint` (0 errors; the same 15 pre-existing warnings); final whitespace verification follows this documentation update.
+
+### 2026-07-07 04:03 WAT
+
+Task completed: Task 14 — KYC Dashboard Banner Integration
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/kyc/dashboard/kyc-dashboard-banner.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/kyc/kyc-dashboard-banner.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/pages/dashboard.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+
+Summary:
+Aligned the dashboard KYC reminder with the persistent `Banner (1).png` contract. The reminder now uses the existing memory-only KYC gate, renders only when the authoritative `kycVerified` value has resolved to `false`, remains absent for unresolved and verified states, and has no dismiss control or local/browser persistence. Updated the visual structure to a full-width pale-teal content banner with a verification badge, “Verify your KYC” copy, and an outlined “Verify now” link carrying the established encoded `/dashboard` return target.
+
+Important decisions:
+Used `role="status"`, polite live semantics, and the banner heading as its accessible name so the reminder announces only after confirmed unverified state without behaving like an urgent error. The CTA uses the existing `DEFAULT_AUTHENTICATED_PATH` constant and established `/kyc?redirect=...` convention rather than accepting user-controlled routing input. The banner consumes only `useKycGate`; it adds no KYC status request, second state source, storage, effect, or layout-shifting dismissal state. Mobile safety comes from `min-w-0` containment, wrapping copy, stacked small-screen layout, and a full-width 44px CTA that returns to intrinsic width above the small breakpoint.
+
+Known follow-ups:
+Task 16 should keep the banner orthogonal to assessed/unassessed overview branching, and Task 17 should preserve its placement above the dashboard heading in the final route composition. Task 18 owns rendered screenshot comparison and full multi-viewport tuning. Loading/error/empty data states are not internal to this store-only banner; its applicable unresolved-flags state is covered and renders no reminder. Verification passed with the focused banner/page suite (2 files, 7 tests), `npx tsc --noEmit`, and `npm run lint` (0 errors; the same 15 pre-existing warnings); final whitespace verification follows this documentation update.
+
+### 2026-07-07 04:40 WAT
+
+Task completed: Task 15 — Notification Preview and Accessible Slide-Over Shell
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/types/dashboard-notifications.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/notifications/notification-preview.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/notifications/notification-panel.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/notifications/notification-list.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/notifications/notification-unavailable-state.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/shell/dashboard-navbar.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/mocks/fixtures/dashboard-notifications.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/dashboard/notification-panel.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/dashboard/dashboard-navbar.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+
+Summary:
+Added a UI-only notification adapter model, compact preview, honest unavailable state, grouped notification list, and accessible right-side slide-over. The production dashboard bell now lazy-loads the panel on first open and supplies the unavailable adapter by default, so it displays no fake unread count or items and makes zero notification requests. The existing component-only fixtures now implement the adapter model for Today/Yesterday visual coverage without registering a feed endpoint. Ready adapters can expose explicit mark-one/mark-all capabilities; controls remain omitted or disabled when those capabilities and callbacks are absent.
+
+Important decisions:
+Kept notification data entirely outside API services, React Query, auth state, and production fixtures because no feed/read contract exists. The panel uses `role="dialog"`, `aria-modal`, labelled title/summary, a polite open announcement, first-focus Back control, Tab/Shift+Tab trapping, Escape/backdrop/explicit dismissal, body-scroll locking, and opener focus restoration. It is full viewport width/height on mobile and bounded to 41.875rem (approximately 670px) from the small breakpoint, with `min-w-0`, wrapping content, overflow containment, and reduced-motion-safe transition classes. `React.lazy` keeps the panel module out of the closed navbar path; test fixture data is never imported by production components.
+
+Known follow-ups:
+Task 16 may compose `NotificationPreview` in the assessed lower column while retaining its default unavailable production adapter and may continue using the navbar's internal panel state or the existing callback boundary. A real feed endpoint, unread count, grouping timestamps, and mark-read mutations remain backend/product blockers; when supplied, an adapter can provide them without changing panel semantics. Loading/error network states are intentionally absent because production performs no notification request; unavailable, ready-empty, and populated adapter states are covered. Task 18 owns rendered screenshot comparison and final multi-viewport tuning. Verification passed with the focused notification/navbar/mock suite (3 files, 29 tests), `npx tsc --noEmit`, and `npm run lint` (0 errors; the same 15 pre-existing warnings); final whitespace verification follows this documentation update.
+
+### 2026-07-07 05:20 WAT
+
+Task completed: Task 16 — Dashboard Overview State Controller
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/dashboard-overview-controller.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/dashboard-overview-content.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/dashboard/dashboard-overview-controller.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+
+Summary:
+Added the focused client orchestration layer for authenticated flags, the canonical user profile query, the single dashboard overview query, and the corrected latest-assessment query. The controller now renders stable initialization/flag/overview loading geometry, retryable profile and overview failures, validated unassessed or assessed success branches, and an assessment-local loading/error/retry state that leaves overview metrics and stability content available. Added the complete success composition using the existing KYC banner, greeting/date, heroes, four metrics, income-stability card, getting-started checklist, recommended actions, risk visualization, and honest notification-unavailable preview. Added MSW-backed integration coverage for unresolved flags, all four KYC/assessment combinations, null and populated stability, parallel request deduplication, overview retry, assessment sub-error recovery, mismatch reconciliation, focus stability, and mobile-first layout contracts.
+
+Important decisions:
+Validated dashboard `has_assessment` is authoritative for the post-query visual branch, while shared `riskAssessed` remains the pre-query gate and checklist source. In the normal assessed path, profile, overview, and assessment requests start together and canonical React Query keys deduplicate duplicate consumers. If overview and the refreshed profile flag still disagree, the controller logs the mismatch and invalidates `/users/me` once without copying query data into Zustand or overwriting either source. KYC remains an orthogonal memory-only flag, notification production output uses the unavailable adapter with zero feed requests, and the controller requires an explicit date prop so Task 17 can preserve deterministic server/client rendering.
+
+Known follow-ups:
+Task 17 must replace the placeholder dashboard route with `DashboardOverviewController`, pass the display date from the thin server page, upgrade route loading/error boundaries, and remove the old standalone KYC recommendations/placeholder cards. Task 18 still owns rendered screenshot comparison and full viewport tuning. Verification passed with the focused controller suite (1 file, 10 tests), the broader dashboard/profile/risk/KYC regression slice (14 files, 112 tests), `npx tsc --noEmit`, and `npm run lint` (0 errors; the same 15 pre-existing warnings); final `git diff --check` follows this documentation update.
+
+### 2026-07-07 05:27 WAT
+
+Task completed: Task 17 — Dashboard Page Composition, Metadata, Loading, and Error Boundaries
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(app)/dashboard/page.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(app)/dashboard/loading.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(app)/dashboard/error.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/pages/dashboard.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+
+Summary:
+Replaced the dashboard placeholder route with the Task 16 overview controller and added meaningful dashboard metadata. The page now supplies one server-created date value to the client controller, while the existing controller owns all profile, overview, assessment, KYC, metric, stability, action, and notification composition. Replaced the centered route spinner with the stable dashboard skeleton and added a route-local client error boundary with friendly, non-technical copy and a keyboard-accessible reset action. Removed the standalone KYC recommendations card and all placeholder-era pulse cards. Reworked the page tests to cover full authenticated-shell composition, one page-level heading, skip-target integration, KYC banner order, assessed content, unassessed empty content, notification-panel integration, route loading geometry, metadata, mobile-safe containment, and keyboard error recovery.
+
+Important decisions:
+Kept `page.tsx` as a small server component without `"use client"`; only `error.tsx` is client-side because Next.js resettable route boundaries require it. Passing the display date from the server prevents a separate client clock effect and keeps serialized props to one small value. Route loading and route errors render inside the existing authenticated shell, so sidebar/navbar geometry and the `#dashboard-content` skip target remain available. The navbar continues to lazy-load the notification panel only when opened, the stability visualization remains lightweight inline SVG, and no notification feed, API call, query, store, or other contract was added.
+
+Known follow-ups:
+Task 18 owns rendered comparison against all four supplied screenshots, final spacing/typography/contrast tuning, and browser overflow verification at 320, 360, 390, 768, 1024, 1280, 1440+, and 1512px. Task 19 will perform the full unit/integration coverage audit. Verification passed with the focused page suite (1 file, 5 tests), the broader dashboard/controller/shell/profile/risk/KYC regression slice (16 files, 125 tests), `npx tsc --noEmit`, and `npm run lint` (0 errors; the same 15 pre-existing warnings); final `git diff --check` follows this documentation update.
+
+### 2026-07-07 05:51 WAT
+
+Task completed: Task 18 — Accessibility, Responsive, and Pixel-Perfect Visual QA
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/public/assets/images/dashboard-marketplace-promo.webp`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/dashboard-overview-content.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/overview/unassessed-hero.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/overview/assessed-hero.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/overview/risk-assessment-prompt.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/overview/metric-card.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/overview/dashboard-date.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/overview/dashboard-empty-state.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/shell/app-sidebar.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/shell/app-navigation.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/shell/marketplace-promo-card.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/shell/dashboard-search.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/shell/mobile-navigation-drawer.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/notifications/notification-panel.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/dashboard/unassessed-overview.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/dashboard/assessed-overview.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/dashboard/dashboard-overview-controller.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/dashboard/app-navigation.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/dashboard/dashboard-primitives.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+
+Summary:
+Completed the four-reference visual and accessibility pass without changing auth, API, query, or dashboard state contracts. Tuned the persistent 298px sidebar, full-width active navigation rail, navigation order, typography, 100px desktop navbar relationship, dashboard heading/date row, 3:1 hero/prompt proportions, compact four-card metrics, equal unassessed lower columns, and assessed lower composition. Replaced the promo illustration with an optimized, explicit-dimension Next Image derived from the supplied umbrella/shield PNG, retaining lazy loading and meaningful alternative text. Added accessible naming to dashboard empty states, touch-safe interaction classes, scroll containment and safe-area padding for overlays, an ellipsis search placeholder, visible focus preservation, and reduced-motion-compatible existing transitions.
+
+Important decisions:
+Kept validated backend values authoritative even where the screenshots contain speculative currency, safety-buffer, and recommendation values; nulls continue to render honestly as “Not available.” Preserved unavailable navigation and demo/explainer controls instead of inventing routes. The reference appearance was matched through existing colors and component boundaries rather than adding a parallel theme or API model. Desktop artwork remains responsive and bounded; mobile uses a single content column, full-width date, wrapping hero actions, 44px targets, and no fixed content track. The notification panel and mobile drawer retain their focus traps, Escape/backdrop dismissal, opener focus restoration, and body scroll locks while adding contained scrolling.
+
+Visual QA and verification:
+Rendered the authenticated unassessed dashboard in headless Chrome at 320, 360, 390, 768, 1024, 1280, 1440, and the exact 1512×1294 reference viewport; the captures showed no horizontal overflow and were compared directly with `Overview (4).png`. The KYC, assessed, and notification compositions remain covered by semantic integration tests and were compared component-by-component with `Banner (1).png`, `Overview (5).png`, and `Overview (6).png`. The bundled in-app browser skill could not initialize because its browser bootstrap tool rejected the required sandbox policy, so local Playwright with installed system Chrome was used for rendered viewport captures. Verification passed with the focused component suite (5 files, 49 tests), the broader dashboard/KYC/page/service slice (17 files, 142 tests), `npx tsc --noEmit`, and `npm run lint` (0 errors; the same 15 pre-existing warnings). No loading, error, empty, keyboard, or mobile assertions were weakened.
+
+Known follow-ups:
+Task 19 owns the final full-suite coverage audit and any project-wide browser automation additions. A real notification feed, unread count, mark-read mutations, unavailable Profile/Settings/Premiums destinations, and product-demo/explainer routes remain documented backend/product blockers and were intentionally not invented. The final whitespace check follows this completion entry.
+
+### 2026-07-07 09:57 WAT
+
+Task completed: Task 19 — Unit and Integration Test Completion
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/dashboard/dashboard-overview-controller.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/dashboard/notification-panel.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/store/auth-store.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+
+Summary:
+Audited the complete dashboard unit and integration suite against Tasks 3–18 and closed the remaining meaningful state-orchestration and security gaps without changing production code. Added MSW-backed coverage for an unresolved `/users/me` failure with accessible keyboard retry, plus a delayed latest-assessment response that proves assessed overview metrics and income stability stay visible while the risk card loads and recommended actions wait for validated assessment data. Strengthened the notification production-boundary test to prove opening the panel performs neither a global fetch nor an authenticated Axios GET. Added an explicit memory-only regression proving full-session access tokens, KYC flags, and risk-assessment flags remain absent from both `localStorage` and `sessionStorage`.
+
+Important decisions:
+Kept the pass behavior-focused and additive: no existing assertion was weakened, no component under test was mocked, and all network-state additions use the shared MSW boundary. Reused the existing controller, React Query cache, authenticated client, auth store, KYC gate, and notification adapter architecture. Existing request-count coverage continues to prove one overview, one profile, and one assessment request per normal cache cycle; all four KYC/risk combinations, malformed service responses, Bearer authentication, null/populated stability, loading/error recovery, drawer/panel keyboard behavior, and notification feed absence remain covered. No test-only production abstraction or undocumented endpoint was introduced.
+
+Known follow-ups:
+Task 20 owns real-browser Playwright dashboard coverage, including protected-route initialization, the four KYC/risk variants, request counts, keyboard-only drawer/panel flows, and small-viewport overflow checks. The full Vitest run continues to print the existing non-fatal jsdom “navigation to another Document” notice from an intentional redirect path. Verification passed with the focused additions (3 files, 33 tests), `npm test -- --run` (96 files, 592 tests), `npx tsc --noEmit`, and `npm run lint` (0 errors; the same 15 pre-existing warnings). Final whitespace verification follows this documentation update.
+
+### 2026-07-07 11:26 WAT
+
+Task completed: Task 20 — Dashboard Playwright E2E Coverage
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/e2e/dashboard/dashboard-flow.spec.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+
+Summary:
+Added a dedicated 11-scenario Playwright dashboard suite using deterministic route-level mocks that match the validated browser-session, `/users/me`, dashboard overview, and latest-assessment contracts. Coverage includes the unauthenticated redirect, silent-refresh and overview-loading no-flash states, all four KYC/assessment combinations, one-overview-request assertions, null and populated income stability, dashboard error/retry recovery, KYC/assessment/marketplace navigation, keyboard-only mobile drawer and notification panel focus lifecycles, zero notification feed/read requests, and horizontal-overflow checks at 320, 390, 768, 1024, and 1512px.
+
+Important decisions:
+Reused the credentialed CORS/preflight-safe route mocking and httpOnly refresh-cookie patterns from the existing KYC/auth specs. The tests assert validated server values and user-facing roles/names rather than CSS implementation details, retain the memory-only access-token boundary, and register no notification API. `playwright.config.ts` required no change because its existing Chromium project, base URL, and server reuse policy already support the dashboard suite. Loading geometry and request counts provide stable browser-observable proxies for initial layout stability without adding brittle performance thresholds.
+
+Known follow-ups:
+`npx playwright test --list --project=chromium e2e/dashboard/dashboard-flow.spec.ts` discovers all 11 tests, `npx eslint e2e/dashboard/dashboard-flow.spec.ts`, `npx tsc --noEmit`, and `npm run lint` pass; lint retains the same 15 pre-existing warnings. Both required runtime commands, `npm run test:e2e -- --project=chromium e2e/dashboard/dashboard-flow.spec.ts` and `npm run test:e2e -- --project=chromium`, are blocked before browser execution because unresponsive Next.js PID 66527 holds `/Users/naijaghost/Desktop/projects/gigsecure-fe/.next/dev/lock`; ports 3000, 3001, and 3100 were unreachable from the normal sandbox, and an escalated health check against the process on port 3000 also did not return. No process was stopped and no lock was removed without approval. Rerun both commands after the stale dev process is intentionally stopped; no test coverage was weakened to bypass the blocker.
+
+### 2026-07-07 11:45 WAT
+
+Task completed: Task 21 — Performance, Build, and Final QA
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/DASHBOARD_EPICS.md`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/playwright.config.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/e2e/auth/auth-flows.spec.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/e2e/dashboard/dashboard-flow.spec.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/e2e/kyc/kyc-flow.spec.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/e2e/marketplace/marketplace-flow.spec.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/test-results/.last-run.json`
+
+Summary:
+Completed the dashboard performance/build/final-QA matrix and resolved browser-suite regressions exposed only by the now-complete dashboard route. Auth success specs now provide the dashboard’s documented profile/overview data, KYC E2E assertions target the persistent dashboard banner and assessed composition instead of the removed standalone recommendations card, the dashboard error assertion excludes Next’s route announcer, and the marketplace mobile filter path uses a stable keyboard interaction. Playwright now uses one worker so the single Next development server does not invalidate active cross-route forms during concurrent route compilation. The dashboard-focused Chromium suite passes 11 tests and the complete Chromium matrix passes 35 tests.
+
+Important decisions:
+No production component, hook, service, API contract, auth store, or design token changed. Production inspection confirms `/dashboard` remains a statically generated route with a 44 KiB raw page chunk (9,967 bytes gzip); its route entry set is 148 KiB raw (46,018 bytes gzip), excluding global/app shared runtime. The authenticated app layout entry is 16 KiB raw (4,178 bytes gzip). The notification panel remains a separate 12 KiB raw lazy chunk (3,021 bytes gzip) and is absent from the dashboard page’s initial client-reference chunk list. No chart library, dashboard notification fixture module, or notification feed/read API appears in production dashboard chunks. The promo is an explicit 480×320 WebP of approximately 17 KiB. Existing integration and E2E assertions confirm one overview request, canonical query deduplication, parallel profile/overview/assessment starts, stable loading geometry, no protected-content flash, zero invented notification requests, memory-only session data, keyboard focus lifecycle, and no horizontal overflow at 320, 390, 768, 1024, and 1512px. Numeric CLS thresholds were intentionally not invented; stable shell/overview skeleton transitions and rendered overflow checks remain the reliable layout observations.
+
+Known follow-ups:
+Focused dashboard/unit validation passed (20 files, 161 tests), the full Vitest matrix passed (96 files, 592 tests), `npm run lint` passed with 0 errors and the same 15 pre-existing non-dashboard warnings, and `npx tsc --noEmit` passed. The workspace’s exact Playwright command remains unable to start while unresponsive PID 66527 holds `.next/dev/lock`; an isolated copy using the same source/specs and a temporary webpack dev-server flag passed all 35 Chromium tests. The exact production build first failed because restricted DNS could not reach `fonts.googleapis.com`, and the network-escalated retry did not complete; the isolated fallback build with only the Google-font loader temporarily omitted and webpack selected compiled, typechecked, generated 36 static pages, and emitted `/dashboard` successfully for bundle inspection. The real source font configuration was not changed. Existing non-blocking warnings remain for Next’s deprecated `middleware` convention, future `allowedDevOrigins`, `NO_COLOR`/`FORCE_COLOR`, and the 15 pre-existing lint warnings. Task 22 should carry these exact environment notes and final bundle/request/layout findings into the dashboard handoff.
+
+### 2026-07-07 14:57 WAT
+
+Task completed: Task 22 — CONTEXT.md and Epic Handoff Update
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/DASHBOARD_EPICS.md`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+
+Summary:
+Completed the dashboard epic handoff without changing production or test behavior. `DASHBOARD_EPICS.md` now marks Tasks 1–22 complete, clearly labels the original codebase audit as the historical pre-implementation baseline, and provides the live file/role map for contracts and data, protected shell and navigation, route/controller/widgets, the notification adapter boundary, and unit/integration/browser tests. The handoff also carries forward the exact Task 21 build/browser environment notes, bundle and request findings, layout-stability evidence, final viewport/keyboard/modal/drawer outcomes, and the remaining backend/product gaps.
+
+Important decisions:
+The live source tree and final handoff supersede historical statements that dashboard runtime files, shell features, mocks, tests, or route composition are absent. The security boundary is unchanged: access tokens, `kycVerified`, and `riskAssessed` remain memory-only; the httpOnly refresh-cookie/BFF and `ProtectedRoute` boundaries remain intact; one authenticated, cancellable, runtime-validated overview query feeds the dashboard; and server data is not copied into a dashboard store. Notification production behavior remains an honest unavailable adapter with no feed, unread-count, grouping, or read-mutation endpoint. The date remains display-only, stability points remain neutral-unit indexed values, and unsupported tour/demo/navigation destinations remain disabled or unavailable.
+
+Known follow-ups:
+Backend/product still needs to define the notification feed/read contract, dashboard date/range behavior, income-stability units and x-axis semantics, tour/demo/explainer destinations, any active-policy subtitle requirement, unavailable Premiums/Profile/Settings routes, and guarantees beyond the documented score/classification contract. The workspace's exact Playwright command remains blocked by unresponsive PID 66527 holding `.next/dev/lock`, although the same source/specs passed 11/11 dashboard and 35/35 full Chromium tests in the isolated Task 21 run. The exact production build remains subject to restricted Google Fonts DNS; the documented isolated fallback compiled, typechecked, generated 36 static pages, and emitted `/dashboard` without changing the real font configuration. Task 22 verification passed with the focused dashboard/security slice (21 files, 172 tests), `npm run lint` (0 errors; the same 15 pre-existing non-dashboard warnings), `npx tsc --noEmit`, and `git diff --check`.

@@ -3,9 +3,9 @@ import { riskService } from '@/services/risk.service';
 import { useAuthStore } from '@/store/auth-store';
 import { useWizardStore } from '@/store/wizard-store';
 import { QUERY_KEYS } from '@/lib/constants';
-import type { TechAssessmentInput, AssessmentResponse } from '@/types/api';
-import type { RiskQuestionsResponse } from '@/types/risk-assessment';
-import type { SubmitAssessmentRequest } from '@/lib/validators/risk';
+import type { TechAssessmentInput } from '@/types/api';
+
+export const LATEST_ASSESSMENT_STALE_TIME = 5 * 60 * 1000;
 
 export function useRiskQuestions(category: string | null) {
   return useQuery({
@@ -25,12 +25,15 @@ export function useRiskCategories() {
   });
 }
 
-export function useLatestAssessment() {
+export function useLatestAssessment({ enabled = true }: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: QUERY_KEYS.RISK_ASSESSMENT,
     queryFn: ({ signal }) => riskService.getLatestAssessment(signal),
-    staleTime: 0,
-    throwOnError: true,
+    enabled,
+    staleTime: LATEST_ASSESSMENT_STALE_TIME,
+    retry: false,
+    refetchOnWindowFocus: false,
+    throwOnError: false,
   });
 }
 
@@ -60,6 +63,7 @@ export function useSubmitTechAssessment() {
   return useMutation({
     mutationFn: (payload: TechAssessmentInput) =>
       riskService.submitTechAssessment(payload),
+    retry: false,
     onError: (error: unknown) => {
       const axiosError = error as { response?: { status?: number } };
       if (axiosError?.response?.status === 401) {
@@ -70,12 +74,5 @@ export function useSubmitTechAssessment() {
         }
       }
     },
-  });
-}
-
-/** Legacy hook (kept for compatibility) */
-export function useSubmitAssessment() {
-  return useMutation({
-    mutationFn: (payload: SubmitAssessmentRequest) => riskService.submitAssessment(payload),
   });
 }

@@ -11,6 +11,7 @@ const REFRESH_COOKIE = {
 
 test.beforeEach(async ({ page }) => {
   await mockUnauthenticatedRefresh(page);
+  await mockDashboardLanding(page);
 });
 
 test('landing navbar login link reaches the forgot password flow', async ({ page }) => {
@@ -19,9 +20,12 @@ test('landing navbar login link reaches the forgot password flow', async ({ page
 
   await expect(page).toHaveURL(/\/login$/);
 
-  await page.getByRole('link', { name: 'Forgot password?' }).click();
-
-  await expect(page).toHaveURL(/\/forgot-password$/);
+  const forgotPasswordLink = page.getByRole('link', { name: 'Forgot password?' });
+  await expect(forgotPasswordLink).toHaveAttribute('href', '/forgot-password');
+  await Promise.all([
+    page.waitForURL(/\/forgot-password$/),
+    forgotPasswordLink.click(),
+  ]);
   await expect(page.getByRole('heading', { name: 'Forgot Password' })).toBeVisible();
 });
 
@@ -224,6 +228,37 @@ async function mockLoginSuccess(page: Page) {
   });
 }
 
+async function mockDashboardLanding(page: Page) {
+  await page.route('**/api/v1/users/me', async (route) => {
+    await fulfillJson(route, {
+      user: {
+        id: '00000000-0000-4000-8000-000000000018',
+        email: 'amaka@example.com',
+        first_name: 'Amaka',
+        last_name: 'Obi',
+        phone_number: null,
+        status: 'active',
+        email_verified: true,
+        last_login_at: null,
+        created_at: '2026-05-27T08:00:00Z',
+      },
+      profile: null,
+      kyc_verified: false,
+      risk_assessed: false,
+    });
+  });
+  await page.route('**/api/v1/dashboard/overview', async (route) => {
+    await fulfillJson(route, {
+      premiums_bought: 0,
+      monthly_income_band: null,
+      safety_buffer: null,
+      recommended_plans_count: 0,
+      income_stability: null,
+      has_assessment: false,
+    });
+  });
+}
+
 async function seedRefreshCookie(context: BrowserContext) {
   await context.addCookies([REFRESH_COOKIE]);
 }
@@ -240,10 +275,29 @@ async function fulfillJson(
   status = 200,
   headers: Record<string, string> = {}
 ) {
+  const origin = route.request().headers().origin ?? new URL(route.request().url()).origin;
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': origin,
+    'Access-Control-Allow-Credentials': 'true',
+    Vary: 'Origin',
+  };
+
+  if (route.request().method() === 'OPTIONS') {
+    await route.fulfill({
+      status: 204,
+      headers: {
+        ...corsHeaders,
+        'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+        'Access-Control-Allow-Headers': 'authorization,content-type,x-requested-with',
+      },
+    });
+    return;
+  }
+
   await route.fulfill({
     status,
     contentType: 'application/json',
-    headers,
+    headers: { ...corsHeaders, ...headers },
     body: JSON.stringify(body),
   });
 }

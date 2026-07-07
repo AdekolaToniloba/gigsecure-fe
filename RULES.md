@@ -41,6 +41,16 @@ These rules are mandatory for the GigSecure authentication epic.
 8. Do not refresh non-expired waitlist tokens for scope errors.
 9. Refresh queue behavior must have meaningful tests.
 
+## Code Scope and Simplicity
+
+1. Write only the code required to implement the approved functionality, UI, accessibility, security, and tests.
+2. Avoid speculative abstractions, premature generalization, duplicate helpers, unnecessary wrappers, and unused configuration.
+3. Prefer the simplest readable implementation consistent with existing codebase patterns.
+4. Do not sacrifice clarity, type safety, accessibility, validation, error handling, or test quality merely to reduce line count.
+5. Keep components and functions focused. Extract shared code only when it removes meaningful duplication or complexity.
+6. Remove dead code, unused imports, obsolete comments, and temporary debugging output before completing a task.
+7. Keep changes scoped to the current task and avoid unrelated refactoring.
+
 ## API and Error Handling
 
 1. Use `src/lib/api/client.ts` for shared API client setup.

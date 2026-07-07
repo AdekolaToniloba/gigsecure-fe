@@ -1,12 +1,5 @@
-import Spinner from '@/components/ui/Spinner';
+import { DashboardSkeleton } from '@/components/dashboard/overview/dashboard-skeleton';
 
 export default function DashboardLoading() {
-  return (
-    <div
-      aria-label="Loading dashboard"
-      className="flex h-64 items-center justify-center"
-    >
-      <Spinner size="lg" />
-    </div>
-  );
+  return <DashboardSkeleton />;
 }

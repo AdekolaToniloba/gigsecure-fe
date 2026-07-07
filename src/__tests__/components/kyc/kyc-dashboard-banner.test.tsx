@@ -12,7 +12,7 @@ beforeEach(() => {
 });
 
 describe('KycDashboardBanner', () => {
-  it('appears for unverified users with accessible alert semantics and a KYC CTA', () => {
+  it('appears for resolved unverified users with a polite labelled status and safe KYC return path', () => {
     act(() => {
       useAuthStore.getState().setSession({
         accessToken: 'access-token',
@@ -23,9 +23,31 @@ describe('KycDashboardBanner', () => {
 
     render(<KycDashboardBanner />);
 
-    expect(screen.getByRole('alert', { name: /Complete KYC verification/i })).toBeInTheDocument();
-    expect(screen.getByText(/unlock insurance recommendations/i)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Start KYC/i })).toHaveAttribute('href', '/kyc');
+    const banner = screen.getByRole('status', { name: 'Verify your KYC' });
+    expect(banner).toHaveAttribute('aria-live', 'polite');
+    expect(banner).toHaveAttribute('aria-atomic', 'true');
+    expect(banner).toHaveTextContent(/unlock personalized insurance recommendations/i);
+    expect(screen.getByRole('link', { name: 'Verify now' })).toHaveAttribute(
+      'href',
+      '/kyc?redirect=%2Fdashboard',
+    );
+  });
+
+  it('does not flash while the KYC flag is unresolved', () => {
+    act(() => {
+      useAuthStore.getState().setAccessToken('access-token');
+    });
+
+    const { rerender } = render(<KycDashboardBanner />);
+
+    expect(screen.queryByRole('status', { name: 'Verify your KYC' })).not.toBeInTheDocument();
+
+    act(() => {
+      useAuthStore.getState().setFlags({ kycVerified: false });
+    });
+    rerender(<KycDashboardBanner />);
+
+    expect(screen.getByRole('status', { name: 'Verify your KYC' })).toBeInTheDocument();
   });
 
   it('is absent for verified users', () => {
@@ -39,11 +61,10 @@ describe('KycDashboardBanner', () => {
 
     render(<KycDashboardBanner />);
 
-    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(screen.queryByRole('status', { name: 'Verify your KYC' })).not.toBeInTheDocument();
   });
 
-  it('can be dismissed for the current component visit and reappears on remount', async () => {
-    const user = userEvent.setup();
+  it('remains persistent across remounts and has no dismiss control', () => {
     act(() => {
       useAuthStore.getState().setSession({
         accessToken: 'access-token',
@@ -54,13 +75,32 @@ describe('KycDashboardBanner', () => {
 
     const { unmount } = render(<KycDashboardBanner />);
 
-    await user.click(screen.getByRole('button', { name: /Dismiss KYC reminder/i }));
-
-    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Dismiss/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('status', { name: 'Verify your KYC' })).toBeInTheDocument();
 
     unmount();
     render(<KycDashboardBanner />);
 
-    expect(screen.getByRole('alert', { name: /Complete KYC verification/i })).toBeInTheDocument();
+    expect(screen.getByRole('status', { name: 'Verify your KYC' })).toBeInTheDocument();
+  });
+
+  it('keeps the CTA keyboard accessible and mobile-width safe', async () => {
+    const user = userEvent.setup();
+    act(() => {
+      useAuthStore.getState().setSession({
+        accessToken: 'access-token',
+        kycVerified: false,
+        riskAssessed: true,
+      });
+    });
+
+    render(<KycDashboardBanner />);
+
+    const banner = screen.getByRole('status', { name: 'Verify your KYC' });
+    const cta = screen.getByRole('link', { name: 'Verify now' });
+    expect(banner).toHaveClass('min-w-0', 'overflow-hidden');
+    expect(cta).toHaveClass('min-h-11', 'w-full', 'sm:w-auto');
+    await user.tab();
+    expect(cta).toHaveFocus();
   });
 });

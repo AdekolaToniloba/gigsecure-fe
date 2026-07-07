@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { AssessmentResponse, AssessmentSummary } from '@/types/api';
 
 // ─── Question ─────────────────────────────────────────────────────
 export const riskQuestionSchema = z.object({
@@ -12,27 +13,44 @@ export const riskQuestionSchema = z.object({
 export const riskQuestionsResponseSchema = z.array(riskQuestionSchema);
 
 // ─── Assessment ───────────────────────────────────────────────────
-export const riskAssessmentAnswerSchema = z.object({
-  question_id: z.string(),
-  answer: z.union([z.string(), z.array(z.string()), z.number()]),
+export const applicantProfileSchema = z.object({
+  first_name: z.string(),
+  last_name: z.string(),
+  age: z.number(),
+  gender: z.string(),
+  marital_status: z.string(),
+  state: z.string(),
+  city: z.string(),
 });
 
-export const submitAssessmentRequestSchema = z.object({
-  answers: z.array(riskAssessmentAnswerSchema),
+export const pillarScoresSchema = z.object({
+  income: z.number().min(0).max(100),
+  client: z.number().min(0).max(100),
+  safety: z.number().min(0).max(100),
+  equipment: z.number().min(0).max(100),
+  health: z.number().min(0).max(100),
 });
 
-export const riskScoreSchema = z.object({
-  score: z.number(),
-  level: z.enum(['low', 'medium', 'high']),
-  category: z.string().optional(),
+export const riskAssessmentResponseSchema: z.ZodType<AssessmentResponse> = z.object({
+  applicant: applicantProfileSchema,
+  category: z.string(),
+  pillar_scores: pillarScoresSchema,
+  overall_score: z.number().min(0).max(100),
+  risk_profile: z.string(),
+  recommendations: z.array(z.string()),
+  recommended_categories: z.array(z.string()).optional(),
+  ai_insights: z.string(),
 });
 
-export const riskAssessmentResponseSchema = z.object({
+export const assessmentSummarySchema: z.ZodType<AssessmentSummary> = z.object({
   id: z.string(),
-  user_id: z.string(),
-  score: riskScoreSchema.optional(),
-  completed_at: z.string().nullable().optional(),
-  created_at: z.string().optional(),
+  category: z.string(),
+  first_name: z.string().nullable().optional(),
+  last_name: z.string().nullable().optional(),
+  age: z.number().int().nullable().optional(),
+  overall_score: z.number().min(0).max(100),
+  risk_profile: z.string(),
+  created_at: z.string(),
 });
 
 // ─── Recommendations ──────────────────────────────────────────────
@@ -46,6 +64,4 @@ export const riskRecommendationsResponseSchema = z.array(riskRecommendationSchem
 
 // ─── Inferred Types ────────────────────────────────────────────────
 export type RiskQuestion = z.infer<typeof riskQuestionSchema>;
-export type SubmitAssessmentRequest = z.infer<typeof submitAssessmentRequestSchema>;
-export type RiskAssessmentResponse = z.infer<typeof riskAssessmentResponseSchema>;
 export type RiskRecommendation = z.infer<typeof riskRecommendationSchema>;
