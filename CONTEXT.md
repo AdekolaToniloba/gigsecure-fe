@@ -4,6 +4,59 @@ Created: 2026-05-22 18:02 WAT
 
 This is the living context file for the authentication epic. It must be updated after every completed task with what changed, what was added, important decisions, and known follow-ups.
 
+## Dashboard Settings Epic Progress
+
+### 2026-07-08 23:57 WAT — Task 1: Settings OpenAPI Contract And Generated Types
+
+- Files changed: `openapi.json`, `src/types/schema.d.ts`.
+- Summary: Added the documented Settings privacy endpoints, account deactivation endpoint, account deletion endpoint, and the required `PrivacySettingsResponse`, `UpdatePrivacySettingsRequest`, and `DeleteAccountRequest` schemas to the local OpenAPI contract. Regenerated `src/types/schema.d.ts` with `npm run generate:types`.
+- Important decisions: Kept `src/types/schema.d.ts` generated-only and matched the epic's documented settings contracts without inventing fields.
+- Known follow-ups: Implement endpoint constants, validators, service methods, React Query hooks, MSW handlers, UI, and tests against these generated contracts.
+- Validation: `npm run generate:types` passed; `rg` confirmed the new settings paths and schemas exist in both OpenAPI and generated types.
+
+### 2026-07-09 00:00 WAT — Task 2: Settings Domain Layer
+
+- Files changed: `src/lib/api/endpoints.ts`, `src/lib/constants.ts`, `src/types/settings.ts`, `src/lib/validators/settings.ts`, `src/services/settings.service.ts`, `src/hooks/settings/useSettings.ts`, `src/mocks/fixtures/settings.ts`, `src/mocks/handlers/settings.ts`, `src/mocks/handlers/index.ts`, `src/__tests__/lib/settings-validators.test.ts`, `src/__tests__/services/settings.service.test.ts`, `src/__tests__/hooks/settings-hooks.test.tsx`.
+- Summary: Added settings endpoint constants, query keys, generated type aliases, Zod validators, authenticated `apiClient` service methods, React Query hooks with `retry: false`, optimistic toggle cache updates with rollback, account action mutations, MSW fixtures, and default handlers.
+- Important decisions: Kept settings server state in React Query only. Toggle services send only the changed documented key with a boolean value. Account actions return `void` and validate `204` responses. Wrapped the delete account mutation function so React Query mutation context is not accidentally passed as an Axios signal.
+- Known follow-ups: Build the protected settings route UI, enable sidebar navigation, add confirmation modals, wire account-action session cleanup and redirect, and cover page-level behavior.
+- Validation: `npm test -- src/__tests__/lib/settings-validators.test.ts src/__tests__/services/settings.service.test.ts src/__tests__/hooks/settings-hooks.test.tsx` passed with 15 tests.
+
+### 2026-07-09 00:06 WAT — Task 3: Protected Settings UI And Shell Integration
+
+- Files changed: `src/components/dashboard/settings/settings-page-controller.tsx`, `src/app/(app)/dashboard/settings/page.tsx`, `src/app/(app)/dashboard/settings/loading.tsx`, `src/components/dashboard/shell/app-navigation.tsx`, `src/app/(auth)/login/page.tsx`, `src/components/auth/login/login-form.tsx`, `src/__tests__/components/dashboard/settings-page-controller.test.tsx`, `src/__tests__/pages/dashboard-settings.test.tsx`, `src/__tests__/components/dashboard/app-navigation.test.tsx`, `src/__tests__/components/auth/login-form.test.tsx`.
+- Summary: Added the protected `/dashboard/settings` page in the existing authenticated shell, enabled the Settings sidebar item, built accessible keyboard tabs, notification/privacy switch rows, loading/error/retry/success states, danger-zone account actions, focus-trapped confirmation dialogs, delete password validation, session cleanup, and login success messaging for deactivation/deletion redirects.
+- Important decisions: Kept UI primitives feature-local. Used React Query data directly for preference state, with optimistic mutation cache updates and rollback handled in hooks. Account actions call the documented settings endpoint first, then call the existing BFF logout cleanup and clear memory auth state before redirecting to `/login?account=...`.
+- Known follow-ups: Add Playwright coverage for the settings flow, run full unit/lint/type/diff checks, and document any validation limitations.
+- Validation: `npm test -- src/__tests__/lib/settings-validators.test.ts src/__tests__/services/settings.service.test.ts src/__tests__/hooks/settings-hooks.test.tsx src/__tests__/components/dashboard/settings-page-controller.test.tsx src/__tests__/pages/dashboard-settings.test.tsx src/__tests__/components/dashboard/app-navigation.test.tsx src/__tests__/components/auth/login-form.test.tsx` passed with 45 tests.
+
+### 2026-07-09 00:16 WAT — Task 4: Settings Test Coverage And Browser Flow
+
+- Files changed: `e2e/dashboard/settings-flow.spec.ts`, `src/__tests__/components/dashboard/settings-page-controller.test.tsx`.
+- Summary: Added Playwright coverage for settings preference saves, documented partial update payloads, mobile overflow checks, delete password confirmation, successful deletion redirect, and deactivation confirmation redirect. Adjusted account cleanup to route to the account success URL before clearing in-memory auth so the protected-route guard does not overwrite the success redirect.
+- Important decisions: Kept the existing BFF logout as the cookie cleanup path, then clear memory auth shortly after navigation starts. This preserves the required success message URL while still clearing local session state.
+- Known follow-ups: Run full verification suite and record final validation output.
+- Validation: `npm test -- src/__tests__/components/dashboard/settings-page-controller.test.tsx` passed with 8 tests. `E2E_PORT=3101 npm run test:e2e -- e2e/dashboard/settings-flow.spec.ts` passed with 3 Playwright tests after rerunning outside the sandbox because local port binding was sandbox-restricted.
+
+### 2026-07-09 00:20 WAT — Final Dashboard Settings Epic Summary
+
+- Files changed:
+  - Contract/types: `openapi.json`, `src/types/schema.d.ts`, `src/types/settings.ts`.
+  - API/domain: `src/lib/api/endpoints.ts`, `src/lib/constants.ts`, `src/lib/validators/settings.ts`, `src/services/settings.service.ts`, `src/hooks/settings/useSettings.ts`.
+  - UI/routes: `src/app/(app)/dashboard/settings/page.tsx`, `src/app/(app)/dashboard/settings/loading.tsx`, `src/components/dashboard/settings/settings-page-controller.tsx`, `src/components/dashboard/shell/app-navigation.tsx`, `src/app/(auth)/login/page.tsx`, `src/components/auth/login/login-form.tsx`.
+  - Mocks/tests: `src/mocks/fixtures/settings.ts`, `src/mocks/handlers/settings.ts`, `src/mocks/handlers/index.ts`, `src/__tests__/lib/settings-validators.test.ts`, `src/__tests__/services/settings.service.test.ts`, `src/__tests__/hooks/settings-hooks.test.tsx`, `src/__tests__/components/dashboard/settings-page-controller.test.tsx`, `src/__tests__/pages/dashboard-settings.test.tsx`, `src/__tests__/components/dashboard/app-navigation.test.tsx`, `src/__tests__/components/auth/login-form.test.tsx`, `e2e/dashboard/settings-flow.spec.ts`.
+- Completed work: Implemented the full protected Dashboard Settings feature with Notifications, Privacy and Data, and Delete account tabs; authenticated settings API integration; runtime validation; React Query server state; mutation-backed switches with rollback; account deactivation/deletion confirmation modals; delete password confirmation; session cleanup and login success redirects; MSW handlers; unit/integration/page tests; and Playwright settings flow coverage.
+- Important decisions: Settings route is `/dashboard/settings` to inherit the existing protected dashboard shell. Settings preferences are not copied into Zustand. Toggle mutations send only the changed documented field. Account success redirects use `/login?account=deactivated` and `/login?account=deleted`; login page now renders those success messages. Memory auth is cleared shortly after the success navigation starts to avoid the protected-route guard overwriting the account success URL.
+- Known follow-ups: Backend/product still own any dedicated reactivation UX after deactivation; no reactivation endpoint is documented. If backend later makes partner data sharing required for quotes, the UI should be updated from a documented contract instead of hard-coding disabled/required behavior.
+- Validation:
+  - `npm run generate:types` passed.
+  - Focused settings/domain/UI tests passed: `npm test -- src/__tests__/lib/settings-validators.test.ts src/__tests__/services/settings.service.test.ts src/__tests__/hooks/settings-hooks.test.tsx src/__tests__/components/dashboard/settings-page-controller.test.tsx src/__tests__/pages/dashboard-settings.test.tsx src/__tests__/components/dashboard/app-navigation.test.tsx src/__tests__/components/auth/login-form.test.tsx` passed with 45 tests.
+  - Full unit suite: first run had one transient existing risk-assessment product-detail animation visibility failure; rerunning that file passed with 6 tests, and the final full run `npm test -- --run` passed with 117 files and 770 tests. The suite still prints jsdom warnings for unimplemented `scrollTo` and document navigation.
+  - `npm run lint` passed with 7 pre-existing warnings outside the settings files.
+  - `npx tsc --noEmit` passed.
+  - `git diff --check` passed.
+  - Relevant Playwright: `E2E_PORT=3101 npm run test:e2e -- e2e/dashboard/settings-flow.spec.ts` passed with 3 tests. Initial sandboxed Playwright attempts could not bind/start the dev server, so the passing run used the approved escalated e2e command on port 3101.
+
 ## Current Codebase State
 
 ### App and Routing

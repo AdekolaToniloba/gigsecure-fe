@@ -156,6 +156,52 @@
         "security": [{ "HTTPBearer": [] }]
       }
     },
+    "/api/v1/settings/privacy": {
+      "get": {
+        "tags": ["Settings"],
+        "summary": "Get Privacy Settings",
+        "description": "Get privacy and data settings for the current user.",
+        "operationId": "get_privacy_settings_api_v1_settings_privacy_get",
+        "responses": { "200": { "description": "Successful Response", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PrivacySettingsResponse" } } } } },
+        "security": [{ "HTTPBearer": [] }]
+      },
+      "put": {
+        "tags": ["Settings"],
+        "summary": "Update Privacy Settings",
+        "description": "Update privacy and data settings (partial update).",
+        "operationId": "update_privacy_settings_api_v1_settings_privacy_put",
+        "requestBody": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UpdatePrivacySettingsRequest" } } }, "required": true },
+        "responses": {
+          "200": { "description": "Successful Response", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PrivacySettingsResponse" } } } },
+          "422": { "description": "Validation Error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/HTTPValidationError" } } } }
+        },
+        "security": [{ "HTTPBearer": [] }]
+      }
+    },
+    "/api/v1/settings/account/deactivate": {
+      "post": {
+        "tags": ["Settings"],
+        "summary": "Deactivate Account",
+        "description": "Temporarily deactivate the current user's account.",
+        "operationId": "deactivate_account_api_v1_settings_account_deactivate_post",
+        "responses": { "204": { "description": "Successful Response" } },
+        "security": [{ "HTTPBearer": [] }]
+      }
+    },
+    "/api/v1/settings/account": {
+      "delete": {
+        "tags": ["Settings"],
+        "summary": "Delete Account",
+        "description": "Permanently delete the current user's account and associated data.",
+        "operationId": "delete_account_api_v1_settings_account_delete",
+        "requestBody": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DeleteAccountRequest" } } }, "required": true },
+        "responses": {
+          "204": { "description": "Successful Response" },
+          "422": { "description": "Validation Error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/HTTPValidationError" } } } }
+        },
+        "security": [{ "HTTPBearer": [] }]
+      }
+    },
     "/api/v1/risk/questions": {
       "get": {
         "tags": ["Risk Assessment"],
@@ -356,6 +402,7 @@
         "description": "Lightweight summary for history listings."
       },
       "ChangePasswordRequest": { "properties": { "old_password": { "type": "string" }, "new_password": { "type": "string" } }, "type": "object", "required": ["old_password", "new_password"], "title": "ChangePasswordRequest" },
+      "DeleteAccountRequest": { "properties": { "password": { "type": "string", "title": "Password" } }, "type": "object", "required": ["password"], "title": "DeleteAccountRequest" },
       "ForgotPasswordRequest": { "properties": { "email": { "type": "string", "format": "email" } }, "type": "object", "required": ["email"], "title": "ForgotPasswordRequest" },
       "HTTPValidationError": { "properties": { "detail": { "items": { "$ref": "#/components/schemas/ValidationError" }, "type": "array" } }, "type": "object", "title": "HTTPValidationError" },
       "KYCStatusResponse": {
@@ -403,6 +450,16 @@
         "type": "object",
         "required": ["risk_score_updates", "premium_renewals", "new_plan_recommendations", "payment_confirmations", "product_updates"],
         "title": "NotificationPrefsResponse"
+      },
+      "PrivacySettingsResponse": {
+        "properties": {
+          "share_anonymised_data": { "type": "boolean", "title": "Share Anonymised Data" },
+          "personalise_recommendations": { "type": "boolean", "title": "Personalise Recommendations" },
+          "share_data_with_partners": { "type": "boolean", "title": "Share Data With Partners" }
+        },
+        "type": "object",
+        "required": ["share_anonymised_data", "personalise_recommendations", "share_data_with_partners"],
+        "title": "PrivacySettingsResponse"
       },
       "PillarScores": {
         "properties": {
@@ -506,6 +563,15 @@
         },
         "type": "object",
         "title": "UpdateNotificationPrefsRequest"
+      },
+      "UpdatePrivacySettingsRequest": {
+        "properties": {
+          "share_anonymised_data": { "anyOf": [{ "type": "boolean" }, { "type": "null" }], "title": "Share Anonymised Data" },
+          "personalise_recommendations": { "anyOf": [{ "type": "boolean" }, { "type": "null" }], "title": "Personalise Recommendations" },
+          "share_data_with_partners": { "anyOf": [{ "type": "boolean" }, { "type": "null" }], "title": "Share Data With Partners" }
+        },
+        "type": "object",
+        "title": "UpdatePrivacySettingsRequest"
       },
       "UpdateProfileRequest": {
         "properties": {

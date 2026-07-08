@@ -99,4 +99,17 @@ describe('LoginForm', () => {
       'button'
     );
   });
+
+  it('shows custom success messages from protected account actions', () => {
+    renderWithProviders(
+      <LoginForm
+        successTitle="Account deleted"
+        successMessage="Your account has been deleted."
+      />,
+    );
+
+    const status = screen.getByRole('status');
+    expect(status).toHaveTextContent('Account deleted');
+    expect(status).toHaveTextContent('Your account has been deleted.');
+  });
 });

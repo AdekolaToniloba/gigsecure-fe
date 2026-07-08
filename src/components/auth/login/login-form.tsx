@@ -20,9 +20,14 @@ import PasswordField from '@/components/auth/shared/password-field';
 type LoginFormProps = {
   redirectTo?: string | null;
   successMessage?: string | null;
+  successTitle?: string;
 };
 
-export default function LoginForm({ redirectTo, successMessage }: LoginFormProps) {
+export default function LoginForm({
+  redirectTo,
+  successMessage,
+  successTitle = 'Password reset',
+}: LoginFormProps) {
   const router = useRouter();
   const loginMutation = useLogin();
   const form = useForm<LoginRequest>({
@@ -73,7 +78,7 @@ export default function LoginForm({ redirectTo, successMessage }: LoginFormProps
       <AuthDivider />
 
       {successMessage && (
-        <AuthAlert id="login-form-success" variant="success" title="Password reset">
+        <AuthAlert id="login-form-success" variant="success" title={successTitle}>
           {successMessage}
         </AuthAlert>
       )}

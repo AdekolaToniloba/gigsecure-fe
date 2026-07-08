@@ -31,12 +31,16 @@ describe('AppNavigation', () => {
       'href',
       '/dashboard/risk-assessment'
     );
+    expect(screen.getByRole('link', { name: 'Settings' })).toHaveAttribute(
+      'href',
+      '/dashboard/settings'
+    );
     expect(screen.getAllByRole('listitem').map((item) => item.textContent)).toEqual([
       'Overview',
       'Risk Assessment',
       'Premiums BoughtSoon',
       'ProfileSoon',
-      'SettingsSoon',
+      'Settings',
     ]);
   });
 
@@ -51,7 +55,18 @@ describe('AppNavigation', () => {
     expect(screen.getByRole('link', { name: 'Overview' })).not.toHaveAttribute('aria-current');
   });
 
-  it.each(['Premiums Bought', 'Profile', 'Settings'])(
+  it('marks Settings active on its route', () => {
+    navigation.pathname = '/dashboard/settings';
+    render(<AppNavigation />);
+
+    expect(screen.getByRole('link', { name: 'Settings' })).toHaveAttribute(
+      'aria-current',
+      'page'
+    );
+    expect(screen.getByRole('link', { name: 'Overview' })).not.toHaveAttribute('aria-current');
+  });
+
+  it.each(['Premiums Bought', 'Profile'])(
     'renders %s as visibly unavailable without a broken link',
     (label) => {
       render(<AppNavigation />);
@@ -71,6 +86,9 @@ describe('AppNavigation', () => {
 
     await user.tab();
     expect(screen.getByRole('link', { name: 'Risk Assessment' })).toHaveFocus();
+
+    await user.tab();
+    expect(screen.getByRole('link', { name: 'Settings' })).toHaveFocus();
   });
 });
 

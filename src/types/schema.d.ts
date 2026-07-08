@@ -216,6 +216,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/settings/privacy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Privacy Settings
+         * @description Get privacy and data settings for the current user.
+         */
+        get: operations["get_privacy_settings_api_v1_settings_privacy_get"];
+        /**
+         * Update Privacy Settings
+         * @description Update privacy and data settings (partial update).
+         */
+        put: operations["update_privacy_settings_api_v1_settings_privacy_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/settings/account/deactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Deactivate Account
+         * @description Temporarily deactivate the current user's account.
+         */
+        post: operations["deactivate_account_api_v1_settings_account_deactivate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/settings/account": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete Account
+         * @description Permanently delete the current user's account and associated data.
+         */
+        delete: operations["delete_account_api_v1_settings_account_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/risk/questions": {
         parameters: {
             query?: never;
@@ -719,6 +783,11 @@ export interface components {
             old_password: string;
             new_password: string;
         };
+        /** DeleteAccountRequest */
+        DeleteAccountRequest: {
+            /** Password */
+            password: string;
+        };
         /** ForgotPasswordRequest */
         ForgotPasswordRequest: {
             /** Format: email */
@@ -781,6 +850,15 @@ export interface components {
             payment_confirmations: boolean;
             /** Product Updates */
             product_updates: boolean;
+        };
+        /** PrivacySettingsResponse */
+        PrivacySettingsResponse: {
+            /** Share Anonymised Data */
+            share_anonymised_data: boolean;
+            /** Personalise Recommendations */
+            personalise_recommendations: boolean;
+            /** Share Data With Partners */
+            share_data_with_partners: boolean;
         };
         /** PillarScores */
         PillarScores: {
@@ -1037,6 +1115,15 @@ export interface components {
             payment_confirmations?: boolean | null;
             /** Product Updates */
             product_updates?: boolean | null;
+        };
+        /** UpdatePrivacySettingsRequest */
+        UpdatePrivacySettingsRequest: {
+            /** Share Anonymised Data */
+            share_anonymised_data?: boolean | null;
+            /** Personalise Recommendations */
+            personalise_recommendations?: boolean | null;
+            /** Share Data With Partners */
+            share_data_with_partners?: boolean | null;
         };
         /** UpdateProfileRequest */
         UpdateProfileRequest: {
@@ -1530,6 +1617,108 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["NotificationPrefsResponse"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_privacy_settings_api_v1_settings_privacy_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrivacySettingsResponse"];
+                };
+            };
+        };
+    };
+    update_privacy_settings_api_v1_settings_privacy_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdatePrivacySettingsRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrivacySettingsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    deactivate_account_api_v1_settings_account_deactivate_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_account_api_v1_settings_account_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeleteAccountRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

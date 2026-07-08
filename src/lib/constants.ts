@@ -5,7 +5,7 @@ export const ROUTES = {
   LOGIN: '/login',
   SIGNUP: '/signup',
   PROFILE: '/profile',
-  SETTINGS: '/settings',
+  SETTINGS: '/dashboard/settings',
 } as const;
 
 export type Route = (typeof ROUTES)[keyof typeof ROUTES];
@@ -20,6 +20,10 @@ export const QUERY_KEYS = {
 
   // Dashboard
   DASHBOARD_OVERVIEW: ['dashboard', 'overview'] as const,
+
+  // Settings
+  SETTINGS_NOTIFICATIONS: ['settings', 'notifications'] as const,
+  SETTINGS_PRIVACY: ['settings', 'privacy'] as const,
 
   // Risk
   RISK_CATEGORIES: ['risk', 'categories'] as const,

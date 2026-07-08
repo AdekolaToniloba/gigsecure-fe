@@ -52,8 +52,9 @@ export const APP_NAVIGATION_ITEMS: readonly AppNavigationItem[] = [
   },
   {
     label: 'Settings',
+    href: '/dashboard/settings',
     icon: Settings,
-    available: false,
+    available: true,
   },
 ] as const;
 

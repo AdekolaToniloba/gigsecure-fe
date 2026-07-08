@@ -42,6 +42,12 @@ export const ENDPOINTS = {
   DASHBOARD: {
     OVERVIEW: '/api/v1/dashboard/overview',
   },
+  SETTINGS: {
+    NOTIFICATIONS: '/api/v1/settings/notifications',
+    PRIVACY: '/api/v1/settings/privacy',
+    ACCOUNT_DEACTIVATE: '/api/v1/settings/account/deactivate',
+    ACCOUNT: '/api/v1/settings/account',
+  },
   MARKETPLACE: {
     PRODUCTS: '/api/v1/marketplace/products',
     RECOMMENDATIONS: '/api/v1/marketplace/recommendations',
