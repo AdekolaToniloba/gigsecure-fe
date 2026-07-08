@@ -5,7 +5,12 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useSession } from '@/hooks/auth/useSession';
 import { buildLoginRedirect, isProtectedAppPath } from '@/lib/auth/redirects';
 
-export function ProtectedRoute({ children }: { children: React.ReactNode }) {
+type ProtectedRouteProps = {
+  children: React.ReactNode;
+  fallback?: React.ReactNode;
+};
+
+export function ProtectedRoute({ children, fallback = null }: ProtectedRouteProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -30,7 +35,11 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     status,
   ]);
 
-  if (isProtectedPath && (isInitializing || status === 'idle' || !isAuthenticated)) {
+  if (isProtectedPath && (isInitializing || status === 'idle')) {
+    return <>{fallback}</>;
+  }
+
+  if (isProtectedPath && !isAuthenticated) {
     return null;
   }
 

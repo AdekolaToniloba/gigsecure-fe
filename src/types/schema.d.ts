@@ -192,6 +192,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/settings/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Notification Prefs
+         * @description Get notification preferences for the current user.
+         */
+        get: operations["get_notification_prefs_api_v1_settings_notifications_get"];
+        /**
+         * Update Notification Prefs
+         * @description Update notification preferences (partial update).
+         */
+        put: operations["update_notification_prefs_api_v1_settings_notifications_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/risk/questions": {
         parameters: {
             query?: never;
@@ -199,10 +223,57 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Assessment Questions */
-        get: operations["get_assessment_questions"];
+        /**
+         * Get assessment questions
+         * @description Return the structured question bank for a given assessment category.
+         *     Defaults to `tech_freelancer`.
+         */
+        get: operations["get_assessment_questions_api_v1_risk_questions_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/risk/categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List available assessment categories
+         * @description Return metadata for all available risk assessment categories.
+         */
+        get: operations["list_categories_api_v1_risk_categories_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/risk/assessment/{category}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Submit a risk assessment
+         * @description Run the full scoring + AI pipeline for the given freelancer category
+         *     and persist the result. Currently supports: `tech_freelancer`.
+         *
+         *     The `category` path parameter must match `data.occupation`.
+         */
+        post: operations["submit_assessment_api_v1_risk_assessment__category__post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -216,11 +287,13 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Latest Assessment */
-        get: operations["get_latest_assessment"];
+        /**
+         * Get latest risk assessment
+         * @description Retrieve the most recent risk assessment for the authenticated user.
+         */
+        get: operations["get_latest_assessment_api_v1_risk_assessment_get"];
         put?: never;
-        /** Submit Assessment */
-        post: operations["submit_assessment"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -234,8 +307,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Assessment History */
-        get: operations["get_assessment_history"];
+        /**
+         * Get assessment history
+         * @description Return a chronological list of all past assessments for the authenticated user.
+         */
+        get: operations["get_assessment_history_api_v1_risk_history_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -251,8 +327,12 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Recommendations */
-        get: operations["get_recommendations"];
+        /**
+         * Get product recommendations
+         * @description Return insurance product recommendations derived from the user's
+         *     latest risk assessment.
+         */
+        get: operations["get_recommendations_api_v1_risk_recommendations_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -572,6 +652,68 @@ export interface components {
             /** Password */
             password: string;
         };
+        /**
+         * ApplicantProfile
+         * @description Personal info echoed back in assessment responses.
+         */
+        ApplicantProfile: {
+            /** First Name */
+            first_name: string;
+            /** Last Name */
+            last_name: string;
+            /** Age */
+            age: number;
+            /** Gender */
+            gender: string;
+            /** Marital Status */
+            marital_status: string;
+            /** State */
+            state: string;
+            /** City */
+            city: string;
+        };
+        /**
+         * AssessmentResponse
+         * @description Full response returned after submitting a risk assessment.
+         */
+        AssessmentResponse: {
+            applicant: components["schemas"]["ApplicantProfile"];
+            /** Category */
+            category: string;
+            pillar_scores: components["schemas"]["PillarScores"];
+            /** Overall Score */
+            overall_score: number;
+            /** Risk Profile */
+            risk_profile: string;
+            /** Recommendations */
+            recommendations: string[];
+            /** Recommended Categories */
+            recommended_categories?: string[];
+            /** Ai Insights */
+            ai_insights: string;
+        };
+        /**
+         * AssessmentSummary
+         * @description Lightweight summary for history listings.
+         */
+        AssessmentSummary: {
+            /** Id */
+            id: string;
+            /** Category */
+            category: string;
+            /** First Name */
+            first_name?: string | null;
+            /** Last Name */
+            last_name?: string | null;
+            /** Age */
+            age?: number | null;
+            /** Overall Score */
+            overall_score: number;
+            /** Risk Profile */
+            risk_profile: string;
+            /** Created At */
+            created_at: string;
+        };
         /** ChangePasswordRequest */
         ChangePasswordRequest: {
             old_password: string;
@@ -627,6 +769,32 @@ export interface components {
             email: string;
             password: string;
         };
+        /** NotificationPrefsResponse */
+        NotificationPrefsResponse: {
+            /** Risk Score Updates */
+            risk_score_updates: boolean;
+            /** Premium Renewals */
+            premium_renewals: boolean;
+            /** New Plan Recommendations */
+            new_plan_recommendations: boolean;
+            /** Payment Confirmations */
+            payment_confirmations: boolean;
+            /** Product Updates */
+            product_updates: boolean;
+        };
+        /** PillarScores */
+        PillarScores: {
+            /** Income */
+            income: number;
+            /** Client */
+            client: number;
+            /** Safety */
+            safety: number;
+            /** Equipment */
+            equipment: number;
+            /** Health */
+            health: number;
+        };
         /** RefreshTokenRequest */
         RefreshTokenRequest: {
             refresh_token: string;
@@ -669,6 +837,74 @@ export interface components {
             PartnerParams: {
                 [key: string]: unknown;
             };
+        };
+        /**
+         * TechAssessmentInput
+         * @description Full survey payload submitted by a tech freelancer.
+         */
+        TechAssessmentInput: {
+            /** First Name */
+            first_name: string;
+            /** Last Name */
+            last_name: string;
+            /** Date Of Birth */
+            date_of_birth: string;
+            /** Gender */
+            gender: string;
+            /** State */
+            state: string;
+            /** City */
+            city: string;
+            /** Occupation */
+            occupation: string;
+            /** Marital Status */
+            marital_status: string;
+            /** Age */
+            age?: number | null;
+            /** Job Type */
+            job_type: string;
+            /** Freelance Duration */
+            freelance_duration: string;
+            /** Client Geography */
+            client_geography: string;
+            /** Work Mode */
+            work_mode: string;
+            /** Weekly Hours */
+            weekly_hours: string;
+            /** Monthly Income Band */
+            monthly_income_band: string;
+            /** Income Stability */
+            income_stability: string;
+            /** Income Sources */
+            income_sources: string;
+            /** Biggest Client Loss */
+            biggest_client_loss: string;
+            /** Past Risks */
+            past_risks: string[];
+            /** Top Worries */
+            top_worries: string[];
+            /** Equipment Dependency */
+            equipment_dependency: string;
+            /** Pre Existing Conditions */
+            pre_existing_conditions: boolean;
+            /** Chronic Illness */
+            chronic_illness: boolean;
+            /** Smoker */
+            smoker: boolean;
+            /** Health Rating */
+            health_rating: number;
+            /** Travel Frequency */
+            travel_frequency: string;
+            /** Survival 3 Months */
+            survival_3_months: string;
+            /** Savings Duration */
+            savings_duration: string;
+            /** Insurance Types */
+            insurance_types: string[];
+            /** Insurance Claims */
+            insurance_claims: string;
+            /** Protection Priority */
+            protection_priority: string;
         };
         /** DashboardOverviewResponse */
         DashboardOverviewResponse: {
@@ -760,6 +996,18 @@ export interface components {
             recommended_categories: string[];
             items: components["schemas"]["ProductOut"][];
         };
+        /**
+         * RecommendationsResponse
+         * @description Standalone recommendations response (without full assessment payload).
+         */
+        RecommendationsResponse: {
+            /** Recommendations */
+            recommendations: string[];
+            /** Overall Score */
+            overall_score?: number | null;
+            /** Risk Profile */
+            risk_profile?: string | null;
+        };
         /** TokenResponse */
         TokenResponse: {
             access_token: string;
@@ -776,6 +1024,19 @@ export interface components {
              * @default false
              */
             risk_assessed: boolean;
+        };
+        /** UpdateNotificationPrefsRequest */
+        UpdateNotificationPrefsRequest: {
+            /** Risk Score Updates */
+            risk_score_updates?: boolean | null;
+            /** Premium Renewals */
+            premium_renewals?: boolean | null;
+            /** New Plan Recommendations */
+            new_plan_recommendations?: boolean | null;
+            /** Payment Confirmations */
+            payment_confirmations?: boolean | null;
+            /** Product Updates */
+            product_updates?: boolean | null;
         };
         /** UpdateProfileRequest */
         UpdateProfileRequest: {
@@ -1216,7 +1477,7 @@ export interface operations {
             };
         };
     };
-    get_assessment_questions: {
+    get_notification_prefs_api_v1_settings_notifications_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -1230,31 +1491,50 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["NotificationPrefsResponse"];
+                };
             };
         };
     };
-    get_latest_assessment: {
+    update_notification_prefs_api_v1_settings_notifications_put: {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateNotificationPrefsRequest"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["NotificationPrefsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
             };
         };
     };
-    submit_assessment: {
+    get_assessment_questions_api_v1_risk_questions_get: {
         parameters: {
-            query?: never;
+            query?: {
+                category?: string;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -1266,11 +1546,22 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
             };
         };
     };
-    get_assessment_history: {
+    list_categories_api_v1_risk_categories_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -1284,11 +1575,48 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": unknown;
+                };
             };
         };
     };
-    get_recommendations: {
+    submit_assessment_api_v1_risk_assessment__category__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                category: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TechAssessmentInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssessmentResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_latest_assessment_api_v1_risk_assessment_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -1302,7 +1630,49 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["AssessmentResponse"];
+                };
+            };
+        };
+    };
+    get_assessment_history_api_v1_risk_history_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssessmentSummary"][];
+                };
+            };
+        };
+    };
+    get_recommendations_api_v1_risk_recommendations_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecommendationsResponse"];
+                };
             };
         };
     };

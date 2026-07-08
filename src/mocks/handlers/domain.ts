@@ -1,4 +1,8 @@
 import { http, HttpResponse } from 'msw';
+import {
+  assessmentHistoryFixture,
+  latestAssessmentFixture,
+} from '@/mocks/fixtures/dashboard';
 
 const BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000';
 
@@ -121,20 +125,14 @@ export const domainHandlers = [
     })
   ),
   http.get(`${BASE}/api/v1/risk/assessment`, () =>
-    HttpResponse.json({ id: 'assess-001', user_id: '00000000-0000-0000-0000-000000000001', score: { score: 72, level: 'medium' }, completed_at: new Date().toISOString() })
-  ),
-  http.post(`${BASE}/api/v1/risk/assessment`, () =>
-    HttpResponse.json({ id: 'assess-002', user_id: '00000000-0000-0000-0000-000000000001', score: { score: 72, level: 'medium' }, completed_at: new Date().toISOString() })
+    HttpResponse.json(latestAssessmentFixture)
   ),
   // Risk — tech freelancer assessment submission (real shape)
   http.post(`${BASE}/api/v1/risk/assessment/tech_freelancer`, () =>
-    HttpResponse.json({
-      overall_score: 68.5,
-      risk_profile: 'Moderate Risk',
-      pillar_scores: { income: 72, client: 45, safety: 80, equipment: 35, health: 55 },
-      recommendations: ['Consider income protection insurance'],
-      ai_insights: 'PERSONALIZED INSIGHTS\n\n- **Income Vulnerability:** Moderate income stability.\n- **Equipment Dependency:** Very dependent on equipment.',
-    })
+    HttpResponse.json(latestAssessmentFixture)
+  ),
+  http.get(`${BASE}/api/v1/risk/history`, () =>
+    HttpResponse.json(assessmentHistoryFixture)
   ),
   http.get(`${BASE}/api/v1/risk/recommendations`, () =>
     HttpResponse.json([{ product_id: 'prod-001', reason: 'High income volatility detected', priority: 1 }])

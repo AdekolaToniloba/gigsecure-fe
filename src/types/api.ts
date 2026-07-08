@@ -34,60 +34,14 @@ export type ParsedApiError = {
   raw?: unknown;
 };
 
-// ─── Hand-maintained types (not in generated schema yet) ────────
+// ─── Generated risk contract aliases ──────────────────────────────────────
 
-export interface PillarScores {
-  income: number;
-  client: number;
-  safety: number;
-  equipment: number;
-  health: number;
-  [key: string]: number;
-}
+export type PillarScores = components['schemas']['PillarScores'];
 
-export interface AssessmentResponse {
-  id: string;
-  user_id: string;
-  overall_score: number;
-  risk_profile: string;
-  ai_insights: string;
-  recommendations: string[];
-  pillar_scores: PillarScores;
-  created_at?: string;
-}
+export type AssessmentResponse = components['schemas']['AssessmentResponse'];
+export type AssessmentSummary = components['schemas']['AssessmentSummary'];
 
-export interface TechAssessmentInput {
-  first_name?: string;
-  last_name?: string;
-  date_of_birth?: string;
-  gender?: string;
-  state?: string;
-  city?: string;
-  occupation?: string;
-  marital_status?: string;
-  job_type: string;
-  freelance_duration: string;
-  client_geography: string;
-  work_mode: string;
-  weekly_hours: string;
-  monthly_income_band: string;
-  income_stability: string;
-  income_sources: string;
-  biggest_client_loss: string;
-  past_risks: string[];
-  top_worries: string[];
-  equipment_dependency: string;
-  pre_existing_conditions: boolean;
-  chronic_illness: boolean;
-  smoker: boolean;
-  health_rating: number;
-  travel_frequency: string;
-  survival_3_months: string;
-  savings_duration: string;
-  insurance_types: string[];
-  insurance_claims: string;
-  protection_priority: string;
-}
+export type TechAssessmentInput = components['schemas']['TechAssessmentInput'];
 
 export interface WaitlistSignupResponse {
   message: string;

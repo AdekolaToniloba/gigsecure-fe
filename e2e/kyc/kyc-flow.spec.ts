@@ -176,7 +176,7 @@ test('pending status shows waiting state and long-running timeout state', async 
   expect(statusRequestCount).toBeGreaterThan(10);
 });
 
-test('dashboard banner and KYC required modal appear for unverified users', async ({ page }) => {
+test('dashboard banner routes unverified users to KYC', async ({ page }) => {
   await mockUserProfile(page, {
     kycVerified: false,
     riskAssessed: true,
@@ -187,18 +187,16 @@ test('dashboard banner and KYC required modal appear for unverified users', asyn
     city: 'Lagos',
   });
   await mockKycStatus(page, 'null');
+  await mockDashboard(page, { kycVerified: false, riskAssessed: true });
   await loginAs(page, { kycVerified: false, riskAssessed: true });
 
-  await expect(page.getByRole('heading', { name: 'Complete KYC verification' })).toBeVisible();
-
-  await page.getByRole('button', { name: 'View Recommendations' }).click();
-  await expect(page.getByRole('dialog', { name: 'KYC verification required' })).toBeVisible();
-  await page.getByRole('button', { name: 'Go to KYC' }).focus();
+  await expect(page.getByRole('heading', { name: 'Verify your KYC' })).toBeVisible();
+  await page.getByRole('link', { name: 'Verify now' }).focus();
   await page.keyboard.press('Enter');
-  await expect(page).toHaveURL(/\/kyc(\?|$)/);
+  await expect(page).toHaveURL(/\/kyc\?redirect=%2Fdashboard$/);
 });
 
-test('verified users do not see dashboard banner and can fetch recommendations', async ({ page }) => {
+test('verified users do not see the dashboard banner and retain assessed content', async ({ page }) => {
   await mockUserProfile(page, {
     kycVerified: true,
     riskAssessed: true,
@@ -209,21 +207,47 @@ test('verified users do not see dashboard banner and can fetch recommendations',
     city: 'Lagos',
   });
   await mockKycStatus(page, 'verified');
-
-  let recommendationsCalls = 0;
-  await page.route('**/api/v1/risk/recommendations', async (route) => {
-    recommendationsCalls += 1;
-    await fulfillJson(route, [
-      { product_id: 'starter-health-cover', reason: 'Matches your current risk profile.' },
-    ]);
-  });
+  await mockDashboard(page, { kycVerified: true, riskAssessed: true });
   await loginAs(page, { kycVerified: true, riskAssessed: true });
-  await expect(page.getByRole('heading', { name: 'Complete KYC verification' })).toHaveCount(0);
-
-  await page.getByRole('button', { name: 'View Recommendations' }).click();
-  await expect(page.getByText('starter-health-cover')).toBeVisible();
-  expect(recommendationsCalls).toBe(1);
+  await expect(page.getByRole('heading', { name: 'Verify your KYC' })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Financial Risk Level' })).toBeVisible();
 });
+
+async function mockDashboard(
+  page: Page,
+  flags: { kycVerified: boolean; riskAssessed: boolean },
+) {
+  await page.route('**/api/v1/dashboard/overview', async (route) => {
+    await fulfillJson(route, {
+      premiums_bought: flags.riskAssessed ? 2 : 0,
+      monthly_income_band: flags.riskAssessed ? 'NGN 300,000-500,000' : null,
+      safety_buffer: flags.riskAssessed ? 'Three months' : null,
+      recommended_plans_count: flags.riskAssessed ? 3 : 0,
+      income_stability: null,
+      has_assessment: flags.riskAssessed,
+    });
+  });
+  await page.route('**/api/v1/risk/assessment', async (route) => {
+    await fulfillJson(route, {
+      applicant: {
+        first_name: 'Amaka',
+        last_name: 'Obi',
+        age: 31,
+        gender: 'female',
+        marital_status: 'single',
+        state: 'Lagos',
+        city: 'Ikeja',
+      },
+      category: 'tech_freelancer',
+      pillar_scores: { income: 72, client: 45, safety: 80, equipment: 35, health: 55 },
+      overall_score: 68.5,
+      risk_profile: 'Moderate Risk',
+      recommendations: ['Build an emergency reserve.'],
+      recommended_categories: ['Income Protection'],
+      ai_insights: 'Income is moderately stable.',
+    });
+  });
+}
 
 async function loginAs(
   page: Page,

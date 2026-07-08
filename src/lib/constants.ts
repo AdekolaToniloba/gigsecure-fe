@@ -18,6 +18,9 @@ export const QUERY_KEYS = {
   // Users
   USER_ME: ['user', 'me'] as const,
 
+  // Dashboard
+  DASHBOARD_OVERVIEW: ['dashboard', 'overview'] as const,
+
   // Risk
   RISK_QUESTIONS: ['risk', 'questions'] as const,
   RISK_ASSESSMENT: ['risk', 'assessment'] as const,

@@ -10,6 +10,9 @@
   --color-accent:         #FFE419;
   --color-accent-alt:     #FECF06;
   --color-background:     #FFF6D0;
+  --color-app-canvas:     #F7F9F8;
+  --color-app-sidebar:    #E8F3F1;
+  --color-app-border:     #D7E4E1;
 
   /* Fonts — populated by next/font */
   --font-apercu: '';
@@ -26,6 +29,9 @@
   --color-accent:         var(--color-accent);
   --color-accent-alt:     var(--color-accent-alt);
   --color-background:     var(--color-background);
+  --color-app-canvas:     var(--color-app-canvas);
+  --color-app-sidebar:    var(--color-app-sidebar);
+  --color-app-border:     var(--color-app-border);
 
   /* Font families */
   --font-heading: var(--font-apercu), sans-serif;

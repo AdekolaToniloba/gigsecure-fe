@@ -79,6 +79,29 @@ describe('useAuthStore', () => {
     setItemSpy.mockRestore();
   });
 
+  it('keeps full-session tokens and dashboard flags out of all browser-readable storage', () => {
+    const setItemSpy = vi.spyOn(Storage.prototype, 'setItem');
+
+    act(() => {
+      useAuthStore.getState().setSession({
+        accessToken: 'memory-only-session-token',
+        kycVerified: false,
+        riskAssessed: true,
+      });
+    });
+
+    expect(localStorage).toHaveLength(0);
+    expect(sessionStorage).toHaveLength(0);
+    expect(setItemSpy).not.toHaveBeenCalled();
+    expect(useAuthStore.getState()).toMatchObject({
+      accessToken: 'memory-only-session-token',
+      kycVerified: false,
+      riskAssessed: true,
+    });
+
+    setItemSpy.mockRestore();
+  });
+
   it('setAuthInitializing marks auth as initializing without a token', () => {
     act(() => { useAuthStore.getState().setAuthInitializing(); });
     const state = useAuthStore.getState();
