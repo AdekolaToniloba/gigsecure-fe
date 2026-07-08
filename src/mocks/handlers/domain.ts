@@ -1,8 +1,4 @@
 import { http, HttpResponse } from 'msw';
-import {
-  assessmentHistoryFixture,
-  latestAssessmentFixture,
-} from '@/mocks/fixtures/dashboard';
 
 const BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000';
 
@@ -98,61 +94,6 @@ export const domainHandlers = [
     HttpResponse.json({ claim_id: params.id, status: 'pending', updated_at: new Date().toISOString() })
   ),
   http.post(`${BASE}/api/v1/claims/`, () => HttpResponse.json(mockClaims[0], { status: 201 })),
-
-  // Risk — questions (real shape)
-  http.get(`${BASE}/api/v1/risk/questions`, () =>
-    HttpResponse.json({
-      category: 'tech_freelancer',
-      title: 'Risk Assessment for Tech Freelancers',
-      description: 'Evaluate your risk exposure as a tech freelancer',
-      steps: [
-        { step: 1, title: 'You & your work', subtitle: 'Role details', questions: [
-          { id: 'job_type', text: 'What type of tech freelancing do you do?', type: 'single_choice', options: ['Web Development', 'Mobile Development'] },
-        ]},
-        { step: 2, title: 'Income & stability', subtitle: 'Earnings', questions: [
-          { id: 'monthly_income_band', text: 'What is your average monthly income?', type: 'single_choice', options: ['Under ₦100k', '₦100k-₦500k'] },
-        ]},
-        { step: 3, title: 'Your risks', subtitle: 'Work hazards', questions: [
-          { id: 'past_risks', text: 'Which risks have you experienced?', type: 'multi_choice', options: ['Late payments', 'Equipment failure'] },
-        ]},
-        { step: 4, title: 'Health & lifestyle', subtitle: 'Wellbeing', consent_required: true, consent_text: 'I agree to provide basic health information.', questions: [
-          { id: 'pre_existing_conditions', text: 'Pre-existing conditions?', type: 'boolean' },
-        ]},
-        { step: 5, title: 'Safety net & history', subtitle: 'Coverage', questions: [
-          { id: 'survival_3_months', text: 'Could you survive 3 months?', type: 'single_choice', options: ['Yes', 'No'] },
-        ]},
-      ],
-    })
-  ),
-  http.get(`${BASE}/api/v1/risk/assessment`, () =>
-    HttpResponse.json(latestAssessmentFixture)
-  ),
-  // Risk — tech freelancer assessment submission (real shape)
-  http.post(`${BASE}/api/v1/risk/assessment/tech_freelancer`, () =>
-    HttpResponse.json(latestAssessmentFixture)
-  ),
-  http.get(`${BASE}/api/v1/risk/history`, () =>
-    HttpResponse.json(assessmentHistoryFixture)
-  ),
-  http.get(`${BASE}/api/v1/risk/recommendations`, () =>
-    HttpResponse.json([{ product_id: 'prod-001', reason: 'High income volatility detected', priority: 1 }])
-  ),
-  http.get(`${BASE}/api/v1/risk/categories`, () =>
-    HttpResponse.json([
-      { id: 'cat-001', name: 'Tech Freelancer', slug: 'tech_freelancer' },
-      { id: 'cat-002', name: 'Creative Freelancer', slug: 'creative_freelancer' },
-    ])
-  ),
-
-  // Auth — waitlist signup
-  http.post('/api/auth/waitlist', () =>
-    HttpResponse.json({
-      message: 'Successfully joined waitlist',
-      user_id: 'test-user-id-001',
-      access_token: 'mock-access-token-xyz',
-      token_type: 'bearer',
-    })
-  ),
 
   // Payments
   http.post(`${BASE}/api/v1/payments/initialize`, () =>

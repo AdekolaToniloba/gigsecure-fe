@@ -1,78 +1,103 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { riskService } from '@/services/risk.service';
 import { useAuthStore } from '@/store/auth-store';
-import { useWizardStore } from '@/store/wizard-store';
 import { QUERY_KEYS } from '@/lib/constants';
+import { parseApiError } from '@/lib/api/errors';
 import type { TechAssessmentInput } from '@/types/api';
 
 export const LATEST_ASSESSMENT_STALE_TIME = 5 * 60 * 1000;
 
-export function useRiskQuestions(category: string | null) {
-  return useQuery({
-    queryKey: [...QUERY_KEYS.RISK_QUESTIONS, category],
+type RiskQueryOptions = {
+  enabled?: boolean;
+};
+
+export type RiskAssessmentSubmission = {
+  category: string;
+  payload: TechAssessmentInput;
+  signal?: AbortSignal;
+};
+
+export function useRiskQuestions(
+  category: string | null,
+  { enabled = true }: RiskQueryOptions = {},
+) {
+  const hasAccessToken = useAuthStore((state) => Boolean(state.accessToken));
+  const query = useQuery({
+    queryKey: QUERY_KEYS.RISK_QUESTIONS(category ?? ''),
     queryFn: ({ signal }) => riskService.getQuestions(category as string, signal),
-    staleTime: Infinity, // Never refetch during session
-    retry: 2,
-    enabled: !!category,
+    staleTime: Infinity,
+    retry: false,
+    enabled: enabled && hasAccessToken && Boolean(category),
   });
+
+  return { ...query, parsedError: query.error ? parseApiError(query.error) : null };
 }
 
-export function useRiskCategories() {
-  return useQuery({
-    queryKey: ['risk-categories'],
+export function useRiskCategories({ enabled = true }: RiskQueryOptions = {}) {
+  const hasAccessToken = useAuthStore((state) => Boolean(state.accessToken));
+  const query = useQuery({
+    queryKey: QUERY_KEYS.RISK_CATEGORIES,
     queryFn: ({ signal }) => riskService.getCategories(signal),
     staleTime: Infinity,
+    retry: false,
+    enabled: enabled && hasAccessToken,
   });
+
+  return { ...query, parsedError: query.error ? parseApiError(query.error) : null };
 }
 
 export function useLatestAssessment({ enabled = true }: { enabled?: boolean } = {}) {
-  return useQuery({
+  const hasAccessToken = useAuthStore((state) => Boolean(state.accessToken));
+  const query = useQuery({
     queryKey: QUERY_KEYS.RISK_ASSESSMENT,
     queryFn: ({ signal }) => riskService.getLatestAssessment(signal),
-    enabled,
+    enabled: enabled && hasAccessToken,
     staleTime: LATEST_ASSESSMENT_STALE_TIME,
     retry: false,
     refetchOnWindowFocus: false,
     throwOnError: false,
   });
+
+  return { ...query, parsedError: query.error ? parseApiError(query.error) : null };
 }
 
-export function useAssessmentHistory() {
-  return useQuery({
+export function useAssessmentHistory({ enabled = true }: RiskQueryOptions = {}) {
+  const hasAccessToken = useAuthStore((state) => Boolean(state.accessToken));
+  const query = useQuery({
     queryKey: QUERY_KEYS.RISK_HISTORY,
     queryFn: ({ signal }) => riskService.getHistory(signal),
+    enabled: enabled && hasAccessToken,
     staleTime: 5 * 60 * 1000,
-    throwOnError: true,
+    retry: false,
+    throwOnError: false,
   });
+
+  return { ...query, parsedError: query.error ? parseApiError(query.error) : null };
 }
 
-export function useRiskRecommendations() {
-  return useQuery({
+export function useRiskRecommendations({ enabled = true }: RiskQueryOptions = {}) {
+  const hasAccessToken = useAuthStore((state) => Boolean(state.accessToken));
+  const query = useQuery({
     queryKey: QUERY_KEYS.RISK_RECOMMENDATIONS,
     queryFn: ({ signal }) => riskService.getRecommendations(signal),
+    enabled: enabled && hasAccessToken,
     staleTime: 5 * 60 * 1000,
-    throwOnError: true,
+    retry: false,
+    throwOnError: false,
   });
+
+  return { ...query, parsedError: query.error ? parseApiError(query.error) : null };
 }
 
-/** New hook for submitting a tech freelancer assessment */
 export function useSubmitTechAssessment() {
-  const clearAuth = useAuthStore((s) => s.clearAuth);
-  const resetWizard = useWizardStore((s) => s.reset);
-
-  return useMutation({
-    mutationFn: (payload: TechAssessmentInput) =>
-      riskService.submitTechAssessment(payload),
+  const mutation = useMutation({
+    mutationFn: ({ category, payload, signal }: RiskAssessmentSubmission) =>
+      riskService.submitAssessment(category, payload, signal),
     retry: false,
-    onError: (error: unknown) => {
-      const axiosError = error as { response?: { status?: number } };
-      if (axiosError?.response?.status === 401) {
-        clearAuth();
-        resetWizard();
-        if (typeof window !== 'undefined') {
-          window.location.href = '/waitlist?expired=true';
-        }
-      }
-    },
   });
+
+  return {
+    ...mutation,
+    parsedError: mutation.error ? parseApiError(mutation.error) : null,
+  };
 }

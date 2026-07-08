@@ -1,7 +1,6 @@
 'use client';
 
-import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { Controller, type Control } from 'react-hook-form';
 import {
   DndContext,
@@ -76,6 +75,7 @@ function SortableItem({ id, onRemove }: { id: string; onRemove: (id: string) => 
 }
 
 export default function RankingInput({ question, control, error }: Props) {
+  const reduceMotion = useReducedMotion();
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -127,7 +127,7 @@ export default function RankingInput({ question, control, error }: Props) {
                     <motion.button
                       key={option}
                       type="button"
-                      whileTap={{ scale: 0.98 }}
+                      whileTap={reduceMotion ? undefined : { scale: 0.98 }}
                       onClick={() => addToRanking(option)}
                       disabled={isMaxed}
                       aria-label={`Add ${option} to ranking`}

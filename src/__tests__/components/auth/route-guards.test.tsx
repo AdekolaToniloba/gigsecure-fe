@@ -5,6 +5,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthRedirectGuard } from '@/components/auth/shared/auth-redirect-guard';
 import { ProtectedRoute } from '@/components/auth/shared/protected-route';
 import { useAuthStore } from '@/store/auth-store';
+import { useUserProfile } from '@/hooks/user/useUserProfile';
+import { userService } from '@/services/user.service';
 
 const navigation = vi.hoisted(() => ({
   pathname: '/',
@@ -26,6 +28,7 @@ vi.mock('next/navigation', () => ({
 }));
 
 beforeEach(() => {
+  vi.restoreAllMocks();
   navigation.pathname = '/';
   navigation.searchParams = new URLSearchParams();
   navigation.replace.mockReset();
@@ -89,7 +92,11 @@ describe('ProtectedRoute', () => {
   it('renders protected content for authenticated users', () => {
     navigation.pathname = '/dashboard';
     act(() => {
-      useAuthStore.getState().setAccessToken('access-token');
+      useAuthStore.getState().setSession({
+        accessToken: 'access-token',
+        kycVerified: true,
+        riskAssessed: false,
+      });
     });
 
     renderWithQueryClient(
@@ -100,6 +107,30 @@ describe('ProtectedRoute', () => {
 
     expect(screen.getByText('Dashboard content')).toBeInTheDocument();
     expect(navigation.replace).not.toHaveBeenCalled();
+  });
+
+  it('rejects client navigation with only a waitlist-issued access token', async () => {
+    navigation.pathname = '/dashboard/risk-assessment';
+    const getMeSpy = vi.spyOn(userService, 'getMe');
+    act(() => {
+      useAuthStore.getState().setAccessToken('waitlist-access-token');
+    });
+
+    renderWithQueryClient(
+      <ProtectedRoute>
+        <ProtectedProfileConsumer />
+      </ProtectedRoute>,
+    );
+
+    await waitFor(() => {
+      expect(navigation.replace).toHaveBeenCalledWith(
+        '/login?redirect=%2Fdashboard%2Frisk-assessment',
+      );
+    });
+    expect(screen.queryByText('Protected risk assessment')).not.toBeInTheDocument();
+    expect(useAuthStore.getState().isAuthenticated).toBe(true);
+    expect(useAuthStore.getState().hasFullSession).toBe(false);
+    expect(getMeSpy).not.toHaveBeenCalled();
   });
 
   it('does not guard required email-link auth routes', () => {
@@ -121,7 +152,11 @@ describe('AuthRedirectGuard', () => {
     navigation.pathname = '/login';
     navigation.searchParams = new URLSearchParams('redirect=%2Fdashboard');
     act(() => {
-      useAuthStore.getState().setAccessToken('access-token');
+      useAuthStore.getState().setSession({
+        accessToken: 'access-token',
+        kycVerified: true,
+        riskAssessed: false,
+      });
     });
 
     renderWithQueryClient(
@@ -140,7 +175,11 @@ describe('AuthRedirectGuard', () => {
     navigation.pathname = '/login';
     navigation.searchParams = new URLSearchParams('redirect=https%3A%2F%2Fevil.example');
     act(() => {
-      useAuthStore.getState().setAccessToken('access-token');
+      useAuthStore.getState().setSession({
+        accessToken: 'access-token',
+        kycVerified: true,
+        riskAssessed: false,
+      });
     });
 
     renderWithQueryClient(
@@ -152,6 +191,22 @@ describe('AuthRedirectGuard', () => {
     await waitFor(() => {
       expect(navigation.replace).toHaveBeenCalledWith('/dashboard');
     });
+  });
+
+  it('keeps login reachable for waitlist-token users without a full session', () => {
+    navigation.pathname = '/login';
+    act(() => {
+      useAuthStore.getState().setAccessToken('waitlist-access-token');
+    });
+
+    renderWithQueryClient(
+      <AuthRedirectGuard>
+        <p>Login content</p>
+      </AuthRedirectGuard>,
+    );
+
+    expect(screen.getByText('Login content')).toBeInTheDocument();
+    expect(navigation.replace).not.toHaveBeenCalled();
   });
 
   it('renders token-link routes even for unauthenticated users', () => {
@@ -181,4 +236,9 @@ function renderWithQueryClient(ui: React.ReactElement) {
       {ui}
     </QueryClientProvider>
   );
+}
+
+function ProtectedProfileConsumer() {
+  useUserProfile();
+  return <p>Protected risk assessment</p>;
 }

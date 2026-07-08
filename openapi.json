@@ -127,7 +127,10 @@
         "summary": "Update Profile",
         "operationId": "update_profile_api_v1_users_me_put",
         "requestBody": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UpdateProfileRequest" } } }, "required": true },
-        "responses": { "200": { "description": "Successful Response", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UserWithProfileResponse" } } } } },
+        "responses": {
+          "200": { "description": "Successful Response", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UserWithProfileResponse" } } } },
+          "422": { "description": "Validation Error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/HTTPValidationError" } } } }
+        },
         "security": [{ "HTTPBearer": [] }]
       }
     },
@@ -271,16 +274,19 @@
           { "name": "provider_slug", "in": "query", "required": false, "schema": { "anyOf": [{ "type": "array", "items": { "type": "string" } }, { "type": "null" }] } },
           { "name": "risk_level", "in": "query", "required": false, "schema": { "anyOf": [{ "type": "array", "items": { "type": "string" } }, { "type": "null" }] } },
           { "name": "q", "in": "query", "required": false, "schema": { "anyOf": [{ "type": "string", "maxLength": 128 }, { "type": "null" }] } },
-          { "name": "min_premium", "in": "query", "required": false, "schema": { "anyOf": [{ "type": "number" }, { "type": "string" }, { "type": "null" }] } },
-          { "name": "max_premium", "in": "query", "required": false, "schema": { "anyOf": [{ "type": "number" }, { "type": "string" }, { "type": "null" }] } },
+          { "name": "min_premium", "in": "query", "required": false, "schema": { "anyOf": [{ "type": "number" }, { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" }, { "type": "null" }] } },
+          { "name": "max_premium", "in": "query", "required": false, "schema": { "anyOf": [{ "type": "number" }, { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" }, { "type": "null" }] } },
           { "name": "limit", "in": "query", "required": false, "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 20 } },
           { "name": "offset", "in": "query", "required": false, "schema": { "type": "integer", "minimum": 0, "default": 0 } }
         ],
-        "responses": { "200": { "description": "Successful Response", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ProductListResponse" } } } } }
+        "responses": {
+          "200": { "description": "Successful Response", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ProductListResponse" } } } },
+          "422": { "description": "Validation Error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/HTTPValidationError" } } } }
+        }
       }
     },
-    "/api/v1/marketplace/recommendations": { "get": { "tags": ["Marketplace"], "summary": "Get Recommendations", "operationId": "get_recommendations_api_v1_marketplace_recommendations_get", "security": [{ "HTTPBearer": [] }], "parameters": [{ "name": "per_category", "in": "query", "required": false, "schema": { "type": "integer", "minimum": 1, "maximum": 10, "default": 3 } }], "responses": { "200": { "description": "Successful Response", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RecommendedProductsResponse" } } } } } } },
-    "/api/v1/marketplace/products/{product_id}": { "get": { "tags": ["Marketplace"], "summary": "Get Product", "operationId": "get_product_api_v1_marketplace_products__product_id__get", "parameters": [{ "name": "product_id", "in": "path", "required": true, "schema": { "type": "string" } }], "responses": { "200": { "description": "Successful Response", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ProductOut" } } } } } } },
+    "/api/v1/marketplace/recommendations": { "get": { "tags": ["Marketplace"], "summary": "Get Recommendations", "operationId": "get_recommendations_api_v1_marketplace_recommendations_get", "security": [{ "HTTPBearer": [] }], "parameters": [{ "name": "per_category", "in": "query", "required": false, "schema": { "type": "integer", "minimum": 1, "maximum": 10, "default": 3 } }], "responses": { "200": { "description": "Successful Response", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RecommendedProductsResponse" } } } }, "422": { "description": "Validation Error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/HTTPValidationError" } } } } } } },
+    "/api/v1/marketplace/products/{product_id}": { "get": { "tags": ["Marketplace"], "summary": "Get Product", "operationId": "get_product_api_v1_marketplace_products__product_id__get", "parameters": [{ "name": "product_id", "in": "path", "required": true, "schema": { "type": "string" } }], "responses": { "200": { "description": "Successful Response", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ProductOut" } } } }, "422": { "description": "Validation Error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/HTTPValidationError" } } } } } } },
     "/api/v1/policies": {
       "get": { "tags": ["Policies"], "summary": "List Policies", "operationId": "list_policies_api_v1_policies_get", "security": [{ "HTTPBearer": [] }], "parameters": [{ "name": "status_filter", "in": "query", "required": false, "schema": { "anyOf": [{ "type": "string" }, { "type": "null" }] } }], "responses": { "200": { "description": "Successful Response", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PolicyListResponse" } } } } } },
       "post": { "tags": ["Policies"], "summary": "Create Policy", "operationId": "create_policy_api_v1_policies_post", "security": [{ "HTTPBearer": [] }], "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PolicyCreate" } } } }, "responses": { "201": { "description": "Successful Response", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PolicyOut" } } } } } }
@@ -475,7 +481,7 @@
       "PolicyProductSummary": { "properties": { "id": { "type": "string" }, "name": { "type": "string" }, "category": { "type": "string" }, "provider_name": { "type": "string" }, "provider_slug": { "type": "string" } }, "type": "object", "required": ["id", "name", "category", "provider_name", "provider_slug"], "title": "PolicyProductSummary" },
       "PolicySummary": { "properties": { "total_coverage": { "type": "string" }, "active_count": { "type": "integer" }, "due_soon_count": { "type": "integer" } }, "type": "object", "required": ["total_coverage", "active_count", "due_soon_count"], "title": "PolicySummary" },
       "ProductListResponse": { "properties": { "items": { "type": "array", "items": { "$ref": "#/components/schemas/ProductOut" } }, "total": { "type": "integer" }, "limit": { "type": "integer" }, "offset": { "type": "integer" } }, "type": "object", "required": ["items", "total", "limit", "offset"], "title": "ProductListResponse" },
-      "ProductOut": { "properties": { "id": { "type": "string" }, "name": { "type": "string" }, "category": { "type": "string" }, "description": { "type": "string" }, "premium_amount": { "type": "string" }, "premium_currency": { "type": "string" }, "coverage_amount": { "type": "string" }, "renewal_frequency": { "type": "string" }, "risk_level": { "anyOf": [{ "type": "string" }, { "type": "null" }] }, "is_active": { "type": "boolean" }, "provider": { "$ref": "#/components/schemas/ProviderRef" } }, "type": "object", "required": ["id", "name", "category", "description", "premium_amount", "premium_currency", "coverage_amount", "renewal_frequency", "is_active", "provider"], "title": "ProductOut" },
+      "ProductOut": { "properties": { "id": { "type": "string" }, "name": { "type": "string" }, "category": { "type": "string" }, "description": { "type": "string" }, "premium_amount": { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" }, "premium_currency": { "type": "string" }, "coverage_amount": { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" }, "renewal_frequency": { "type": "string" }, "risk_level": { "anyOf": [{ "type": "string" }, { "type": "null" }] }, "is_active": { "type": "boolean" }, "provider": { "$ref": "#/components/schemas/ProviderRef" } }, "type": "object", "required": ["id", "name", "category", "description", "premium_amount", "premium_currency", "coverage_amount", "renewal_frequency", "is_active", "provider"], "title": "ProductOut" },
       "ProviderRef": { "properties": { "id": { "type": "string" }, "slug": { "type": "string" }, "name": { "type": "string" }, "logo_url": { "anyOf": [{ "type": "string" }, { "type": "null" }] } }, "type": "object", "required": ["id", "slug", "name"], "title": "ProviderRef" },
       "RecommendedProductsResponse": { "properties": { "recommended_categories": { "type": "array", "items": { "type": "string" } }, "items": { "type": "array", "items": { "$ref": "#/components/schemas/ProductOut" } } }, "type": "object", "required": ["recommended_categories", "items"], "title": "RecommendedProductsResponse" },
       "RecommendationsResponse": {
@@ -516,7 +522,7 @@
           "postal_code": { "anyOf": [{ "type": "string" }, { "type": "null" }] },
           "occupation": { "anyOf": [{ "type": "string" }, { "type": "null" }] },
           "gig_platform": { "anyOf": [{ "type": "string" }, { "type": "null" }] },
-          "average_monthly_income": { "anyOf": [{ "type": "number" }, { "type": "null" }] },
+          "average_monthly_income": { "anyOf": [{ "type": "number" }, { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" }, { "type": "null" }] },
           "years_of_experience": { "anyOf": [{ "type": "integer" }, { "type": "null" }] },
           "profile_picture_url": { "anyOf": [{ "type": "string" }, { "type": "null" }] }
         },
@@ -535,7 +541,7 @@
           "postal_code": { "anyOf": [{ "type": "string" }, { "type": "null" }] },
           "occupation": { "anyOf": [{ "type": "string" }, { "type": "null" }] },
           "gig_platform": { "anyOf": [{ "type": "string" }, { "type": "null" }] },
-          "average_monthly_income": { "anyOf": [{ "type": "number" }, { "type": "null" }] },
+          "average_monthly_income": { "anyOf": [{ "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" }, { "type": "null" }] },
           "years_of_experience": { "anyOf": [{ "type": "integer" }, { "type": "null" }] },
           "profile_picture_url": { "anyOf": [{ "type": "string" }, { "type": "null" }] }
         },
@@ -550,12 +556,13 @@
           "first_name": { "type": "string" },
           "last_name": { "anyOf": [{ "type": "string" }, { "type": "null" }] },
           "status": { "type": "string" },
+          "role": { "type": "string" },
           "email_verified": { "type": "boolean" },
           "last_login_at": { "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }] },
           "created_at": { "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }] }
         },
         "type": "object",
-        "required": ["id", "email", "first_name", "status", "email_verified"],
+        "required": ["id", "email", "first_name", "status", "role", "email_verified"],
         "title": "UserResponse"
       },
       "UserWithProfileResponse": {
@@ -564,7 +571,7 @@
         "required": ["user"],
         "title": "UserWithProfileResponse"
       },
-      "ValidationError": { "properties": { "loc": { "items": { "anyOf": [{ "type": "string" }, { "type": "integer" }] }, "type": "array" }, "msg": { "type": "string" }, "type": { "type": "string" } }, "type": "object", "required": ["loc", "msg", "type"], "title": "ValidationError" },
+      "ValidationError": { "properties": { "loc": { "items": { "anyOf": [{ "type": "string" }, { "type": "integer" }] }, "type": "array" }, "msg": { "type": "string" }, "type": { "type": "string" }, "input": {}, "ctx": { "type": "object" } }, "type": "object", "required": ["loc", "msg", "type"], "title": "ValidationError" },
       "VerifyEmailRequest": { "properties": { "token": { "type": "string" } }, "type": "object", "required": ["token"], "title": "VerifyEmailRequest" },
       "WaitlistSignupRequest": { "properties": { "email": { "type": "string", "format": "email" }, "first_name": { "type": "string" }, "last_name": { "anyOf": [{ "type": "string" }, { "type": "null" }] } }, "type": "object", "required": ["email", "first_name"], "title": "WaitlistSignupRequest" },
       "WaitlistSignupResponse": { "properties": { "message": { "type": "string" }, "user_id": { "type": "string" }, "access_token": { "type": "string" }, "token_type": { "type": "string", "default": "bearer" } }, "type": "object", "required": ["message", "user_id", "access_token"], "title": "WaitlistSignupResponse" }

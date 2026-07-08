@@ -5,7 +5,7 @@ import { AUTH_ENDPOINTS } from './endpoints';
 import {
   parseBrowserSessionResponse,
   refreshAccessTokenOnce,
-  shouldSkipRefreshForWaitlistToken,
+  shouldAttemptSessionRefresh,
 } from './refresh-queue';
 
 // ─── Create Axios Instance ─────────────────────────────────────────
@@ -55,12 +55,9 @@ apiClient.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    const currentToken = useAuthStore.getState().accessToken;
-
-    // If waitlist token is not expired, it's a scope/permission error from the backend, not an auth expiration.
-    // Waitlist tokens don't have refresh tokens, so attempting a refresh is guaranteed to fail and log them out.
-    // We just reject the request so the UI can gracefully handle the API failure without nuking the session.
-    if (shouldSkipRefreshForWaitlistToken(currentToken)) {
+    // Public assessment tokens have no refresh-backed session. Route controllers
+    // own their recovery, so reject the backend response without decoding JWTs.
+    if (!shouldAttemptSessionRefresh(useAuthStore.getState().hasFullSession)) {
       return Promise.reject(error);
     }
 

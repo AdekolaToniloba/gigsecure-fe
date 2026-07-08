@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+const decimalString = z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/);
+
 // ─── User Profile ──────────────────────────────────────────────────
 export const userProfileResponseSchema = z.object({
   date_of_birth: z.string().nullable().optional(),
@@ -12,7 +14,7 @@ export const userProfileResponseSchema = z.object({
   postal_code: z.string().nullable().optional(),
   occupation: z.string().nullable().optional(),
   gig_platform: z.string().nullable().optional(),
-  average_monthly_income: z.coerce.number().nullable().optional(),
+  average_monthly_income: decimalString.nullable().optional(),
   years_of_experience: z.number().int().nullable().optional(),
   profile_picture_url: z.string().nullable().optional(),
 });
@@ -24,6 +26,7 @@ export const userResponseSchema = z.object({
   first_name: z.string(),
   last_name: z.string().nullable().optional(),
   status: z.string(),
+  role: z.string(),
   email_verified: z.boolean(),
   last_login_at: z.string().nullable().optional(),
   created_at: z.string().nullable().optional(),
@@ -51,7 +54,7 @@ export const updateProfileRequestSchema = z.object({
   postal_code: z.string().nullable().optional(),
   occupation: z.string().nullable().optional(),
   gig_platform: z.string().nullable().optional(),
-  average_monthly_income: z.coerce.number().nullable().optional(),
+  average_monthly_income: z.union([z.number(), decimalString]).nullable().optional(),
   years_of_experience: z.number().int().nullable().optional(),
   profile_picture_url: z.string().nullable().optional(),
 });

@@ -1939,3 +1939,334 @@ The live source tree and final handoff supersede historical statements that dash
 
 Known follow-ups:
 Backend/product still needs to define the notification feed/read contract, dashboard date/range behavior, income-stability units and x-axis semantics, tour/demo/explainer destinations, any active-policy subtitle requirement, unavailable Premiums/Profile/Settings routes, and guarantees beyond the documented score/classification contract. The workspace's exact Playwright command remains blocked by unresponsive PID 66527 holding `.next/dev/lock`, although the same source/specs passed 11/11 dashboard and 35/35 full Chromium tests in the isolated Task 21 run. The exact production build remains subject to restricted Google Fonts DNS; the documented isolated fallback compiled, typechecked, generated 36 static pages, and emitted `/dashboard` without changing the real font configuration. Task 22 verification passed with the focused dashboard/security slice (21 files, 172 tests), `npm run lint` (0 errors; the same 15 pre-existing non-dashboard warnings), `npx tsc --noEmit`, and `git diff --check`.
+
+### 2026-07-07 16:35 WAT
+
+Task completed: Task 1 — Dual-Journey Route, Bearer Authentication, Wizard, Report, and Contract Audit
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/DASHBOARD_RISK_ASSESSMENT_EPICS.md`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+
+Summary:
+Revalidated and locked the implementation plan against the live public acquisition routes, authenticated app shell, middleware and client guards, waitlist BFF/token handoff, memory-only auth store, shared Bearer-attaching `apiClient`, risk/profile/marketplace services and hooks, current wizard/report/PDF code, local and supplied OpenAPI documents, existing mocks/tests, and both supplied dashboard references. Confirmed that `/risk-assessment` remains public information, `/waitlist` remains public onboarding, and `/assessment` remains the standalone waitlist-issued-Bearer wizard outside protected middleware. The future `/dashboard/risk-assessment` belongs under `(app)/dashboard`, inherits the existing shell and `/dashboard/*` middleware prefix, and must use full-session-aware `ProtectedRoute` behavior. No production, test, generated-contract, or route code changed.
+
+Important decisions:
+All `/api/v1/risk/*` calls continue through one `riskService` and the existing `apiClient`, which forwards whichever Bearer token is in memory and lets the backend decide validity and authorization. No JWT-scope preflight, endpoint-specific risk allowlist, duplicate token-specific service, token persistence, or invented permission matrix is permitted. Public backend authentication failure recovers to `/waitlist?expired=true`; dashboard authentication failure uses refresh/logout recovery. Public mode must not call profile, dashboard, KYC, or authenticated marketplace recommendation APIs. React Query retains server-data ownership through canonical keys, requests must deduplicate, and PDF code must be lazy-loaded on user action. The 1512×1810 assessed and 1512×1133 unassessed references are visual targets only: unsupported plan/critical-gap/monthly/benchmark/timestamp/share/product values cannot be fabricated.
+
+Known follow-ups:
+Task 2 must synchronize the supplied profile/marketplace/generated contract differences while preserving the exact matching risk core. Category and question response schemas remain underspecified; the risk-recommendations validator is stale; category submission is hard-coded; latest has no timestamp or documented 404; history ordering direction and public-result persistence remain backend/product questions. Task 6 must close the confirmed security gap where a waitlist `setAccessToken` currently sets generic `isAuthenticated: true`: direct dashboard navigation is already blocked without the refresh cookie, but client-side navigation can pass the current `ProtectedRoute`. Explicit memory-only full-session provenance established by successful refresh-backed initialization must gate dashboard content and full-session-only APIs without decoding JWT scope or blocking waitlist Bearer access to risk APIs. Later tasks own shared-wizard extraction, dual-route behavior, report display-model/PDF reuse, dashboard composition, and regression coverage. Task 1 requires documentation validation only; `npx tsc --noEmit`, `npm run lint`, and runtime suites were not run because no executable source or test file changed. Validation passed with `git diff --check` and a separate `git diff --no-index --check /dev/null DASHBOARD_RISK_ASSESSMENT_EPICS.md` check for the currently untracked epic file.
+
+### 2026-07-07 21:56 WAT
+
+Task completed: Task 2 — OpenAPI Synchronization and Generated Types
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/DASHBOARD_RISK_ASSESSMENT_EPICS.md`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/openapi.json`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/types/schema.d.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/lib/validators/user.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/mocks/fixtures/dashboard.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/mocks/handlers/auth.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/lib/user-validators.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/services/user.service.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/e2e/auth/auth-flows.spec.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/e2e/dashboard/dashboard-flow.spec.ts`
+
+Summary:
+Applied only the approved semantic differences from the supplied OpenAPI to the repository contract and regenerated `src/types/schema.d.ts` through `npm run generate:types`. User/profile contracts now require `UserResponse.role`, return average monthly income as a validated decimal string, allow profile updates to send a number or decimal string, and expose optional validation-error `input`/`ctx`. Marketplace product amounts and string filter values carry the supplied decimal constraints, while profile update and marketplace list/detail/recommendation operations expose documented 422 responses. The core assessment paths and generated `TechAssessmentInput`, `AssessmentResponse`, `AssessmentSummary`, `ApplicantProfile`, `PillarScores`, and `RecommendationsResponse` remain semantically identical to the supplied source. Updated the directly affected runtime user schema and canonical MSW/E2E profile fixtures so generated and runtime contracts agree.
+
+Important decisions:
+Preserved the established marketplace security boundary: list/detail operations remain public and authenticated recommendations retain HTTP Bearer security. Supplied descriptions, titles, and unrelated endpoint domains were not copied because they do not justify semantic or scope churn. Category and question success schemas remain `{}` in both OpenAPI sources and were intentionally not invented. Generated declarations were never hand-edited. Profile response income remains a string instead of being silently coerced into a number; update requests still accept the backend-approved numeric or decimal-string forms. No route, shell, wizard, report, PDF, query key, token handling, browser storage, or UI behavior changed.
+
+Known follow-ups:
+Task 3 still owns risk request/category/question runtime validators, the pure payload builder, report display model, and removal of unsupported report derivations. Category/question response structure still needs backend confirmation. The existing risk-recommendations runtime validator remains stale, category submission remains hard-coded, latest assessment has no documented timestamp/404, and history ordering/public-result persistence remain unresolved. Task 6 still owns explicit refresh-backed full-session provenance. Validation passed with the semantic supplied/local OpenAPI assertion, two successful `npm run generate:types` runs, the focused user/marketplace/risk contract suite (5 files, 21 tests), `npx tsc --noEmit`, and `npm run lint` with 0 errors and the same 15 pre-existing warnings. Browser tests were not run because Task 2 changes no product behavior; the two E2E edits only keep existing `/users/me` fixtures contract-valid. Final whitespace checks follow this entry.
+
+### 2026-07-07 22:11 WAT
+
+Task completed: Task 3 — Runtime Risk Validators, Types, Selectors, and Field Mapping
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/DASHBOARD_RISK_ASSESSMENT_EPICS.md`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/lib/validators/risk.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/types/risk-assessment.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/types/api.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/lib/risk/build-assessment-payload.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/lib/risk/report-display-model.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_lib/buildStepSchema.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_lib/getRiskLevel.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/RiskWizard.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/ReportScreen.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/report/RiskReportPDF.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/services/risk.service.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/kyc/dashboard/kyc-recommendations-action.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/mocks/handlers/domain.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/lib/risk-validators.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/lib/buildStepSchema.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/lib/build-assessment-payload.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/lib/risk-report-display-model.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/lib/getRiskLevel.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/wizard/ReportScreen.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/services/risk.service.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/kyc/kyc-recommendations-action.test.tsx`
+
+Summary:
+Added strict runtime foundations for the established discriminated question bank, assessment steps, provisional categories, complete `TechAssessmentInput`, applicant/pillar/assessment/history responses, and textual `RecommendationsResponse`. Replaced the hand-maintained question interfaces with schema-inferred types. Added a pure payload builder that accepts the wizard's explicit boolean representation, validates every request field, rejects unknown/email fields and missing/invalid answers, and requires selected category to equal payload occupation without manufacturing empty strings, `false`, arrays, or a default health rating. Added one exhaustive five-pillar report display model with tested rounding, textual score equivalents, preserved authored advice/AI copy, and a readable insight fallback. Corrected the existing risk-recommendations service/consumer/mock from product objects to textual advice.
+
+Important decisions:
+Because category/question OpenAPI success schemas are still `{}`, validation is intentionally limited to the narrow shapes already consumed by the existing wizard and remains documented as provisional pending backend confirmation. No new OpenAPI fields, category metadata, scores, labels, thresholds, or descriptions were invented. Pillar classifications are not product-approved: the public report and PDF now use neutral numeric score presentation, while backend `risk_profile` remains the only classification authority. Removed “Generated just now,” PDF generation date, recommendation-count-as-plans, critical-gap counts, and Low/Moderate/High pillar derivations. Shared the exhaustive pillar label mapping between selectors, web report, and PDF. Both public and authenticated token/session boundaries, routes, query ownership, and browser storage behavior remain unchanged.
+
+Known follow-ups:
+Task 4 still owns comprehensive shared-Bearer risk fixtures and malformed/delay/error scenarios; the current category fixture remains deliberately provisional. Task 5 must wire category/question runtime parsing into `riskService`, use the selected category for submission instead of the still-hard-coded tech path, pass `AbortSignal` consistently, and correct canonical query/retry behavior. Tasks 6–7 own full-session provenance, mode namespacing/prefill, and shell-neutral wizard extraction. Task 12 will make both final report presentations consume the display model end to end, and Task 15 will lazy-load the PDF bundle. Latest-assessment 404/timestamp behavior, history ordering, public result persistence, and authoritative category/question schemas remain backend blockers. Validation passed with the focused validator/helper/report/service/KYC regression slice (10 files, 86 tests), `npx tsc --noEmit`, and `npm run lint` with 0 errors and 11 remaining pre-existing warnings. Browser/E2E tests were not run because this task adds no route or interaction flow; observable report and recommendation changes are covered by focused component tests. Final whitespace checks passed with `git diff --check` plus a separate no-index whitespace check for the currently untracked epic file.
+
+### 2026-07-07 22:28 WAT
+
+Task completed: Task 4 — Shared-Bearer Risk MSW Fixtures and Contract Scenarios
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/DASHBOARD_RISK_ASSESSMENT_EPICS.md`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/mocks/fixtures/risk-assessment.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/mocks/fixtures/dashboard.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/mocks/handlers/risk.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/mocks/handlers/auth.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/mocks/handlers/domain.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/mocks/handlers/index.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/mocks/handlers/marketplace.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/mocks/risk-handlers.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/pages/WaitlistPage.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/services/risk.service.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/services/marketplace.service.test.ts`
+
+Summary:
+Added deterministic, runtime-contract-checked fixtures for waitlist signup, the established risk question bank and category, valid payloads, public/dashboard assessment responses, latest/history/textual recommendations, malformed responses, long content, and empty content. Replaced the stale catch-all domain risk mocks with one dedicated shared-Bearer handler set covering no-token and backend-401 behavior; category/question success, malformed, failure, and delay states; category-dynamic 201/401/422/500 submission; latest/history/recommendation page states; and both public and dashboard completion responses. Added authenticated marketplace recommendation success, empty, malformed, failure, and delay states, plus focused MSW registration and contract tests. The full public waitlist page regression continues to store the fixture token and redirect to `/assessment`.
+
+Important decisions:
+Risk handlers accept any syntactically present Bearer token and never decode JWTs, infer scopes, or branch response authority by token type. Dedicated waitlist-issued and full-session token constants prove that the same risk endpoints accept both; explicit backend-401 overrides model expiry or invalidity. The public and dashboard 201 response scenarios are selected by the test/page state rather than by inspecting the token. Submission uses the real dynamic `:category` path, validates the existing `TechAssessmentInput`, and returns 422 when body occupation and route category differ. The waitlist fixture contains no refresh token, KYC flag, risk-assessed flag, or other full-session state. Marketplace recommendation mocks require a Bearer header but likewise do not classify its permissions; public-route orchestration remains responsible for never invoking full-session-only APIs. No route, auth store, wizard, report, PDF, query cache, production service, or browser storage behavior changed.
+
+Known follow-ups:
+Task 5 still owns wiring category/question validators into `riskService`, making submission category-dynamic in production, propagating `AbortSignal` consistently, and correcting canonical query/retry behavior. Task 6 still owns refresh-backed full-session provenance and the client/direct-navigation dashboard security regression. Authoritative category/question schemas, latest-assessment 404 semantics, history ordering, public result persistence, and timestamps remain backend/product blockers rather than mock inventions. Focused handler/validator/service verification passed (5 files, 56 tests); the full Vitest matrix passed (99 files, 640 tests); `npx tsc --noEmit` passed; `npm run lint` passed with 0 errors and the same 11 pre-existing warnings; and `git diff --check` passed after documentation. Playwright was not run because Task 4 changes test fixtures/handlers only and adds no route or browser interaction behavior.
+
+### 2026-07-07 22:36 WAT
+
+Task completed: Task 5 — Shared Risk Service and React Query Hook Corrections
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/lib/constants.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/services/risk.service.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/hooks/risk/useRisk.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/RiskWizard.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/services/risk.service.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/hooks/risk-hooks.test.tsx`
+
+Summary:
+Completed the shared risk data-layer correction without adding a route, UI, token store, or duplicate assessment implementation. `riskService` now runtime-validates category and question responses, validates the category/payload submission pair before transport, uses the selected category in the endpoint path, requires the documented 201 response, validates every returned assessment shape, and passes `AbortSignal` through all operations. Risk hooks now use canonical category/question keys, enable requests only when their route requests them and an in-memory token is present, expose `parseApiError` output beside raw React Query error state, and disable React Query retries so the existing `apiClient` remains the only network/5xx retry layer. The shared submission mutation no longer clears auth, resets wizard state, or redirects; the existing public controller retains `/waitlist?expired=true` recovery for backend 401 responses.
+
+Important decisions:
+Waitlist-issued and full-session Bearer tokens use the exact same `apiClient`, service methods, validators, and query hooks; no token decoding, scope preflight, token-type branch, endpoint permission matrix, or browser persistence was added. Query enablement is the conjunction of caller-owned route state and token presence, so public mode can enable only category/question/submission work while later dashboard controllers can independently enable latest/history/recommendation work. Category/question data remains session-stable because the OpenAPI response schemas are still underspecified; their strict runtime schemas remain the provisional Task 3 contracts. React Query owns all server data, and no response was copied into Zustand or local component state. The React/Next.js performance guidance reinforced canonical request deduplication, narrow Zustand token subscriptions, and avoiding retry/request multiplication.
+
+Known follow-ups:
+Task 6 still owns explicit refresh-backed full-session provenance, route capability adapters, profile prefill, and public/dashboard progress namespacing. Task 7 still owns shell-neutral wizard extraction, and Task 11 owns mode-specific cache seeding/invalidation after submission. Backend/product still needs to document authoritative category/question response schemas, latest-assessment 404 semantics, history ordering, public-result persistence, and report timestamps. Focused verification passed across 5 files and 66 tests, covering both Bearer fixtures, dynamic category and exact payload, 201 enforcement, malformed responses, cancellation, canonical-key deduplication, token-presence gating, parsed 401/422 errors, no shared-hook route side effects, no expected-4xx retry, and the existing public wizard regression. `npx tsc --noEmit` and whitespace checks passed. `npm run lint` passed with 0 errors and the same 11 pre-existing warnings. Browser and visual tests were not run because Task 5 changes no route composition, rendered UI, responsive layout, keyboard interaction, or screenshot-owned styling.
+
+### 2026-07-07 23:39 WAT
+
+Task completed: Task 6 — Full-Session Provenance, Route Capabilities, Mode Namespacing, and Prefill Adapters
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(app)/layout.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/RiskWizard.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/steps/StepPersonalDetails.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/auth/shared/auth-redirect-guard.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/auth/shared/protected-route.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/dashboard-overview-controller.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/kyc/kyc-route-controller.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/ui/ComboboxSelect.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/ui/Select.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/hooks/auth/useAuth.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/hooks/auth/useSession.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/hooks/auth/useUserFlags.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/hooks/marketplace/useMarketplaceRecommendationsGate.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/hooks/user/useUser.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/lib/api/client.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/lib/api/refresh-queue.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/lib/risk/assessment-route-context.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/lib/risk/profile-to-wizard-defaults.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/store/auth-store.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/store/wizard-store.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/auth/route-guards.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/dashboard/authenticated-app-shell.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/dashboard/dashboard-overview-controller.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/kyc/kyc-status-gate.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/wizard/StepPersonalDetails.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/hooks/auth-hooks.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/hooks/marketplace-recommendations-gate.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/hooks/user-profile.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/lib/api-client.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/lib/api-refresh-queue.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/lib/assessment-route-context.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/lib/auth-session.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/lib/profile-to-wizard-defaults.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/middleware.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/store/auth-store.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/store/wizard-store.test.ts`
+
+Summary:
+Added an explicit memory-only `hasFullSession` invariant: waitlist `setAccessToken` retains legacy risk authentication but leaves full-session capability false, while browser-safe login/verification/activation/refresh `setSession` calls establish it. Protected client routes, public-auth redirects, dashboard/profile/KYC orchestration, marketplace recommendation gating, and 401 refresh decisions now consume provenance instead of generic authentication or decoded JWT scope. The authenticated shell now sits inside the full-session guard, preserving its stable initialization fallback while rendering no sidebar, navbar, page content, or full-session API consumer for a waitlist-token client navigation. Direct `/dashboard/risk-assessment` entry remains rejected by the existing refresh-cookie middleware prefix.
+
+Added a pure `public | dashboard` assessment route-capability adapter with mode-owned authentication recovery and explicit profile/dashboard/KYC/marketplace permissions. Added a pure profile-to-wizard adapter with resumed-answer precedence, public waitlist-name-only defaults, dashboard mappings for supported name/DOB/gender/state/city/occupation fields, ISO-to-form DOB conversion, and no email or marital-status fabrication. `StepPersonalDetails` now disables `/users/me` in public mode, uses the canonical deduplicated profile query only in dashboard mode, applies asynchronous profile values once only into still-empty fields, preserves user edits and resumed answers, keeps all prefilled fields editable, and associates validation messages with controls. Wizard progress is session-storage-backed and independently namespaced for public and dashboard modes, including migration of the legacy single public record and mode-specific reset behavior.
+
+Important decisions:
+Backend responses remain authoritative for risk-token validity: any present token may still reach shared risk APIs, and neither risk service nor route capability code inspects JWT claims. Refresh attempts now depend solely on explicit full-session provenance, so opaque waitlist tokens receive route-owned backend-401 recovery without a futile refresh. Auth provenance, flags, users, and access tokens remain memory-only; only resumable non-sensitive wizard answers remain in `sessionStorage`. `/users/me` remains one canonical five-minute query and is not mirrored into Zustand or local component state; Zustand continues to hold only the existing hydrated user/flags and mode-specific wizard progress. The React/Next.js performance guidance informed narrow store subscriptions, canonical query deduplication, a pure O(1)-field prefill adapter, and one guarded profile initialization pass rather than an effect reset loop.
+
+Known follow-ups:
+Task 7 must pass explicit mode/callback/default contracts through the shell-neutral shared wizard and activate the dashboard namespace from its route adapter. Task 8 still owns the final public controller extraction, while Tasks 9–11 own the dashboard route, state controller, and mode-specific success synchronization. Authoritative category/question schemas, latest-assessment 404 semantics, history ordering, public-result persistence, and report timestamps remain backend/product questions. No screenshot-owned dashboard report/empty-state styling was introduced in this task.
+
+Validation results:
+The required focused matrix passed 17 files and 123 tests. The full Vitest blast-radius run passed 101 files and 673 tests after the shared auth/session changes. Coverage includes public zero-profile requests, one deduplicated full-session `/users/me`, explicit route disablement, partial/error profile behavior, editable and resumed prefill precedence, public/dashboard progress isolation, opaque waitlist risk access, no JWT-scope decoding, refresh provenance, full-only marketplace gating, direct middleware rejection, client guard rejection, no protected shell/content/API call for waitlist navigation, public wizard regression, keyboard-compatible fields, and existing dashboard loading/error/retry behavior. `npx tsc --noEmit` passed. `npm run lint` passed with 0 errors and the same 11 pre-existing warnings. `git diff --check` passed before this documentation entry. Browser/visual suites were not required because Task 6 adds no dashboard risk route or screenshot-owned layout; the affected route, keyboard, loading, error, retry, and shell visibility behaviors are covered by the integration/unit matrix above.
+
+### 2026-07-08 09:45 WAT
+
+Task completed: Task 7 — Shared Composable RiskAssessmentWizard Extraction
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/risk-assessment/wizard/index.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/risk-assessment/wizard/risk-assessment-wizard.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/risk-assessment/wizard/risk-assessment-wizard-context.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/risk-assessment/wizard/risk-assessment-wizard.types.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/RiskWizard.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/ConsentGate.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/StepSidebar.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/questions/BooleanInput.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/questions/MultiChoiceInput.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/questions/QuestionRenderer.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/questions/RankingInput.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/questions/RatingInput.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/questions/SingleChoiceInput.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/steps/AssessmentQuestionStep.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/steps/StepHealthLifestyle.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/steps/StepIncomeStability.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/steps/StepPersonalDetails.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/steps/StepSafetyNet.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/steps/StepWrapper.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/steps/StepYourRisks.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/steps/StepYourWork.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/wizard/RiskAssessmentWizard.contract.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/wizard/StepComponents.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/wizard/StepPersonalDetails.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/wizard/StepSidebar.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/wizard/StepWrapper.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/test-utils.tsx`
+
+Summary:
+Extracted one shell-neutral `RiskAssessmentWizard` that owns category/question orchestration, runtime-validated payload construction, the canonical React Query submission mutation, consent, progress, retry/loading/error/success states, resume behavior, and wizard-scoped focus. It accepts explicit public/dashboard mode, prefill defaults, shell sizing, cancel, success, authentication-failure, and success-render callbacks. The existing public `RiskWizard` is now a thin adapter retaining waitlist-token entry, no-token and backend-401 recovery, handoff analytics, public cancellation, waitlist name defaults, and the existing public report. The five API-driven steps now delegate to one shared question-step implementation, removing repeated form/schema/renderer/navigation logic, while personal details consume adapter-provided defaults and categories without calling auth, profile, or risk hooks themselves.
+
+Important decisions:
+The shared core imports no Next route API, auth/profile query, report/PDF component, dashboard shell, or global chrome. Report selection and route recovery remain adapter callbacks, so the core does not hard-code public or dashboard URLs and does not pull heavy report/PDF code into its own graph. Both modes use the Task 6 namespaced progress store and the same Task 5 hooks, `apiClient` service path, validators, payload builder, mutation, and parsed errors; server responses remain React Query/mutation data and are not copied into Zustand or local state. Invalid actions remain keyboard reachable with `aria-disabled`, then focus the first invalid question inside the current wizard root. Step progress is announced, footer links no longer use empty `#` destinations, mobile remains the existing `flex-col lg:flex-row`/horizontal-step layout, and wizard/sidebar/consent/question-control motion honors reduced-motion preference. No screenshot-owned dashboard UI was introduced; dashboard route and screenshot composition remain later tasks.
+
+Known follow-ups:
+Task 8 owns the final named public-controller/report regression boundary, Tasks 9–10 own the protected dashboard route/controller and screenshot-specific empty/assessed composition, and Task 11 owns mode-specific success cache synchronization. The shared component is exercised by a dashboard harness now but deliberately does not create the future dashboard route. Authoritative category/question schemas, latest-assessment 404 semantics, history ordering, public-result persistence, and report timestamps remain backend/product questions.
+
+Validation results:
+The focused wizard/risk matrix passed 12 files and 108 tests, including identical public/dashboard question validation and exact submission payloads, adapter-owned cancel/authentication recovery, loading, retry, success, progress, keyboard first-invalid focus, responsive class contracts, and preserved public waitlist/report behavior. The full Vitest matrix passed 102 files and 680 tests. `npx tsc --noEmit` passed. `npm run lint` passed with 0 errors and 7 pre-existing warnings (reduced from 10 by removing relevant stale imports and the React Hook Form compiler warning). `git diff --check` passed before this documentation entry. Browser/visual suites were not run because Task 7 adds no route or screenshot-owned dashboard presentation; observable UI, API, keyboard, loading/error/retry, public-flow, and mobile layout contracts are covered by the component/integration suite.
+
+### 2026-07-08 09:55 WAT
+
+Task completed: Task 8 — Public Acquisition Adapter and Report Regression
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/page.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/public-assessment-controller.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/RiskWizard.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/ReportScreen.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/_components/WizardCancelButton.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/waitlist/page.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/wizard/RiskWizard.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/wizard/ReportScreen.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/pages/WaitlistPage.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/pages/RiskAssessmentPage.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/middleware.test.ts`
+
+Summary:
+Added the named `PublicAssessmentController` as the sole public `/assessment` route adapter around the Task 7 shared wizard. It preserves absent-token routing to `/waitlist`, waitlist-issued Bearer entry without login, public-name defaults, standalone cancellation, one-time handoff analytics, backend-authentication-failure recovery through `/waitlist?expired=true`, and selection of the existing public report from the runtime-validated 201 mutation response. The legacy `RiskWizard` module now re-exports the controller for compatibility instead of retaining a second implementation. The report-containing module is dynamically loaded only after successful submission, preserving waitlist-to-wizard handoff cost and keeping future dashboard report/product code out of the public adapter graph.
+
+Important decisions:
+The adapter never decodes or pre-rejects the access token, never calls profile/latest/history/dashboard/marketplace-recommendation APIs, never sets `hasFullSession` or `riskAssessed`, and does not copy the assessment response into Zustand or component state. An authentication-recovery ref prevents the generic absent-token effect from overwriting the intentional expired-session URL after `clearAuth`. The standalone header cancel explicitly clears only public wizard progress. The existing public report/PDF content remains intact; report arrival now focuses and labels its heading as an accessible region, report and waitlist motion honor reduced-motion preference, waitlist async/error states are announced, and waitlist field errors are programmatically associated. Public informational hero and floating CTAs continue to route to `/waitlist`, while `/assessment` remains outside middleware protection. No dashboard screenshot styles or routes were introduced.
+
+Known follow-ups:
+Task 9 owns the authenticated `/dashboard/risk-assessment` route and dashboard-owned link changes. Task 11 owns mode-specific success synchronization and public-progress clearing after success. Task 15 still owns click-level lazy loading, pending/error/retry handling, and shared action extraction for the PDF renderer/document; Task 8 only defers the whole public report/PDF chunk until report presentation. Public result persistence after navigation remains an unresolved backend/product contract.
+
+Validation results:
+The required focused public/wizard/risk/security matrix passed 16 files and 143 tests. Coverage includes waitlist prefetch/signup/token handoff, no-token entry, present waitlist token, category and submission backend 401 recovery without login or redirect races, validated 201 report rendering, exact absence of `/users/me`, latest/history/risk-recommendation/dashboard/marketplace-recommendation requests, unchanged memory-only provenance flags, handoff analytics, report heading focus/announcement, PDF generation foundation, CTA destinations, `/assessment` middleware exclusion, loading, retry, keyboard, and responsive wizard/report behavior. The full Vitest matrix passed 102 files and 689 tests. `npx tsc --noEmit` passed. `npm run lint` passed with 0 errors and the same 7 pre-existing warnings. `git diff --check` passed before this documentation entry. Browser screenshots and Playwright were not run because Task 8 introduces no screenshot-owned dashboard UI and Task 20 owns the dual-journey browser suite; the existing public visuals were preserved and observable public-flow behavior is covered by MSW-backed integration tests.
+
+### 2026-07-08 10:03 WAT
+
+Task completed: Task 9 — Authenticated Dashboard Route and Shell Integration
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(app)/dashboard/risk-assessment/page.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/shell/app-navigation.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/shell/dashboard-navbar.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/lib/dashboard/actions.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/overview/unassessed-hero.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/overview/risk-assessment-prompt.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/overview/income-stability-card.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/hooks/marketplace/useMarketplaceRecommendationsGate.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/pages/dashboard-risk-assessment.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/dashboard/app-navigation.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/dashboard/dashboard-navbar.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/dashboard/dashboard-actions.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/dashboard/unassessed-overview.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/dashboard/income-stability.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/dashboard/authenticated-app-shell.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/hooks/marketplace-recommendations-gate.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/marketplace/marketplace-recommendations-action.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/e2e/dashboard/dashboard-flow.spec.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/e2e/marketplace/marketplace-flow.spec.ts`
+
+Summary:
+Added the thin server page for `/dashboard/risk-assessment` under the existing protected `(app)/dashboard` prefix with route metadata, one page heading, and no standalone wizard chrome. Updated the shared authenticated sidebar, dashboard onboarding hero and prompt, income-stability empty action, getting-started action model, and full-session marketplace recommendation gate to use `/dashboard/risk-assessment`. The navbar now recognizes the route and replaces dashboard search with a responsive “Risk Assessment” page title while retaining the existing menu, notification, premium, and tour boundaries. Public informational, waitlist, public marketplace prompt, and public `/assessment` destinations remain unchanged.
+
+Important decisions:
+Task 9 establishes route/shell/navigation ownership only. It deliberately does not implement the Task 10 profile/latest/empty/wizard/report state controller, duplicate the shared wizard, or introduce interim API requests or fabricated state. The page automatically inherits `ProtectedRoute`, the 298px desktop sidebar, content-column navbar, skip target, mobile drawer, stable auth fallback, and `/dashboard/*` refresh-cookie middleware protection from the existing app layout. Overview navigation is now exact-match so `/dashboard/risk-assessment` marks only Risk Assessment active; nested risk paths remain supported. Full-session unassessed marketplace users now enter the authenticated route, while waitlist-token users still lack route capability and receive the safe login return path. Access/refresh token storage and scopes are unchanged.
+
+Known follow-ups:
+Task 10 owns the dashboard assessment controller, profile/default orchestration, unassessed screenshot state, and opening the shared dashboard-mode wizard. Task 11 owns dashboard submission synchronization and success recovery. Tasks 12–18 own the assessed report and screenshot-specific presentation. The new route intentionally contains no assessment API consumer until Task 10, preventing premature or duplicate profile/dashboard/risk requests.
+
+Validation results:
+The focused route/navigation/security/public-regression matrix passed 19 files and 160 tests before the final full-suite pass; the full Vitest matrix passed 103 files and 693 tests. Coverage includes metadata, one h1, app shell and skip target, active desktop/drawer navigation, navbar route title and 44px mobile menu control, dashboard action destinations, full-session marketplace gating, waitlist-token client rejection without protected content, safe login return, direct middleware rejection, public CTA/waitlist/public-assessment preservation, shared-risk access tests, and existing loading/error/retry behavior. The focused Chromium dashboard suite passed 11/11 tests, including authenticated navigation, drawer keyboard behavior, shell retention, and required-width overflow checks. The final focused Chromium marketplace suite passed 5/5 tests. Its first combined run exposed a test-only missing refresh-cookie hint for the newly protected destination; the harness now sets an httpOnly `SameSite=Strict` cookie alongside its mocked full-session refresh response, matching the production security boundary. `npx tsc --noEmit` passed. `npm run lint` passed with 0 errors and the same 7 pre-existing warnings. `git diff --check` passed before this documentation entry. No screenshot-specific Task 10 content was introduced or compared in Task 9.
+
+### 2026-07-08 10:18 WAT
+
+Task completed: Task 10 — Dashboard State Controller and Unassessed UI
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/public/assets/images/risk-assessment-empty.webp`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(app)/dashboard/risk-assessment/page.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/risk-assessment/dashboard/dashboard-risk-assessment-controller.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/risk-assessment/dashboard/unassessed-state.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/risk-assessment/dashboard/risk-assessment-skeleton.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/risk-assessment/dashboard/risk-assessment-error.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/risk-assessment/wizard/risk-assessment-wizard.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/risk-assessment/dashboard-risk-assessment-controller.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/risk-assessment/unassessed-state.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/pages/dashboard-risk-assessment.test.tsx`
+
+Summary:
+Replaced the protected risk-assessment route placeholder with a focused dashboard controller that waits for the canonical full-session profile query, branches from the runtime-validated `risk_assessed` value, skips the latest-assessment request for authoritative false, and loads the canonical latest report only for assessed users. Added stable dashboard loading and parsed retryable error states, including explicit true-flag/latest-404 reconciliation that refreshes `/users/me` without silently clearing the server flag. Added the screenshot-aligned unassessed panel with exact page heading/subtitle, fluid mobile layout, a primary assessment CTA, duration and information copy, and an owned optimized 720×480 WebP illustration. The CTA embeds the one shared wizard in dashboard mode with editable profile defaults and dashboard-namespaced resumed answers; cancel returns to the empty state and restores focus. Existing validated assessments and fresh dashboard mutation results enter a contract-backed summary boundary without mirroring server data.
+
+Important decisions:
+`/users/me` and latest assessment remain React Query-owned under `QUERY_KEYS.USER_ME` and `QUERY_KEYS.RISK_ASSESSMENT`; neither response is copied into Zustand or local component state. The only new local state is the reversible `summary | wizard` presentation mode. A resolved assessed full session starts profile and latest requests in parallel, while resolved false performs zero latest requests. The existing `apiClient`, runtime validators, `parseApiError`, full-session provenance, shared wizard, profile-default adapter, and dashboard progress namespace are reused unchanged. Dashboard authentication failures continue through the shared refresh/logout boundary and never use waitlist recovery. The shared wizard's internal nested `<main>` was changed to a neutral `<div>` so both public and dashboard adapters retain exactly one route-owned main landmark. The generated illustration is decorative because adjacent semantic copy communicates its meaning; `next/image` supplies explicit dimensions and responsive sizing. No public route, waitlist token behavior, report ownership, endpoint, metric, scoring rule, or token scope changed.
+
+Known follow-ups:
+Task 11 still owns dashboard success flag/cache synchronization, progress clearing, and mode-specific authentication/submission recovery. Tasks 12–15 own the full dashboard report, risk exposure, marketplace products, and shared click-level PDF action; Task 16 owns deliberate reassessment/update behavior. Backend still needs to document latest-assessment 404 semantics; until then, true flag plus 404 remains a visible consistency error with profile/latest retry rather than an empty state. Task 18 owns native-reference pixel comparison and the complete viewport matrix. The in-app browser could not initialize because the environment did not provide the browser sandbox-policy metadata, so no browser screenshot is claimed for this task; component contracts cover mobile wrapping/overflow, image dimensions, keyboard entry/cancel focus, and reduced-motion skeleton behavior.
+
+Validation results:
+The required focused controller, empty-state, route, shared-wizard, and public-regression suite passed 5 files and 29 tests. The final broader risk/profile/auth/store/shell regression matrix passed 19 files and 158 tests. Coverage verifies loading, authoritative empty state, zero latest requests for false, parallel profile/latest requests for true, latest success, 404 reconciliation, non-404 error/retry, profile error/retry, dashboard profile prefill, embedded wizard entry, cancel focus restoration, image/content/mobile contracts, one main/page heading, and unchanged public waitlist/report behavior. `npx tsc --noEmit` passed. `npm run lint` passed with 0 errors and the same 7 pre-existing unrelated warnings. `git diff --check` passed before this documentation entry.

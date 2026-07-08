@@ -1,21 +1,9 @@
 import { Document, Page, Text, View, StyleSheet, Svg, Circle, Path } from '@react-pdf/renderer';
-import type { AssessmentResponse } from '@/types/api';
+import type { AssessmentResponse, PillarScores } from '@/types/api';
 import type { InsightBlock } from '../../_lib/parseInsights';
 import { reportColors } from '@/lib/report-theme';
-
-const PILLAR_LABELS: Record<string, string> = {
-  income: 'Income Stability',
-  client: 'Client Concentration',
-  safety: 'Safety Net Strength',
-  equipment: 'Equipment Dependency',
-  health: 'Health & Lifestyle',
-};
-
-function getRiskLevel(score: number) {
-  if (score > 70) return { label: 'High Risk', colors: reportColors.risk.high };
-  if (score >= 40) return { label: 'Moderate', colors: reportColors.risk.moderate };
-  return { label: 'Low Risk', colors: reportColors.risk.low };
-}
+import { getRiskScorePresentation } from '../../_lib/getRiskLevel';
+import { RISK_PILLAR_LABELS } from '@/lib/risk/report-display-model';
 
 function getPdfInsightIcon(label: string) {
   const l = label.toLowerCase();
@@ -85,7 +73,6 @@ const styles = StyleSheet.create({
   heroLeft: { flex: 1, paddingRight: 20 },
   heroPre: { fontSize: 10, color: 'rgba(255,255,255,0.6)', marginBottom: 6 },
   heroTitle: { fontSize: 24, fontWeight: 'bold', color: reportColors.white, marginBottom: 8, lineHeight: 1.2 },
-  heroDate: { fontSize: 10, color: 'rgba(255,255,255,0.5)' },
   
   // PDF Gauge
   gaugeContainer: { alignItems: 'center', justifyContent: 'center', width: 100, height: 120 },
@@ -189,7 +176,6 @@ export default function RiskReportPDF({
             <Text style={styles.heroTitle}>
               {firstName ? `${firstName}, here's your protection plan` : "Here's your protection plan"}
             </Text>
-            <Text style={styles.heroDate}>{`Generated ${new Date().toLocaleDateString()}`}</Text>
           </View>
           
           <View style={styles.gaugeContainer}>
@@ -215,12 +201,12 @@ export default function RiskReportPDF({
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Risk exposure breakdown</Text>
           <View style={styles.grid}>
-            {(Object.entries(data.pillar_scores) as [string, number][]).map(([key, score]) => {
-              const risk = getRiskLevel(score);
+            {(Object.entries(data.pillar_scores) as [keyof PillarScores, number][]).map(([key, score]) => {
+              const risk = getRiskScorePresentation(score);
               return (
                 <View key={key} style={styles.pillarCard}>
                   <View style={styles.pillarHeader}>
-                    <Text style={styles.pillarName}>{PILLAR_LABELS[key] ?? key}</Text>
+                    <Text style={styles.pillarName}>{RISK_PILLAR_LABELS[key]}</Text>
                     <Text style={[styles.pillarBadge, { backgroundColor: risk.colors.bg, color: risk.colors.text }]}>
                       {risk.label}
                     </Text>

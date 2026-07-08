@@ -1,31 +1,93 @@
 import { http, HttpResponse } from 'msw';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ENDPOINTS } from '@/lib/api/endpoints';
 import {
   assessmentHistoryFixture,
   latestAssessmentFixture,
 } from '@/mocks/fixtures/dashboard';
+import {
+  assessmentPayloadFixture,
+  FULL_SESSION_RISK_ACCESS_TOKEN,
+  publicAssessmentResponseFixture,
+  riskCategoriesFixture,
+  riskQuestionsFixture,
+  riskRecommendationsFixture,
+  WAITLIST_RISK_ACCESS_TOKEN,
+} from '@/mocks/fixtures/risk-assessment';
+import { riskHandlerScenarios } from '@/mocks/handlers/risk';
 import { server } from '@/mocks/server';
 import { riskService } from '@/services/risk.service';
 import { useAuthStore } from '@/store/auth-store';
-import type { TechAssessmentInput } from '@/types/api';
 
 const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000';
 
 beforeEach(() => {
   useAuthStore.getState().setSession({
-    accessToken: 'risk-service-token',
+    accessToken: FULL_SESSION_RISK_ACCESS_TOKEN,
     kycVerified: true,
     riskAssessed: true,
   });
 });
 
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
 describe('riskService', () => {
+  it.each([WAITLIST_RISK_ACCESS_TOKEN, FULL_SESSION_RISK_ACCESS_TOKEN])(
+    'uses the same authenticated risk methods for token %s',
+    async (accessToken) => {
+      useAuthStore.getState().setAccessToken(accessToken);
+
+      await expect(riskService.getCategories()).resolves.toEqual(riskCategoriesFixture);
+      await expect(riskService.getQuestions('tech_freelancer')).resolves.toEqual(
+        riskQuestionsFixture,
+      );
+      await expect(riskService.getLatestAssessment()).resolves.toEqual(
+        latestAssessmentFixture,
+      );
+      await expect(riskService.getHistory()).resolves.toEqual(assessmentHistoryFixture);
+      await expect(riskService.getRecommendations()).resolves.toEqual(
+        riskRecommendationsFixture,
+      );
+      await expect(
+        riskService.submitAssessment('tech_freelancer', assessmentPayloadFixture),
+      ).resolves.toEqual(publicAssessmentResponseFixture);
+    },
+  );
+
+  it('rejects malformed category and question responses', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    server.use(
+      riskHandlerScenarios.categories.malformed,
+      riskHandlerScenarios.questions.malformed,
+    );
+
+    await expect(riskService.getCategories()).rejects.toThrow(
+      'Invalid API response shape in riskService.getCategories',
+    );
+    await expect(riskService.getQuestions('tech_freelancer')).rejects.toThrow(
+      'Invalid API response shape in riskService.getQuestions',
+    );
+  });
+
+  it('passes AbortSignal through cancellable risk requests', async () => {
+    server.use(riskHandlerScenarios.questions.delayed);
+    const controller = new AbortController();
+    const request = riskService.getQuestions('tech_freelancer', controller.signal);
+
+    controller.abort();
+
+    await expect(request).rejects.toMatchObject({ code: 'ERR_CANCELED' });
+  });
+
   it('loads and validates the latest assessment through the authenticated client', async () => {
     expect.assertions(2);
     server.use(
       http.get(`${baseUrl}${ENDPOINTS.RISK.ASSESSMENT}`, ({ request }) => {
-        expect(request.headers.get('authorization')).toBe('Bearer risk-service-token');
+        expect(request.headers.get('authorization')).toBe(
+          `Bearer ${FULL_SESSION_RISK_ACCESS_TOKEN}`,
+        );
         return HttpResponse.json(latestAssessmentFixture);
       })
     );
@@ -48,14 +110,16 @@ describe('riskService', () => {
 
   it('submits the generated payload to the documented category endpoint and validates output', async () => {
     expect.assertions(4);
-    const payload = createAssessmentPayload();
+    const payload = assessmentPayloadFixture;
     const controller = new AbortController();
 
     server.use(
       http.post(
         `${baseUrl}${ENDPOINTS.RISK.ASSESSMENT_BY_CATEGORY('tech_freelancer')}`,
         async ({ request }) => {
-          expect(request.headers.get('authorization')).toBe('Bearer risk-service-token');
+          expect(request.headers.get('authorization')).toBe(
+            `Bearer ${FULL_SESSION_RISK_ACCESS_TOKEN}`,
+          );
           expect(request.signal.aborted).toBe(false);
           expect(await request.json()).toEqual(payload);
           return HttpResponse.json(latestAssessmentFixture, { status: 201 });
@@ -63,9 +127,45 @@ describe('riskService', () => {
       )
     );
 
-    await expect(riskService.submitTechAssessment(payload, controller.signal)).resolves.toEqual(
-      latestAssessmentFixture
+    await expect(
+      riskService.submitAssessment('tech_freelancer', payload, controller.signal),
+    ).resolves.toEqual(latestAssessmentFixture);
+  });
+
+  it('uses a dynamic category and requires it to match the exact payload occupation', async () => {
+    let requests = 0;
+    const payload = { ...assessmentPayloadFixture, occupation: 'creative_freelancer' };
+    server.use(
+      http.post(
+        `${baseUrl}${ENDPOINTS.RISK.ASSESSMENT_BY_CATEGORY('creative_freelancer')}`,
+        async ({ request }) => {
+          requests += 1;
+          expect(await request.json()).toEqual(payload);
+          return HttpResponse.json(latestAssessmentFixture, { status: 201 });
+        },
+      ),
     );
+
+    await expect(
+      riskService.submitAssessment('creative_freelancer', payload),
+    ).resolves.toEqual(latestAssessmentFixture);
+    await expect(
+      riskService.submitAssessment('tech_freelancer', payload),
+    ).rejects.toThrow('Assessment category must match payload occupation');
+    expect(requests).toBe(1);
+  });
+
+  it('requires the documented 201 submission status', async () => {
+    server.use(
+      http.post(
+        `${baseUrl}${ENDPOINTS.RISK.ASSESSMENT_BY_CATEGORY('tech_freelancer')}`,
+        () => HttpResponse.json(latestAssessmentFixture, { status: 200 }),
+      ),
+    );
+
+    await expect(
+      riskService.submitAssessment('tech_freelancer', assessmentPayloadFixture),
+    ).rejects.toThrow('Invalid API response status in riskService.submitAssessment');
   });
 
   it('rejects malformed category-submission responses', async () => {
@@ -77,8 +177,10 @@ describe('riskService', () => {
       )
     );
 
-    await expect(riskService.submitTechAssessment(createAssessmentPayload())).rejects.toThrow(
-      'Invalid API response shape in riskService.submitTechAssessment'
+    await expect(
+      riskService.submitAssessment('tech_freelancer', assessmentPayloadFixture),
+    ).rejects.toThrow(
+      'Invalid API response shape in riskService.submitAssessment'
     );
   });
 
@@ -96,39 +198,21 @@ describe('riskService', () => {
       'Invalid API response shape in riskService.getHistory'
     );
   });
-});
 
-function createAssessmentPayload(): TechAssessmentInput {
-  return {
-    first_name: 'Toni',
-    last_name: 'Adeyemi',
-    date_of_birth: '1995-06-15',
-    gender: 'female',
-    state: 'Lagos',
-    city: 'Ikeja',
-    occupation: 'tech_freelancer',
-    marital_status: 'single',
-    job_type: 'Web Development',
-    freelance_duration: '3-5 years',
-    client_geography: 'Global',
-    work_mode: 'Fully remote',
-    weekly_hours: '20-40',
-    monthly_income_band: '₦300,000-₦500,000',
-    income_stability: 'Somewhat stable',
-    income_sources: '2-3',
-    biggest_client_loss: '25-50%',
-    past_risks: ['Late payments'],
-    top_worries: ['Income interruption'],
-    equipment_dependency: 'High',
-    pre_existing_conditions: false,
-    chronic_illness: false,
-    smoker: false,
-    health_rating: 4,
-    travel_frequency: 'Occasionally',
-    survival_3_months: 'Yes',
-    savings_duration: '3 months',
-    insurance_types: [],
-    insurance_claims: 'None',
-    protection_priority: 'Income protection',
-  };
-}
+  it('loads textual risk recommendations and rejects the removed product-array shape', async () => {
+    await expect(riskService.getRecommendations()).resolves.toEqual(
+      riskRecommendationsFixture
+    );
+
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    server.use(
+      http.get(`${baseUrl}${ENDPOINTS.RISK.RECOMMENDATIONS}`, () =>
+        HttpResponse.json([{ product_id: 'product-1', reason: 'Stale product shape' }])
+      )
+    );
+
+    await expect(riskService.getRecommendations()).rejects.toThrow(
+      'Invalid API response shape in riskService.getRecommendations'
+    );
+  });
+});

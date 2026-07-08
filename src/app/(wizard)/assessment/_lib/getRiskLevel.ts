@@ -1,10 +1,20 @@
-import { reportColors } from '@/lib/report-theme';
+import { formatRiskScore } from '@/lib/risk/report-display-model';
+
+const neutralRiskColors = {
+  bg: '#E8F3F1',
+  text: '#004E4C',
+  bar: '#1B686C',
+} as const;
 
 /**
- * Returns the risk level label and color set for a given pillar score.
+ * Pillar classifications are not contracted or product-approved. This helper
+ * exposes only the validated numeric score with a neutral visual treatment.
  */
-export function getRiskLevel(score: number) {
-  if (score > 70) return { label: 'High Risk', colors: reportColors.risk.high };
-  if (score >= 40) return { label: 'Moderate', colors: reportColors.risk.moderate };
-  return { label: 'Low Risk', colors: reportColors.risk.low };
+export function getRiskScorePresentation(score: number) {
+  const roundedScore = formatRiskScore(score);
+  return {
+    label: `${roundedScore}%`,
+    accessibleLabel: `${roundedScore} out of 100`,
+    colors: neutralRiskColors,
+  };
 }

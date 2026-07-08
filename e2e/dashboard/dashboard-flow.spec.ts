@@ -170,7 +170,7 @@ test('dashboard actions navigate to KYC, assessment, and marketplace destination
 
   await page.goBack();
   await page.getByRole('link', { name: 'Take Risk Assessment' }).click();
-  await expect(page).toHaveURL(/\/assessment$/);
+  await expect(page).toHaveURL(/\/dashboard\/risk-assessment$/);
 
   await page.goto('/dashboard');
   await page.getByRole('link', { name: 'Explore protection plans' }).click();
@@ -236,7 +236,7 @@ test('mobile drawer traps focus, navigates, dismisses, and restores its opener',
 
   await opener.click();
   await drawer.getByRole('link', { name: 'Risk Assessment' }).click();
-  await expect(page).toHaveURL(/\/assessment$/);
+  await expect(page).toHaveURL(/\/dashboard\/risk-assessment$/);
 });
 
 test('notification panel traps and restores focus without notification network calls', async ({
@@ -372,6 +372,7 @@ function userProfile(options: { kycVerified: boolean; riskAssessed: boolean }) {
       last_name: 'Obi',
       phone_number: null,
       status: 'active',
+      role: 'user',
       email_verified: true,
       last_login_at: '2026-07-07T08:00:00Z',
       created_at: '2026-01-10T09:00:00Z',

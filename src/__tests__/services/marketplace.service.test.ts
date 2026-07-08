@@ -23,6 +23,11 @@ describe('marketplace services', () => {
     await expect(marketplaceService.getProduct('prod-equipment')).resolves.toMatchObject({
       category: 'Equipment Protection',
     });
+    useAuthStore.getState().setSession({
+      accessToken: 'marketplace-access-token',
+      kycVerified: false,
+      riskAssessed: true,
+    });
     await expect(marketplaceService.getRecommendations()).resolves.toMatchObject({
       recommended_categories: ['Income Protection', 'Equipment Protection'],
     });

@@ -1053,7 +1053,7 @@ export interface components {
             postal_code?: string | null;
             occupation?: string | null;
             gig_platform?: string | null;
-            average_monthly_income?: number | null;
+            average_monthly_income?: number | string | null;
             years_of_experience?: number | null;
             profile_picture_url?: string | null;
         };
@@ -1069,7 +1069,7 @@ export interface components {
             postal_code?: string | null;
             occupation?: string | null;
             gig_platform?: string | null;
-            average_monthly_income?: number | null;
+            average_monthly_income?: string | null;
             years_of_experience?: number | null;
             profile_picture_url?: string | null;
         };
@@ -1082,6 +1082,7 @@ export interface components {
             first_name: string;
             last_name?: string | null;
             status: string;
+            role: string;
             email_verified: boolean;
             last_login_at?: string | null;
             created_at?: string | null;
@@ -1106,6 +1107,8 @@ export interface components {
             loc: (string | number)[];
             msg: string;
             type: string;
+            input?: unknown;
+            ctx?: Record<string, never>;
         };
         /** VerifyEmailRequest */
         VerifyEmailRequest: {
@@ -1475,6 +1478,15 @@ export interface operations {
                     "application/json": components["schemas"]["UserWithProfileResponse"];
                 };
             };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
         };
     };
     get_notification_prefs_api_v1_settings_notifications_get: {
@@ -1789,6 +1801,15 @@ export interface operations {
                     "application/json": components["schemas"]["ProductListResponse"];
                 };
             };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
         };
     };
     get_recommendations_api_v1_marketplace_recommendations_get: {
@@ -1811,6 +1832,15 @@ export interface operations {
                     "application/json": components["schemas"]["RecommendedProductsResponse"];
                 };
             };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
         };
     };
     get_product_api_v1_marketplace_products__product_id__get: {
@@ -1831,6 +1861,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProductOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

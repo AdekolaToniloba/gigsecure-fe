@@ -30,6 +30,23 @@ describe('useMarketplaceRecommendationsGate', () => {
     expect(recommendationsSpy).not.toHaveBeenCalled();
   });
 
+  it('treats a waitlist token as lacking marketplace recommendation capability', () => {
+    const recommendationsSpy = vi.spyOn(marketplaceService, 'getRecommendations');
+    act(() => {
+      useAuthStore.getState().setAccessToken('waitlist-access-token');
+    });
+    const { result } = renderHook(() => useMarketplaceRecommendationsGate(), {
+      wrapper: createWrapper(),
+    });
+
+    act(() => {
+      result.current.requestRecommendations();
+    });
+
+    expect(mockRouter.push).toHaveBeenCalledWith('/login?redirect=%2Fmarketplace');
+    expect(recommendationsSpy).not.toHaveBeenCalled();
+  });
+
   it('routes authenticated users without a risk assessment to the assessment wizard', () => {
     const recommendationsSpy = vi.spyOn(marketplaceService, 'getRecommendations');
     act(() => {
@@ -47,7 +64,7 @@ describe('useMarketplaceRecommendationsGate', () => {
       result.current.requestRecommendations();
     });
 
-    expect(mockRouter.push).toHaveBeenCalledWith('/assessment');
+    expect(mockRouter.push).toHaveBeenCalledWith('/dashboard/risk-assessment');
     expect(recommendationsSpy).not.toHaveBeenCalled();
   });
 

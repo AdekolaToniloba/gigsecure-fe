@@ -1,15 +1,20 @@
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { beforeEach, describe, it, expect, vi } from 'vitest';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ReportScreen from '@/app/(wizard)/assessment/_components/ReportScreen';
 import { useAuthStore } from '@/store/auth-store';
 import { mockAssessmentResponse, mockHighRiskResponse, mockLowRiskResponse } from '../../fixtures/mockAssessmentResponse';
 
+const pdfMocks = vi.hoisted(() => ({
+  pdf: vi.fn(),
+  toBlob: vi.fn(),
+}));
+
 // Mock @react-pdf/renderer since it doesn't work in jsdom
 vi.mock('@react-pdf/renderer', async () => {
   const { MockAnimatePresence } = await import('@/__tests__/mock-components');
   return {
-    pdf: () => ({ toBlob: vi.fn().mockResolvedValue(new Blob()) }),
+    pdf: pdfMocks.pdf,
     Document: MockAnimatePresence,
     Page: MockAnimatePresence,
     View: MockAnimatePresence,
@@ -24,6 +29,13 @@ Object.assign(navigator, {
 });
 
 describe('ReportScreen', () => {
+  beforeEach(() => {
+    pdfMocks.toBlob.mockResolvedValue(new Blob());
+    pdfMocks.pdf.mockReturnValue({ toBlob: pdfMocks.toBlob });
+    URL.createObjectURL = vi.fn(() => 'blob:risk-report');
+    URL.revokeObjectURL = vi.fn();
+  });
+
   it('renders firstName in hero heading', () => {
     useAuthStore.getState().setUserMeta('Toni', null);
     render(<ReportScreen data={mockAssessmentResponse} />);
@@ -63,29 +75,36 @@ describe('ReportScreen', () => {
 
   it('renders all 5 pillar breakdown cards', () => {
     render(<ReportScreen data={mockAssessmentResponse} />);
-    expect(screen.getAllByText('Income Stability')[0]).toBeInTheDocument();
-    expect(screen.getAllByText('Client Concentration')[0]).toBeInTheDocument();
-    expect(screen.getAllByText('Safety Net Strength')[0]).toBeInTheDocument();
-    expect(screen.getAllByText('Equipment Dependency')[0]).toBeInTheDocument();
-    expect(screen.getAllByText('Health & Lifestyle')[0]).toBeInTheDocument();
+    expect(screen.getByText('Income stability')).toBeInTheDocument();
+    expect(screen.getByText('Client concentration')).toBeInTheDocument();
+    expect(screen.getByText('Safety-net strength')).toBeInTheDocument();
+    expect(screen.getByText('Equipment dependency')).toBeInTheDocument();
+    expect(screen.getByText('Health and lifestyle')).toBeInTheDocument();
   });
 
-  it('shows "High Risk" badge for score > 70', () => {
+  it('shows the backend risk profile once without deriving pillar classifications', () => {
     render(<ReportScreen data={mockHighRiskResponse} />);
-    const highRiskBadges = screen.getAllByText('High Risk');
-    expect(highRiskBadges.length).toBeGreaterThan(0);
+    expect(screen.getAllByText('High Risk')).toHaveLength(1);
+    expect(screen.getByText('90%')).toBeInTheDocument();
   });
 
-  it('shows "Moderate" badge for score 40-70', () => {
+  it('uses neutral numeric pillar labels for moderate scores', () => {
     render(<ReportScreen data={mockAssessmentResponse} />);
-    const moderateBadges = screen.getAllByText('Moderate Risk');
-    expect(moderateBadges.length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('Moderate Risk')).toHaveLength(1);
+    expect(screen.getByText('45%')).toBeInTheDocument();
   });
 
-  it('shows "Low Risk" badge for score < 40', () => {
+  it('uses neutral numeric pillar labels for low scores', () => {
     render(<ReportScreen data={mockLowRiskResponse} />);
-    const lowRiskBadges = screen.getAllByText('Low Risk');
-    expect(lowRiskBadges.length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Low Risk')).toHaveLength(1);
+    expect(screen.getByText('20%')).toBeInTheDocument();
+  });
+
+  it('omits unsupported report counters and timestamps', () => {
+    render(<ReportScreen data={mockAssessmentResponse} />);
+    expect(screen.queryByText(/Plans Needed/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Critical Gaps/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Generated just now/i)).not.toBeInTheDocument();
   });
 
   /*
@@ -117,5 +136,21 @@ describe('ReportScreen', () => {
   it('renders footer section', () => {
     render(<ReportScreen data={mockAssessmentResponse} />);
     expect(screen.getByText(/You're among the first freelancers/)).toBeInTheDocument();
+  });
+
+  it('announces the report region and focuses its heading', () => {
+    render(<ReportScreen data={mockAssessmentResponse} />);
+    const heading = screen.getByRole('heading', { name: /protection plan/i });
+    expect(screen.getByRole('region', { name: /protection plan/i })).toBeInTheDocument();
+    expect(heading).toHaveFocus();
+  });
+
+  it('keeps the existing PDF download foundation working', async () => {
+    render(<ReportScreen data={mockAssessmentResponse} />);
+    await userEvent.click(screen.getByRole('button', { name: /download pdf/i }));
+
+    await waitFor(() => expect(pdfMocks.toBlob).toHaveBeenCalledOnce());
+    expect(URL.createObjectURL).toHaveBeenCalled();
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:risk-report');
   });
 });

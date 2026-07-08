@@ -8,7 +8,7 @@ export default function WizardCancelButton() {
   const reset = useWizardStore((s) => s.reset);
 
   const handleCancel = () => {
-    reset();
+    reset('public');
     router.push('/');
   };
 

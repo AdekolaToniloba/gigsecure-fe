@@ -22,7 +22,8 @@ export const QUERY_KEYS = {
   DASHBOARD_OVERVIEW: ['dashboard', 'overview'] as const,
 
   // Risk
-  RISK_QUESTIONS: ['risk', 'questions'] as const,
+  RISK_CATEGORIES: ['risk', 'categories'] as const,
+  RISK_QUESTIONS: (category: string) => ['risk', 'questions', category] as const,
   RISK_ASSESSMENT: ['risk', 'assessment'] as const,
   RISK_HISTORY: ['risk', 'history'] as const,
   RISK_RECOMMENDATIONS: ['risk', 'recommendations'] as const,

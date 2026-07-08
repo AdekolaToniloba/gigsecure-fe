@@ -41,6 +41,7 @@ describe('StepSidebar', () => {
   it('renders footer links', () => {
     render(<StepSidebar steps={mockSteps} currentStep={0} />);
     expect(screen.getByText('What is a risk assessment')).toBeInTheDocument();
-    expect(screen.getByText(/Contact Support/)).toBeInTheDocument();
+    expect(screen.getByText(/View FAQs/)).toBeInTheDocument();
+    expect(screen.getAllByRole('link').every((link) => link.getAttribute('href') !== '#')).toBe(true);
   });
 });

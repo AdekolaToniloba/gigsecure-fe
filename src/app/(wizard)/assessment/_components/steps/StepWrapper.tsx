@@ -1,8 +1,7 @@
 'use client';
 
-import { motion } from 'framer-motion';
-import { useRouter } from 'next/navigation';
-import { useWizardStore } from '@/store/wizard-store';
+import { motion, useReducedMotion } from 'framer-motion';
+import { useWizardNavigation } from '@/components/risk-assessment/wizard/risk-assessment-wizard-context';
 
 interface Props {
   title: string;
@@ -27,13 +26,8 @@ export default function StepWrapper({
   isSubmitting,
   isValid = true,
 }: Props) {
-  const router = useRouter();
-  const reset = useWizardStore((s) => s.reset);
-
-  const handleCancel = () => {
-    reset();
-    router.push('/');
-  };
+  const { onCancel, stepNumber, totalSteps } = useWizardNavigation();
+  const reduceMotion = useReducedMotion();
 
   return (
     <div className="flex flex-col min-h-full">
@@ -45,6 +39,9 @@ export default function StepWrapper({
           className="outline-none mb-5"
           suppressHydrationWarning
         >
+          <p className="sr-only" aria-live="polite">
+            Step {stepNumber} of {totalSteps}
+          </p>
           <h2 className="font-heading text-[28px] font-bold text-[#0F172A] leading-tight">
             {title}
           </h2>
@@ -59,7 +56,7 @@ export default function StepWrapper({
         {isFirstStep ? (
           <button
             type="button"
-            onClick={handleCancel}
+            onClick={onCancel}
             className="h-11 px-6 rounded-lg bg-gray-100 text-gray-600 font-body text-[14px] font-medium hover:bg-gray-200 transition-colors cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[#004E4C]"
           >
             Cancel
@@ -78,15 +75,16 @@ export default function StepWrapper({
         <motion.button
           type="button"
           onClick={onNext}
-          disabled={!isValid || isSubmitting}
-          whileHover={isValid && !isSubmitting ? { scale: 1.02 } : {}}
-          whileTap={isValid && !isSubmitting ? { scale: 0.98 } : {}}
+          disabled={isSubmitting}
+          aria-disabled={!isValid || undefined}
+          whileHover={!reduceMotion && isValid && !isSubmitting ? { scale: 1.02 } : {}}
+          whileTap={!reduceMotion && isValid && !isSubmitting ? { scale: 0.98 } : {}}
           className="h-11 px-8 rounded-lg bg-[#FFE419] text-[#004E4C] font-body text-[14px] font-bold hover:bg-[#EBD001] transition-colors cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[#004E4C] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
         >
           {isSubmitting ? (
             <>
               <motion.div
-                animate={{ rotate: 360 }}
+                animate={reduceMotion ? undefined : { rotate: 360 }}
                 transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }}
                 className="h-4 w-4 rounded-full border-2 border-[#004E4C]/30 border-t-[#004E4C]"
               />

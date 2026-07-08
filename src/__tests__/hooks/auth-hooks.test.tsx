@@ -62,6 +62,7 @@ describe('auth hooks', () => {
     expect(useAuthStore.getState().kycVerified).toBe(false);
     expect(useAuthStore.getState().riskAssessed).toBe(true);
     expect(useAuthStore.getState().status).toBe('authenticated');
+    expect(useAuthStore.getState().hasFullSession).toBe(true);
   });
 
   it('does not set access token after register success', async () => {
@@ -106,6 +107,7 @@ describe('auth hooks', () => {
     expect(state.lastName).toBe('Obi');
     expect(state.kycVerified).toBeNull();
     expect(state.riskAssessed).toBeNull();
+    expect(state.hasFullSession).toBe(false);
   });
 
   it('sets access token after verify email, activate account, and silent refresh success', async () => {
@@ -138,6 +140,7 @@ describe('auth hooks', () => {
     expect(useAuthStore.getState().accessToken).toBe('verified-token');
     expect(useAuthStore.getState().kycVerified).toBe(false);
     expect(useAuthStore.getState().riskAssessed).toBe(false);
+    expect(useAuthStore.getState().hasFullSession).toBe(true);
 
     await act(async () => {
       await activateHook.result.current.mutateAsync({
@@ -239,6 +242,7 @@ describe('auth hooks', () => {
     expect(result.current.kycVerified).toBe(true);
     expect(result.current.riskAssessed).toBe(false);
     expect(result.current.status).toBe('authenticated');
+    expect(result.current.hasFullSession).toBe(true);
   });
 });
 

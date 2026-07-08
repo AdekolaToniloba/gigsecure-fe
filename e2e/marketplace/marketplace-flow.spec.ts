@@ -1,5 +1,8 @@
 import { expect, test, type Page, type Route } from '@playwright/test';
 
+const E2E_BASE_URL =
+  process.env.E2E_BASE_URL ?? `http://127.0.0.1:${process.env.E2E_PORT ?? 3100}`;
+
 type ProductFixture = {
   id: string;
   name: string;
@@ -189,7 +192,7 @@ test.describe('public marketplace flow', () => {
     await page.reload();
     await expect(recommendationsButton).toBeEnabled();
     await recommendationsButton.click();
-    await expect(page).toHaveURL(/\/assessment$/);
+    await expect(page).toHaveURL(/\/dashboard\/risk-assessment$/);
   });
 
   test('assessed authenticated users can load personalized recommendations', async ({ page }) => {
@@ -257,6 +260,13 @@ async function mockAnonymousRefresh(page: Page) {
 }
 
 async function mockRefresh(page: Page, flags: { riskAssessed: boolean }) {
+  await page.context().addCookies([{
+    name: 'gs_refresh_token',
+    value: 'e2e-refresh-token',
+    url: E2E_BASE_URL,
+    httpOnly: true,
+    sameSite: 'Strict',
+  }]);
   await page.unroute('**/api/auth/refresh').catch(() => undefined);
   await page.route('**/api/auth/refresh', (route) =>
     fulfillJson(route, {

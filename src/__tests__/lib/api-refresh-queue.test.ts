@@ -2,7 +2,7 @@ import { describe, expect, it, beforeEach, vi } from 'vitest';
 import {
   refreshAccessTokenOnce,
   resetRefreshQueueForTests,
-  shouldSkipRefreshForWaitlistToken,
+  shouldAttemptSessionRefresh,
 } from '@/lib/api/refresh-queue';
 
 beforeEach(() => {
@@ -61,30 +61,9 @@ describe('refreshAccessTokenOnce', () => {
   });
 });
 
-describe('shouldSkipRefreshForWaitlistToken', () => {
-  it('skips refresh for non-expired waitlist tokens', () => {
-    const token = createJwt({ scope: 'waitlist', exp: 2_000 });
-
-    expect(shouldSkipRefreshForWaitlistToken(token, 1_000_000)).toBe(true);
-  });
-
-  it('does not skip refresh for expired waitlist tokens', () => {
-    const token = createJwt({ scope: 'waitlist', exp: 1_000 });
-
-    expect(shouldSkipRefreshForWaitlistToken(token, 2_000_000)).toBe(false);
-  });
-
-  it('does not skip refresh for authenticated tokens', () => {
-    const token = createJwt({ scope: 'authenticated', exp: 2_000 });
-
-    expect(shouldSkipRefreshForWaitlistToken(token, 1_000_000)).toBe(false);
+describe('shouldAttemptSessionRefresh', () => {
+  it('allows refresh only for explicit full-session provenance', () => {
+    expect(shouldAttemptSessionRefresh(true)).toBe(true);
+    expect(shouldAttemptSessionRefresh(false)).toBe(false);
   });
 });
-
-function createJwt(payload: Record<string, unknown>) {
-  return ['header', encodeBase64Url(JSON.stringify(payload)), 'signature'].join('.');
-}
-
-function encodeBase64Url(value: string) {
-  return btoa(value).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-}

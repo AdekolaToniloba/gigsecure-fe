@@ -5,7 +5,7 @@ export type DashboardActionItem = {
   title: string;
   description: string;
   status: DashboardActionStatus;
-  href?: '/assessment' | '/marketplace' | '/kyc';
+  href?: '/dashboard/risk-assessment' | '/marketplace' | '/kyc';
 };
 
 type GettingStartedInput = {
@@ -27,7 +27,7 @@ export function getGettingStartedActions({
         ? 'Your latest risk assessment is complete.'
         : 'Generate your financial risk score and protection insights.',
       status: riskAssessed ? 'complete' : 'incomplete',
-      href: riskAssessed ? undefined : '/assessment',
+      href: riskAssessed ? undefined : '/dashboard/risk-assessment',
     },
     {
       id: 'kyc-verification',

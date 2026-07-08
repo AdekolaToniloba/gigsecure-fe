@@ -36,7 +36,7 @@ export const APP_NAVIGATION_ITEMS: readonly AppNavigationItem[] = [
   },
   {
     label: 'Risk Assessment',
-    href: '/assessment',
+    href: '/dashboard/risk-assessment',
     icon: ClipboardCheck,
     available: true,
   },
@@ -62,6 +62,7 @@ type AppNavigationProps = {
 };
 
 function isActivePath(pathname: string, href: string) {
+  if (href === '/dashboard') return pathname === href;
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 

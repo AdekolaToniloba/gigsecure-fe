@@ -2,6 +2,7 @@
 
 import { WalletCards } from 'lucide-react';
 import { lazy, Suspense, useCallback, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { NotificationTrigger } from '@/components/dashboard/notifications/notification-trigger';
 import { DashboardSearch } from '@/components/dashboard/shell/dashboard-search';
 import { MobileNavigationDrawer } from '@/components/dashboard/shell/mobile-navigation-drawer';
@@ -17,6 +18,9 @@ const LazyNotificationPanel = lazy(() =>
 );
 
 export function DashboardNavbar({ onNotificationsOpen }: DashboardNavbarProps) {
+  const pathname = usePathname();
+  const isRiskAssessmentRoute = pathname === '/dashboard/risk-assessment'
+    || pathname.startsWith('/dashboard/risk-assessment/');
   const [isNotificationPanelOpen, setIsNotificationPanelOpen] = useState(false);
   const openNotifications = useCallback(() => {
     if (onNotificationsOpen) {
@@ -34,7 +38,15 @@ export function DashboardNavbar({ onNotificationsOpen }: DashboardNavbarProps) {
         className="flex w-full min-w-0 items-center gap-2 sm:gap-3 xl:gap-4"
       >
         <MobileNavigationDrawer />
-        <DashboardSearch />
+        {isRiskAssessmentRoute ? (
+          <p
+            className="min-w-0 flex-1 truncate font-heading text-lg font-bold text-primary sm:text-xl"
+          >
+            Risk Assessment
+          </p>
+        ) : (
+          <DashboardSearch />
+        )}
 
         <div className="ml-auto flex shrink-0 items-center gap-2 sm:gap-3 xl:gap-4">
           <NotificationTrigger onOpen={openNotifications} />

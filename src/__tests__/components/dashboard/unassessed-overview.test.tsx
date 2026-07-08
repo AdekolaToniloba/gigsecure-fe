@@ -21,11 +21,11 @@ describe('UnassessedOverview', () => {
 
     expect(screen.getByRole('link', { name: /Take Risk Assessment/i })).toHaveAttribute(
       'href',
-      '/assessment'
+      '/dashboard/risk-assessment'
     );
     expect(screen.getByRole('link', { name: 'Generate Risk Score' })).toHaveAttribute(
       'href',
-      '/assessment'
+      '/dashboard/risk-assessment'
     );
   });
 

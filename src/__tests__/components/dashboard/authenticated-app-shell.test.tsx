@@ -1,5 +1,5 @@
 import React from 'react';
-import { act, render, screen, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -97,7 +97,7 @@ describe('AuthenticatedAppShell', () => {
 
 describe('protected app layout composition', () => {
   it('keeps the dashboard navbar inside the content-column header', () => {
-    act(() => useAuthStore.getState().setAccessToken('access-token'));
+    setFullSession();
 
     renderWithQueryClient(
       <AppLayout>
@@ -129,13 +129,34 @@ describe('protected app layout composition', () => {
     expect(navigation.replace).not.toHaveBeenCalled();
   });
 
+  it('does not render authenticated shell content for a waitlist-only token', async () => {
+    navigation.pathname = '/dashboard/risk-assessment';
+    act(() => useAuthStore.getState().setAccessToken('waitlist-access-token'));
+
+    renderWithQueryClient(
+      <AppLayout>
+        <p>Secret risk assessment</p>
+      </AppLayout>,
+    );
+
+    expect(screen.queryByRole('navigation', { name: 'Application navigation' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('banner', { name: 'Application header' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Secret risk assessment')).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(navigation.replace).toHaveBeenCalledWith(
+        '/login?redirect=%2Fdashboard%2Frisk-assessment',
+      );
+    });
+  });
+
   it.each([
     ['/dashboard', 'Dashboard page content'],
+    ['/dashboard/risk-assessment', 'Risk assessment page content'],
     ['/kyc', 'KYC page content'],
     ['/change-password', 'Change password page content'],
   ])('renders authenticated protected content for %s inside the shell', (pathname, content) => {
     navigation.pathname = pathname;
-    act(() => useAuthStore.getState().setAccessToken('access-token'));
+    setFullSession();
 
     renderWithQueryClient(
       <AppLayout>
@@ -161,4 +182,14 @@ function renderWithQueryClient(ui: React.ReactElement) {
       {ui}
     </QueryClientProvider>
   );
+}
+
+function setFullSession() {
+  act(() => {
+    useAuthStore.getState().setSession({
+      accessToken: 'access-token',
+      kycVerified: true,
+      riskAssessed: false,
+    });
+  });
 }

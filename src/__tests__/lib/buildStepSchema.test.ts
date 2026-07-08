@@ -21,6 +21,13 @@ describe('buildStepSchema', () => {
     expect(result.success).toBe(true);
   });
 
+  it('single_choice: rejects values not supplied by the question', () => {
+    const questions: Question[] = [
+      { id: 'q1', text: 'Pick one', type: 'single_choice', options: ['A', 'B'] },
+    ];
+    expect(buildStepSchema(questions).safeParse({ q1: 'C' }).success).toBe(false);
+  });
+
   it('boolean: accepts "true" and "false"', () => {
     const questions: Question[] = [
       { id: 'q1', text: 'Yes or no?', type: 'boolean' },
@@ -55,6 +62,15 @@ describe('buildStepSchema', () => {
     expect(schema.safeParse({ q1: ['A', 'B'] }).success).toBe(true);
   });
 
+  it('multi_choice: rejects duplicate and unknown selections', () => {
+    const questions: Question[] = [
+      { id: 'q1', text: 'Select many', type: 'multi_choice', options: ['A', 'B'] },
+    ];
+    const schema = buildStepSchema(questions);
+    expect(schema.safeParse({ q1: ['A', 'A'] }).success).toBe(false);
+    expect(schema.safeParse({ q1: ['A', 'C'] }).success).toBe(false);
+  });
+
   it('ranking: rejects array exceeding max_selections', () => {
     const questions: Question[] = [
       { id: 'q1', text: 'Rank top 3', type: 'ranking', max_selections: 3, options: ['A', 'B', 'C', 'D'] },
@@ -70,6 +86,15 @@ describe('buildStepSchema', () => {
     const schema = buildStepSchema(questions);
     expect(schema.safeParse({ q1: ['A', 'B'] }).success).toBe(true);
     expect(schema.safeParse({ q1: ['A', 'B', 'C'] }).success).toBe(true);
+  });
+
+  it('ranking: rejects duplicate and unknown options', () => {
+    const questions: Question[] = [
+      { id: 'q1', text: 'Rank top 2', type: 'ranking', max_selections: 2, options: ['A', 'B'] },
+    ];
+    const schema = buildStepSchema(questions);
+    expect(schema.safeParse({ q1: ['A', 'A'] }).success).toBe(false);
+    expect(schema.safeParse({ q1: ['A', 'C'] }).success).toBe(false);
   });
 
   it('rating: rejects values outside min/max range', () => {

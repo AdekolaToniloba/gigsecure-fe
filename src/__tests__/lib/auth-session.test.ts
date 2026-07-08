@@ -77,6 +77,7 @@ describe('initializeAuthSession', () => {
     expect(state.kycVerified).toBe(false);
     expect(state.riskAssessed).toBe(true);
     expect(state.isAuthenticated).toBe(true);
+    expect(state.hasFullSession).toBe(true);
     expect(state.status).toBe('authenticated');
   });
 
@@ -92,6 +93,7 @@ describe('initializeAuthSession', () => {
     expect(state.kycVerified).toBeNull();
     expect(state.riskAssessed).toBeNull();
     expect(state.isAuthenticated).toBe(false);
+    expect(state.hasFullSession).toBe(false);
     expect(state.status).toBe('unauthenticated');
   });
 

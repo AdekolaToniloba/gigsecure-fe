@@ -14,7 +14,7 @@ export function ProtectedRoute({ children, fallback = null }: ProtectedRouteProp
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { isAuthenticated, status, isInitializing } = useSession();
+  const { hasFullSession, status, isInitializing } = useSession();
   const isProtectedPath = isProtectedAppPath(pathname);
 
   const search = searchParams.toString();
@@ -22,11 +22,11 @@ export function ProtectedRoute({ children, fallback = null }: ProtectedRouteProp
 
   useEffect(() => {
     if (!isProtectedPath || isInitializing || status === 'idle') return;
-    if (isAuthenticated) return;
+    if (hasFullSession) return;
 
     router.replace(buildLoginRedirect(pathname, searchSuffix));
   }, [
-    isAuthenticated,
+    hasFullSession,
     isInitializing,
     isProtectedPath,
     pathname,
@@ -39,7 +39,7 @@ export function ProtectedRoute({ children, fallback = null }: ProtectedRouteProp
     return <>{fallback}</>;
   }
 
-  if (isProtectedPath && !isAuthenticated) {
+  if (isProtectedPath && !hasFullSession) {
     return null;
   }
 

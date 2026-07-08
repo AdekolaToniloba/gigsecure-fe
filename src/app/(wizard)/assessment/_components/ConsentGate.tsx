@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { Lock } from 'lucide-react';
 import { useWizardStore } from '@/store/wizard-store';
 import type { AssessmentStep } from '@/types/risk-assessment';
@@ -12,13 +12,15 @@ interface Props {
 
 export default function ConsentGate({ step }: Props) {
   const [checked, setChecked] = useState(false);
-  const { prevStep, setHealthConsent } = useWizardStore();
+  const prevStep = useWizardStore((state) => state.prevStep);
+  const setHealthConsent = useWizardStore((state) => state.setHealthConsent);
+  const reduceMotion = useReducedMotion();
 
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.97 }}
+      initial={reduceMotion ? false : { opacity: 0, scale: 0.97 }}
       animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.25, ease: 'easeOut' }}
+      transition={{ duration: reduceMotion ? 0 : 0.25, ease: 'easeOut' }}
       className="max-w-lg mx-auto"
     >
       <div className="mb-6">

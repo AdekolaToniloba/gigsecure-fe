@@ -13,7 +13,7 @@ describe('IncomeStabilityCard', () => {
     expect(region).toHaveTextContent('Complete your risk assessment');
     expect(screen.getByRole('link', { name: 'Start assessment' })).toHaveAttribute(
       'href',
-      '/assessment',
+      '/dashboard/risk-assessment',
     );
     expect(screen.queryByRole('img', { name: /stability trend values/i })).not.toBeInTheDocument();
     expect(region).not.toHaveTextContent(/₦|moderate|%/i);

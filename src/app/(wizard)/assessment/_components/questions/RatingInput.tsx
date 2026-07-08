@@ -1,6 +1,6 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { Controller, type Control } from 'react-hook-form';
 import type { RatingQuestion } from '@/types/risk-assessment';
 
@@ -11,6 +11,7 @@ interface Props {
 }
 
 export default function RatingInput({ question, control, error }: Props) {
+  const reduceMotion = useReducedMotion();
   const values = Array.from(
     { length: question.max - question.min + 1 },
     (_, i) => question.min + i
@@ -38,8 +39,8 @@ export default function RatingInput({ question, control, error }: Props) {
                   role="radio"
                   aria-checked={isSelected}
                   aria-label={`${val}${label ? ` – ${label}` : ''}`}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={reduceMotion ? undefined : { scale: 1.05 }}
+                  whileTap={reduceMotion ? undefined : { scale: 0.95 }}
                   onClick={() => field.onChange(val)}
                   className={`flex flex-col items-center justify-center flex-1 rounded-lg border py-3 px-1 transition-all duration-150 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[#004E4C] ${
                     isSelected

@@ -1,25 +1,18 @@
 'use client';
 
-import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { useEffect, useRef } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
 import { pdf } from '@react-pdf/renderer';
-import type { AssessmentResponse } from '@/types/api';
+import type { AssessmentResponse, PillarScores } from '@/types/api';
 import { useAuthStore } from '@/store/auth-store';
 import { Check, CreditCard, AlertTriangle, Users, Clock, Heart, Info, Download} from 'lucide-react';
 import RiskReportPDF from './report/RiskReportPDF';
 import { reportColors } from '@/lib/report-theme';
+import { RISK_PILLAR_LABELS } from '@/lib/risk/report-display-model';
 import { parseInsights, type InsightBlock } from '../_lib/parseInsights';
-import { getRiskLevel } from '../_lib/getRiskLevel';
+import { getRiskScorePresentation } from '../_lib/getRiskLevel';
 import { renderInlineBold } from '../_lib/renderInlineBold';
 import { twMerge } from 'tailwind-merge';
-
-const PILLAR_LABELS: Record<string, string> = {
-  income: 'Income Stability',
-  client: 'Client Concentration',
-  safety: 'Safety Net Strength',
-  equipment: 'Equipment Dependency',
-  health: 'Health & Lifestyle',
-};
 
 type InsightSection = {
   header: string;
@@ -78,9 +71,15 @@ interface Props {
 
 export default function ReportScreen({ data }: Props) {
   const firstName = useAuthStore((s) => s.firstName);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const reduceMotion = useReducedMotion();
   // const [copied, setCopied] = useState(false);
 
   const parsedInsights = parseInsights(data.ai_insights);
+
+  useEffect(() => {
+    headingRef.current?.focus();
+  }, []);
 
   
   const handleDownload = async () => {
@@ -100,15 +99,15 @@ export default function ReportScreen({ data }: Props) {
   // };
   
 
-  const pillarEntries = Object.entries(data.pillar_scores) as [string, number][];
-  const criticalGaps = pillarEntries.filter(([_, score]) => score > 70).length;
+  const pillarEntries = Object.entries(data.pillar_scores) as [keyof PillarScores, number][];
 
   return (
     <motion.div
-      initial={{ opacity: 0 }}
+      initial={reduceMotion ? false : { opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 0.4 }}
-      aria-live="polite"
+      transition={{ duration: reduceMotion ? 0 : 0.4 }}
+      role="region"
+      aria-labelledby="public-risk-report-title"
       className="w-full pt-4 pb-0"
     >
       <div className="max-w-3xl mx-auto px-4 sm:px-6 md:px-0">
@@ -119,31 +118,14 @@ export default function ReportScreen({ data }: Props) {
       >
         <div className="flex-1 w-full text-center md:text-left">
           <p className="text-[#8FB3A8] font-body text-xs mb-2">Your Personalized Protection Plan</p>
-          <h2 className="text-white font-heading text-[32px] font-bold leading-tight mb-2">
+          <h2
+            ref={headingRef}
+            id="public-risk-report-title"
+            tabIndex={-1}
+            className="text-white font-heading text-[32px] font-bold leading-tight mb-2 outline-none"
+          >
             {firstName ? `${firstName}, here's your protection plan` : "Here's your protection plan"}
           </h2>
-          <p className="text-[#8FB3A8] font-body text-[13px] mb-8">Generated just now</p>
-
-          <div className="flex gap-4 justify-center md:justify-start">
-            <div className="flex flex-col items-center">
-              <div 
-                className="w-16 h-12 flex items-center justify-center rounded-lg mb-1 font-bold text-xl"
-                style={{ backgroundColor: reportColors.accent, color: reportColors.primary }}
-              >
-                {data.recommendations.length}
-              </div>
-              <span className="text-[#8FB3A8] text-xs">Plans Needed</span>
-            </div>
-            <div className="flex flex-col items-center">
-              <div 
-                className="w-16 h-12 flex items-center justify-center rounded-lg mb-1 font-bold text-xl"
-                style={{ backgroundColor: '#2D6053', color: 'white' }}
-              >
-                {criticalGaps}
-              </div>
-              <span className="text-[#8FB3A8] text-xs">Critical Gaps</span>
-            </div>
-          </div>
         </div>
         <CircularGauge
           score={Math.round(data.overall_score)}
@@ -158,12 +140,12 @@ export default function ReportScreen({ data }: Props) {
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {pillarEntries.map(([key, score]) => {
-            const risk = getRiskLevel(score);
-            const label = PILLAR_LABELS[key] ?? key;
+            const risk = getRiskScorePresentation(score);
+            const label = RISK_PILLAR_LABELS[key];
             const barWidth = `${Math.min(score, 100)}%`;
             return (
               <motion.div 
-                whileHover={{ y: -4, boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.05)' }}
+                whileHover={reduceMotion ? undefined : { y: -4, boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.05)' }}
                 key={key} 
                 className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm flex flex-col justify-between h-[130px] transition-all"
               >
@@ -386,7 +368,7 @@ export default function ReportScreen({ data }: Props) {
             </p>
           </div>
           <button
-
+            type="button"
             onClick={handleDownload}
             className="flex items-center justify-center gap-2 h-12 px-8 rounded-lg bg-[#FFE419] text-[#004E4C] font-body text-[15px] font-bold hover:bg-[#EBD001] transition-colors flex-shrink-0 cursor-pointer"
           >

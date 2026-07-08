@@ -1,12 +1,17 @@
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react';
+import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useUserFlags } from '@/hooks/auth/useUserFlags';
 import { useCurrentUser, useUpdateProfile } from '@/hooks/user/useUser';
 import { useUserProfile } from '@/hooks/user/useUserProfile';
 import { userService } from '@/services/user.service';
 import { useAuthStore } from '@/store/auth-store';
+import { ENDPOINTS } from '@/lib/api/endpoints';
+import { server } from '@/mocks/server';
+
+const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000';
 
 beforeEach(() => {
   vi.restoreAllMocks();
@@ -18,7 +23,7 @@ beforeEach(() => {
 describe('user profile hooks', () => {
   it('hydrates the authenticated user profile and syncs flags into the auth store', async () => {
     act(() => {
-      useAuthStore.getState().setAccessToken(createJwt({ scope: 'authenticated' }));
+      setFullSession();
     });
 
     const { result } = renderHook(() => useUserProfile(), { wrapper: createWrapper() });
@@ -36,10 +41,10 @@ describe('user profile hooks', () => {
     expect(state.riskAssessed).toBe(true);
   });
 
-  it('skips /users/me for waitlist-scoped tokens', async () => {
+  it('skips /users/me for waitlist tokens without decoding token scope', async () => {
     const getMeSpy = vi.spyOn(userService, 'getMe');
     act(() => {
-      useAuthStore.getState().setAccessToken(createJwt({ scope: 'waitlist' }));
+      useAuthStore.getState().setAccessToken('opaque-waitlist-token');
     });
 
     const { result } = renderHook(() => useCurrentUser(), { wrapper: createWrapper() });
@@ -49,20 +54,25 @@ describe('user profile hooks', () => {
     expect(getMeSpy).not.toHaveBeenCalled();
     expect(useAuthStore.getState().kycVerified).toBeNull();
     expect(useAuthStore.getState().riskAssessed).toBeNull();
+    expect(useAuthStore.getState().hasFullSession).toBe(false);
   });
 
-  it('exposes resolved and loading flag state without raw store imports', async () => {
+  it('does not treat unresolved waitlist flags as full-session loading', async () => {
     act(() => {
-      useAuthStore.getState().setAccessToken(createJwt({ scope: 'authenticated' }));
+      useAuthStore.getState().setAccessToken('opaque-waitlist-token');
     });
 
     const { result } = renderHook(() => useUserFlags());
 
     expect(result.current.hasResolvedFlags).toBe(false);
-    expect(result.current.isLoading).toBe(true);
+    expect(result.current.isLoading).toBe(false);
 
     act(() => {
-      useAuthStore.getState().setFlags({ kycVerified: true, riskAssessed: false });
+      useAuthStore.getState().setSession({
+        accessToken: 'opaque-full-session-token',
+        kycVerified: true,
+        riskAssessed: false,
+      });
     });
 
     await waitFor(() => {
@@ -75,7 +85,7 @@ describe('user profile hooks', () => {
 
   it('syncs flags after profile updates', async () => {
     act(() => {
-      useAuthStore.getState().setAccessToken(createJwt({ scope: 'authenticated' }));
+      setFullSession();
     });
 
     const { result } = renderHook(() => useUpdateProfile(), { wrapper: createWrapper() });
@@ -88,6 +98,51 @@ describe('user profile hooks', () => {
     expect(state.user?.email).toBe('test@gigsecure.com');
     expect(state.kycVerified).toBe(false);
     expect(state.riskAssessed).toBe(true);
+  });
+
+  it('deduplicates /users/me across full-session consumers', async () => {
+    let requests = 0;
+    server.use(
+      http.get(`${baseUrl}${ENDPOINTS.USERS.ME}`, () => {
+        requests += 1;
+        return HttpResponse.json({
+          user: {
+            id: '00000000-0000-4000-8000-000000000001',
+            email: 'dedupe@gigsecure.com',
+            first_name: 'Dedupe',
+            last_name: 'User',
+            status: 'active',
+            role: 'user',
+            email_verified: true,
+          },
+          profile: null,
+          kyc_verified: true,
+          risk_assessed: false,
+        });
+      }),
+    );
+    act(() => setFullSession());
+    const Wrapper = createWrapper();
+    const first = renderHook(() => useCurrentUser(), { wrapper: Wrapper });
+    const second = renderHook(() => useUserProfile(), { wrapper: Wrapper });
+
+    await waitFor(() => {
+      expect(first.result.current.isSuccess).toBe(true);
+      expect(second.result.current.isSuccess).toBe(true);
+    });
+
+    expect(requests).toBe(1);
+  });
+
+  it('honors route-owned profile disablement in a full session', () => {
+    act(() => setFullSession());
+    const getMeSpy = vi.spyOn(userService, 'getMe');
+    const { result } = renderHook(() => useCurrentUser({ enabled: false }), {
+      wrapper: createWrapper(),
+    });
+
+    expect(result.current.fetchStatus).toBe('idle');
+    expect(getMeSpy).not.toHaveBeenCalled();
   });
 });
 
@@ -110,10 +165,10 @@ function createWrapper() {
   return Wrapper;
 }
 
-function createJwt(payload: Record<string, unknown>) {
-  return ['header', encodeBase64Url(JSON.stringify(payload)), 'signature'].join('.');
-}
-
-function encodeBase64Url(value: string) {
-  return btoa(value).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+function setFullSession() {
+  useAuthStore.getState().setSession({
+    accessToken: 'opaque-full-session-token',
+    kycVerified: false,
+    riskAssessed: false,
+  });
 }

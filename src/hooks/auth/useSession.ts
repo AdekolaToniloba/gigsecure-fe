@@ -9,6 +9,7 @@ export function useSession() {
   const kycVerified = useAuthStore((s) => s.kycVerified);
   const riskAssessed = useAuthStore((s) => s.riskAssessed);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const hasFullSession = useAuthStore((s) => s.hasFullSession);
   const status = useAuthStore((s) => s.status);
   const refreshMutation = useSilentRefresh();
 
@@ -20,6 +21,7 @@ export function useSession() {
     kycVerified,
     riskAssessed,
     isAuthenticated,
+    hasFullSession,
     status,
     isInitializing: status === 'initializing' || refreshMutation.isPending,
     refresh: refreshMutation.mutateAsync,

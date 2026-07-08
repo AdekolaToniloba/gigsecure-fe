@@ -26,7 +26,11 @@ afterEach(() => {
 describe('apiClient refresh handling', () => {
   it('sends one refresh request for concurrent 401s and retries with the new access token', async () => {
     act(() => {
-      useAuthStore.getState().setAccessToken(createJwt({ scope: 'authenticated', exp: 1 }));
+      useAuthStore.getState().setSession({
+        accessToken: 'authenticated-token',
+        kycVerified: true,
+        riskAssessed: false,
+      });
     });
 
     const adapter = vi.fn<AxiosAdapter>(async (config) => {
@@ -72,11 +76,16 @@ describe('apiClient refresh handling', () => {
     expect(useAuthStore.getState().accessToken).toBe('fresh-access-token');
     expect(useAuthStore.getState().kycVerified).toBe(true);
     expect(useAuthStore.getState().riskAssessed).toBe(false);
+    expect(useAuthStore.getState().hasFullSession).toBe(true);
   });
 
   it('clears auth state when refresh fails', async () => {
     act(() => {
-      useAuthStore.getState().setAccessToken(createJwt({ scope: 'authenticated', exp: 1 }));
+      useAuthStore.getState().setSession({
+        accessToken: 'authenticated-token',
+        kycVerified: true,
+        riskAssessed: false,
+      });
     });
 
     apiClient.defaults.adapter = vi.fn<AxiosAdapter>(async (config) => {
@@ -95,14 +104,13 @@ describe('apiClient refresh handling', () => {
     expect(state.kycVerified).toBeNull();
     expect(state.riskAssessed).toBeNull();
     expect(state.isAuthenticated).toBe(false);
+    expect(state.hasFullSession).toBe(false);
     expect(state.status).toBe('unauthenticated');
   });
 
-  it('does not refresh non-expired waitlist tokens on 401 scope failures', async () => {
+  it('does not refresh waitlist tokens on backend 401 responses', async () => {
     act(() => {
-      useAuthStore.getState().setAccessToken(
-        createJwt({ scope: 'waitlist', exp: Math.ceil(Date.now() / 1000) + 60 })
-      );
+      useAuthStore.getState().setAccessToken('waitlist-access-token');
     });
 
     apiClient.defaults.adapter = vi.fn<AxiosAdapter>(async (config) => {
@@ -114,6 +122,7 @@ describe('apiClient refresh handling', () => {
     expect(fetch).not.toHaveBeenCalled();
     expect(useAuthStore.getState().accessToken).not.toBeNull();
     expect(useAuthStore.getState().isAuthenticated).toBe(true);
+    expect(useAuthStore.getState().hasFullSession).toBe(false);
   });
 });
 
@@ -142,12 +151,4 @@ function jsonResponse(body: unknown, init?: ResponseInit) {
     status: init?.status ?? 200,
     headers: { 'Content-Type': 'application/json' },
   });
-}
-
-function createJwt(payload: Record<string, unknown>) {
-  return ['header', encodeBase64Url(JSON.stringify(payload)), 'signature'].join('.');
-}
-
-function encodeBase64Url(value: string) {
-  return btoa(value).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }

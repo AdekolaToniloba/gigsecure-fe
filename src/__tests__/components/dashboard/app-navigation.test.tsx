@@ -29,7 +29,7 @@ describe('AppNavigation', () => {
     );
     expect(screen.getByRole('link', { name: 'Risk Assessment' })).toHaveAttribute(
       'href',
-      '/assessment'
+      '/dashboard/risk-assessment'
     );
     expect(screen.getAllByRole('listitem').map((item) => item.textContent)).toEqual([
       'Overview',
@@ -41,7 +41,7 @@ describe('AppNavigation', () => {
   });
 
   it('marks Risk Assessment active on its route', () => {
-    navigation.pathname = '/assessment';
+    navigation.pathname = '/dashboard/risk-assessment';
     render(<AppNavigation />);
 
     expect(screen.getByRole('link', { name: 'Risk Assessment' })).toHaveAttribute(

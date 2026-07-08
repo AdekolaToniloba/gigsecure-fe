@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import React, { useEffect, useMemo, useRef } from 'react';
+import { useForm, Controller, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { User } from 'lucide-react';
@@ -9,9 +9,10 @@ import DatePicker from '@/components/ui/DatePicker';
 import Select from '@/components/ui/Select';
 import ComboboxSelect from '@/components/ui/ComboboxSelect';
 import { useWizardStore } from '@/store/wizard-store';
-import { useAuthStore } from '@/store/auth-store';
-import { useCurrentUser } from '@/hooks/user/useUser';
-import { useRiskCategories } from '@/hooks/risk/useRisk';
+import {
+  type WizardPersonalDetailsDefaults,
+} from '@/lib/risk/profile-to-wizard-defaults';
+import type { RiskCategory } from '@/types/risk-assessment';
 import {
   getCitiesByState,
   getStateNames,
@@ -60,17 +61,34 @@ function getAllowedValue<T extends string>(value: unknown, allowedValues: readon
     : undefined;
 }
 
-export default function StepPersonalDetails() {
-  const { answers, setStepAnswers, nextStep, setSelectedCategory } = useWizardStore();
-  const authFirstName = useAuthStore((s) => s.firstName);
-  const authLastName = useAuthStore((s) => s.lastName);
-  const { data: userResponse } = useCurrentUser();
-  const { data: categories } = useRiskCategories();
+type StepPersonalDetailsProps = {
+  initialDefaults?: Partial<WizardPersonalDetailsDefaults>;
+  categories?: RiskCategory[];
+  isCategoriesLoading?: boolean;
+};
 
-  const me = userResponse?.user;
-  const profile = userResponse?.profile;
+const PERSONAL_DETAIL_FIELDS = [
+  'first_name',
+  'last_name',
+  'date_of_birth',
+  'gender',
+  'state',
+  'city',
+  'occupation',
+  'marital_status',
+] as const satisfies ReadonlyArray<keyof WizardPersonalDetailsDefaults>;
 
-  const [hasPrefilled, setHasPrefilled] = useState(false);
+export default function StepPersonalDetails({
+  initialDefaults = {},
+  categories = [],
+  isCategoriesLoading = false,
+}: StepPersonalDetailsProps) {
+  const answers = useWizardStore((state) => state.answers);
+  const setStepAnswers = useWizardStore((state) => state.setStepAnswers);
+  const nextStep = useWizardStore((state) => state.nextStep);
+  const setSelectedCategory = useWizardStore((state) => state.setSelectedCategory);
+  const appliedDefaults = useRef<Partial<WizardPersonalDetailsDefaults>>({});
+  const defaults = useMemo(() => ({ ...initialDefaults, ...answers }), [answers, initialDefaults]);
   const stateOptions = useMemo(
     () => getStateNames().map((stateName) => ({ value: stateName, label: stateName })),
     []
@@ -80,36 +98,31 @@ export default function StepPersonalDetails() {
     resolver: zodResolver(personalDetailsSchema),
     mode: 'onChange',
     defaultValues: {
-      first_name: (answers.first_name as string) || authFirstName || '',
-      last_name: (answers.last_name as string) || authLastName || '',
-      date_of_birth: (answers.date_of_birth as string) || '',
-      gender: getAllowedValue(answers.gender, GENDER_VALUES),
-      state: (answers.state as string) || '',
-      city: (answers.city as string) || '',
-      occupation: (answers.occupation as string) || '',
-      marital_status: getAllowedValue(answers.marital_status, MARITAL_STATUS_VALUES),
+      first_name: typeof defaults.first_name === 'string' ? defaults.first_name : '',
+      last_name: typeof defaults.last_name === 'string' ? defaults.last_name : '',
+      date_of_birth: typeof defaults.date_of_birth === 'string' ? defaults.date_of_birth : '',
+      gender: getAllowedValue(defaults.gender, GENDER_VALUES),
+      state: typeof defaults.state === 'string' ? defaults.state : '',
+      city: typeof defaults.city === 'string' ? defaults.city : '',
+      occupation: typeof defaults.occupation === 'string' ? defaults.occupation : '',
+      marital_status: getAllowedValue(defaults.marital_status, MARITAL_STATUS_VALUES),
     },
   });
 
-  // Pre-fill fields from useCurrentUser if they are empty in answers
   useEffect(() => {
-    if (userResponse && !hasPrefilled) {
-      if (me?.first_name && !form.getValues('first_name')) form.setValue('first_name', me.first_name, { shouldValidate: true });
-      if (me?.last_name && !form.getValues('last_name')) form.setValue('last_name', me.last_name, { shouldValidate: true });
-      if (profile?.state && !form.getValues('state')) form.setValue('state', profile.state, { shouldValidate: true });
-      if (profile?.city && !form.getValues('city')) form.setValue('city', profile.city, { shouldValidate: true });
-      if (profile?.gender && !form.getValues('gender')) {
-        const genderVal = profile.gender.toLowerCase();
-        const allowedGender = getAllowedValue(genderVal, GENDER_VALUES);
-        if (allowedGender) {
-          form.setValue('gender', allowedGender, { shouldValidate: true });
-        }
-      }
-      setHasPrefilled(true);
-    }
-  }, [userResponse, me, profile, form, hasPrefilled]);
+    for (const field of PERSONAL_DETAIL_FIELDS) {
+      if (form.getValues(field)) continue;
+      const value = initialDefaults[field];
+      if (!value || appliedDefaults.current[field] === value) continue;
 
-  const selectedState = form.watch('state');
+      if (field === 'gender' && !getAllowedValue(value, GENDER_VALUES)) continue;
+      if (field === 'marital_status' && !getAllowedValue(value, MARITAL_STATUS_VALUES)) continue;
+      form.setValue(field, value as FormValues[typeof field], { shouldValidate: true });
+      appliedDefaults.current[field] = value;
+    }
+  }, [form, initialDefaults]);
+
+  const selectedState = useWatch({ control: form.control, name: 'state' });
   const cityOptions = useMemo(
     () => getCitiesByState(selectedState).map((cityName) => ({ value: cityName, label: cityName })),
     [selectedState]
@@ -163,14 +176,15 @@ export default function StepPersonalDetails() {
               type="text"
               placeholder="Enter your full name"
               {...form.register('first_name')}
-              disabled={!!me?.first_name}
+              aria-invalid={form.formState.errors.first_name ? true : undefined}
+              aria-describedby={form.formState.errors.first_name ? 'first_name-error' : undefined}
               className={inputClassName}
             />
             <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
               <User size={18} />
             </div>
           </div>
-          {form.formState.errors.first_name && <p className="mt-1.5 text-xs text-red-500">{form.formState.errors.first_name.message}</p>}
+          {form.formState.errors.first_name && <p id="first_name-error" className="mt-1.5 text-xs text-red-500">{form.formState.errors.first_name.message}</p>}
         </div>
 
         {/* Last Name */}
@@ -182,14 +196,15 @@ export default function StepPersonalDetails() {
               type="text"
               placeholder="Enter your full name"
               {...form.register('last_name')}
-              disabled={!!me?.last_name}
+              aria-invalid={form.formState.errors.last_name ? true : undefined}
+              aria-describedby={form.formState.errors.last_name ? 'last_name-error' : undefined}
               className={inputClassName}
             />
             <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
               <User size={18} />
             </div>
           </div>
-          {form.formState.errors.last_name && <p className="mt-1.5 text-xs text-red-500">{form.formState.errors.last_name.message}</p>}
+          {form.formState.errors.last_name && <p id="last_name-error" className="mt-1.5 text-xs text-red-500">{form.formState.errors.last_name.message}</p>}
         </div>
 
         {/* Date of Birth */}
@@ -206,10 +221,11 @@ export default function StepPersonalDetails() {
                 onChange={field.onChange}
                 onBlur={field.onBlur}
                 hasError={!!form.formState.errors.date_of_birth}
+                ariaDescribedBy={form.formState.errors.date_of_birth ? 'date_of_birth-error' : undefined}
               />
             )}
           />
-          {form.formState.errors.date_of_birth && <p className="mt-1.5 text-xs text-red-500">{form.formState.errors.date_of_birth.message}</p>}
+          {form.formState.errors.date_of_birth && <p id="date_of_birth-error" className="mt-1.5 text-xs text-red-500">{form.formState.errors.date_of_birth.message}</p>}
         </div>
 
         {/* Gender */}
@@ -231,12 +247,12 @@ export default function StepPersonalDetails() {
                 onChange={field.onChange}
                 onBlur={field.onBlur}
                 placeholder="Select gender"
-                disabled={!!profile?.gender}
                 hasError={!!form.formState.errors.gender}
+                ariaDescribedBy={form.formState.errors.gender ? 'gender-error' : undefined}
               />
             )}
           />
-          {form.formState.errors.gender && <p className="mt-1.5 text-xs text-red-500">{form.formState.errors.gender.message}</p>}
+          {form.formState.errors.gender && <p id="gender-error" className="mt-1.5 text-xs text-red-500">{form.formState.errors.gender.message}</p>}
         </div>
 
         {/* State of Residence */}
@@ -261,12 +277,12 @@ export default function StepPersonalDetails() {
                 onBlur={field.onBlur}
                 placeholder="Select your state"
                 searchPlaceholder="Search state..."
-                disabled={!!profile?.state}
                 hasError={!!form.formState.errors.state}
+                ariaDescribedBy={form.formState.errors.state ? 'state-error' : undefined}
               />
             )}
           />
-          {form.formState.errors.state && <p className="mt-1.5 text-xs text-red-500">{form.formState.errors.state.message}</p>}
+          {form.formState.errors.state && <p id="state-error" className="mt-1.5 text-xs text-red-500">{form.formState.errors.state.message}</p>}
         </div>
 
         {/* City */}
@@ -284,12 +300,13 @@ export default function StepPersonalDetails() {
                 onChange={field.onChange}
                 onBlur={field.onBlur}
                 placeholder={selectedState ? 'Select city' : 'Select state first'}
-                disabled={!selectedState || !!profile?.city}
+                disabled={!selectedState}
                 hasError={!!form.formState.errors.city}
+                ariaDescribedBy={form.formState.errors.city ? 'city-error' : undefined}
               />
             )}
           />
-          {form.formState.errors.city && <p className="mt-1.5 text-xs text-red-500">{form.formState.errors.city.message}</p>}
+          {form.formState.errors.city && <p id="city-error" className="mt-1.5 text-xs text-red-500">{form.formState.errors.city.message}</p>}
         </div>
 
         {/* Occupation */}
@@ -310,11 +327,14 @@ export default function StepPersonalDetails() {
                 onChange={field.onChange}
                 onBlur={field.onBlur}
                 placeholder="Select occupation"
+                disabled={isCategoriesLoading}
                 hasError={!!form.formState.errors.occupation}
+                ariaDescribedBy={form.formState.errors.occupation ? 'occupation-error' : undefined}
               />
             )}
           />
-          {form.formState.errors.occupation && <p className="mt-1.5 text-xs text-red-500">{form.formState.errors.occupation.message}</p>}
+          {form.formState.errors.occupation && <p id="occupation-error" className="mt-1.5 text-xs text-red-500">{form.formState.errors.occupation.message}</p>}
+          {isCategoriesLoading && <p className="mt-1.5 text-xs text-gray-500" role="status">Loading occupations…</p>}
         </div>
 
         {/* Marital Status */}
@@ -338,10 +358,11 @@ export default function StepPersonalDetails() {
                 onBlur={field.onBlur}
                 placeholder="Select marital status"
                 hasError={!!form.formState.errors.marital_status}
+                ariaDescribedBy={form.formState.errors.marital_status ? 'marital_status-error' : undefined}
               />
             )}
           />
-          {form.formState.errors.marital_status && <p className="mt-1.5 text-xs text-red-500">{form.formState.errors.marital_status.message}</p>}
+          {form.formState.errors.marital_status && <p id="marital_status-error" className="mt-1.5 text-xs text-red-500">{form.formState.errors.marital_status.message}</p>}
         </div>
 
       </div>

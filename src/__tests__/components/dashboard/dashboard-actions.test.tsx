@@ -56,7 +56,7 @@ describe('GettingStartedChecklist', () => {
 
     expect(within(getAction('risk-assessment')).getByRole('link')).toHaveAttribute(
       'href',
-      '/assessment',
+      '/dashboard/risk-assessment',
     );
     expect(within(getAction('kyc-verification')).getByRole('link')).toHaveAttribute(
       'href',

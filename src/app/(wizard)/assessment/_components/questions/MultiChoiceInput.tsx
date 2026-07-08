@@ -1,6 +1,6 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { Check } from 'lucide-react';
 import { Controller, type Control } from 'react-hook-form';
 import type { MultiChoiceQuestion } from '@/types/risk-assessment';
@@ -12,6 +12,7 @@ interface Props {
 }
 
 export default function MultiChoiceInput({ question, control, error }: Props) {
+  const reduceMotion = useReducedMotion();
   return (
     <div>
       <Controller
@@ -43,7 +44,7 @@ export default function MultiChoiceInput({ question, control, error }: Props) {
                     type="button"
                     role="checkbox"
                     aria-checked={isSelected}
-                    whileTap={{ scale: 0.99 }}
+                    whileTap={reduceMotion ? undefined : { scale: 0.99 }}
                     onClick={() => toggle(option)}
                     className={`flex items-center gap-3 rounded-lg border px-4 py-3.5 text-left transition-all duration-150 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[#004E4C] ${
                       isSelected

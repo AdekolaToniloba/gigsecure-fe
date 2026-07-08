@@ -17,6 +17,7 @@ interface ComboboxSelectProps {
   disabled?: boolean;
   className?: string;
   hasError?: boolean;
+  ariaDescribedBy?: string;
 }
 
 export default function ComboboxSelect({
@@ -31,6 +32,7 @@ export default function ComboboxSelect({
   disabled = false,
   className,
   hasError = false,
+  ariaDescribedBy,
 }: ComboboxSelectProps) {
   const generatedId = useId();
   const inputId = id || `combobox-${generatedId}`;
@@ -162,6 +164,7 @@ export default function ComboboxSelect({
         aria-controls={listboxId}
         aria-haspopup="listbox"
         aria-invalid={hasError || undefined}
+        aria-describedby={ariaDescribedBy}
         aria-activedescendant={
           isOpen && highlightedIndex >= 0 ? `${inputId}-option-${highlightedIndex}` : undefined
         }

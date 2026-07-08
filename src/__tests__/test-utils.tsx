@@ -2,6 +2,7 @@ import React from 'react';
 import { render, type RenderOptions } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { vi } from 'vitest';
+import { WizardNavigationProvider } from '@/components/risk-assessment/wizard/risk-assessment-wizard-context';
 
 // Shared QueryClient with retries disabled for deterministic tests
 function createTestQueryClient() {
@@ -31,7 +32,9 @@ function TestWrapper({ children }: { children: React.ReactNode }) {
   const queryClient = createTestQueryClient();
   return (
     <QueryClientProvider client={queryClient}>
-      {children}
+      <WizardNavigationProvider value={{ onCancel: vi.fn(), stepNumber: 1, totalSteps: 6, focusQuestion: vi.fn() }}>
+        {children}
+      </WizardNavigationProvider>
     </QueryClientProvider>
   );
 }

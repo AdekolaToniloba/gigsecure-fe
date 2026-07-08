@@ -1,4 +1,5 @@
-import { http, HttpResponse } from 'msw';
+import { delay, http, HttpResponse } from 'msw';
+import type { JsonBodyType } from 'msw';
 
 const BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000';
 
@@ -27,6 +28,45 @@ function matchesRepeated(search: URLSearchParams, key: string, value: string) {
   return selected.length === 0 || selected.includes(value);
 }
 
+const recommendationsUrl = `${BASE}/api/v1/marketplace/recommendations`;
+export const MARKETPLACE_RECOMMENDATIONS_DELAY_MS = 120;
+
+function hasBearerToken(request: Request): boolean {
+  return /^Bearer\s+\S+$/i.test(request.headers.get('authorization') ?? '');
+}
+
+function recommendationHandler(body: JsonBodyType, status = 200) {
+  return http.get(recommendationsUrl, ({ request }) => {
+    if (!hasBearerToken(request)) {
+      return HttpResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+    }
+    return HttpResponse.json(body, { status });
+  });
+}
+
+export const marketplaceRecommendationHandlerScenarios = {
+  success: recommendationHandler({
+    recommended_categories: ['Income Protection', 'Equipment Protection'],
+    items: marketplaceProducts.slice(0, 3),
+  }),
+  empty: recommendationHandler({ recommended_categories: [], items: [] }),
+  malformed: recommendationHandler({ recommended_categories: 'Income Protection', items: null }),
+  failure: recommendationHandler(
+    { detail: 'Marketplace recommendations are temporarily unavailable.' },
+    500
+  ),
+  delayed: http.get(recommendationsUrl, async ({ request }) => {
+    if (!hasBearerToken(request)) {
+      return HttpResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+    }
+    await delay(MARKETPLACE_RECOMMENDATIONS_DELAY_MS);
+    return HttpResponse.json({
+      recommended_categories: ['Income Protection', 'Equipment Protection'],
+      items: marketplaceProducts.slice(0, 3),
+    });
+  }),
+} as const;
+
 export const marketplaceHandlers = [
   http.get(`${BASE}/api/v1/marketplace/products`, ({ request }) => {
     const url = new URL(request.url);
@@ -50,12 +90,7 @@ export const marketplaceHandlers = [
       offset,
     });
   }),
-  http.get(`${BASE}/api/v1/marketplace/recommendations`, () =>
-    HttpResponse.json({
-      recommended_categories: ['Income Protection', 'Equipment Protection'],
-      items: marketplaceProducts.slice(0, 3),
-    })
-  ),
+  marketplaceRecommendationHandlerScenarios.success,
   http.get(`${BASE}/api/v1/marketplace/products/:id`, ({ params }) => {
     const product = marketplaceProducts.find((item) => item.id === params.id);
     return product

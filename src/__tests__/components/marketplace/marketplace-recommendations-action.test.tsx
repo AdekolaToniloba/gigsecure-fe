@@ -40,7 +40,7 @@ describe('MarketplaceRecommendationsAction', () => {
 
     await user.click(screen.getByRole('button', { name: /View Recommendations/i }));
 
-    expect(mockRouter.push).toHaveBeenCalledWith('/assessment');
+    expect(mockRouter.push).toHaveBeenCalledWith('/dashboard/risk-assessment');
   });
 
   it('shows accessible loading and success states for assessed authenticated users', async () => {

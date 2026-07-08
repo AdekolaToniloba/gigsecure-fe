@@ -1,8 +1,7 @@
 'use client';
 
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Check } from 'lucide-react';
-import { useWizardStore } from '@/store/wizard-store';
 import type { AssessmentStep } from '@/types/risk-assessment';
 
 interface Props {
@@ -12,6 +11,7 @@ interface Props {
 
 export default function StepSidebar({ steps, currentStep }: Props) {
   const fullSteps = steps;
+  const reduceMotion = useReducedMotion();
 
   return (
     <aside className="w-full lg:w-[340px] flex-shrink-0">
@@ -44,19 +44,19 @@ export default function StepSidebar({ steps, currentStep }: Props) {
                     {isCompleted ? (
                       <motion.div
                         key="check"
-                        initial={{ scale: 0, opacity: 0 }}
+                        initial={reduceMotion ? false : { scale: 0, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
-                        exit={{ scale: 0, opacity: 0 }}
-                        transition={{ duration: 0.2 }}
+                        exit={reduceMotion ? undefined : { scale: 0, opacity: 0 }}
+                        transition={{ duration: reduceMotion ? 0 : 0.2 }}
                       >
                         <Check className="h-4 w-4 text-[#004E4C]" strokeWidth={3} />
                       </motion.div>
                     ) : (
                       <motion.span
                         key="number"
-                        initial={{ scale: 0, opacity: 0 }}
+                        initial={reduceMotion ? false : { scale: 0, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
-                        exit={{ scale: 0, opacity: 0 }}
+                        exit={reduceMotion ? undefined : { scale: 0, opacity: 0 }}
                         className={`font-body text-[13px] font-bold ${isActive ? 'text-[#004E4C]' : 'text-gray-500'}`}
                       >
                         {index + 1}
@@ -86,13 +86,13 @@ export default function StepSidebar({ steps, currentStep }: Props) {
         {/* Footer info - hidden on mobile */}
         <div className="hidden lg:block mt-6 pt-5 border-t border-gray-100 space-y-2">
           <a
-            href="#"
+            href="/risk-assessment"
             className="flex items-center gap-2 text-[12px] text-[#004E4C] font-body font-medium hover:underline"
           >
             What is a risk assessment
           </a>
           <a
-            href="#"
+            href="/faq"
             className="flex items-center gap-2 text-[12px] text-[#004E4C] font-body font-medium hover:underline"
           >
             FAQ&apos;s on GigSecure
@@ -105,8 +105,8 @@ export default function StepSidebar({ steps, currentStep }: Props) {
           </div>
           <p className="font-body text-[11px] text-gray-400">Your data is secure and private.</p>
         </div>
-        <a href="#" className="hidden lg:block mt-1 font-body text-[11px] text-[#004E4C] hover:underline">
-          Need help? <span className="font-semibold">Contact Support</span>
+        <a href="/faq" className="hidden lg:block mt-1 font-body text-[11px] text-[#004E4C] hover:underline">
+          Need help? <span className="font-semibold">View FAQs</span>
         </a>
       </div>
     </aside>

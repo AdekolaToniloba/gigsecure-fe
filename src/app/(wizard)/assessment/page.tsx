@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import RiskWizard from './_components/RiskWizard';
+import PublicAssessmentController from './_components/public-assessment-controller';
 
 export const metadata: Metadata = {
   title: 'Risk Assessment - GigSecure',
@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function AssessmentPage() {
-  return <RiskWizard />;
+  return <PublicAssessmentController />;
 }

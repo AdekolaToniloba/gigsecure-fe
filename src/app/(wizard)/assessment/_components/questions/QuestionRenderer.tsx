@@ -18,7 +18,11 @@ export default function QuestionRenderer({ question, control, errors }: Props) {
   const error = (errors[question.id]?.message as string) || undefined;
 
   return (
-    <div className="mb-7">
+    <div
+      className="mb-7 outline-none"
+      data-question-id={question.id}
+      tabIndex={-1}
+    >
       <p className="font-body text-[14px] font-semibold text-[#0F172A] mb-3 leading-snug">
         {question.text}
       </p>
