@@ -8,6 +8,7 @@ import type { Product } from '@/types/marketplace';
 type ProductCardProps = {
   product: Product;
   onOpen: (product: Product) => void;
+  headingLevel?: 'h2' | 'h4';
 };
 
 function formatAmount(value: string) {
@@ -22,9 +23,10 @@ function getProviderInitials(name: string) {
     .join('');
 }
 
-export function ProductCard({ product, onOpen }: ProductCardProps) {
+export function ProductCard({ product, onOpen, headingLevel = 'h2' }: ProductCardProps) {
   const [hasLogoError, setHasLogoError] = useState(false);
   const hasProviderLogo = Boolean(product.provider.logo_url) && !hasLogoError;
+  const Heading = headingLevel;
 
   function handleKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
     if (event.key === 'Enter' || event.key === ' ') {
@@ -48,9 +50,9 @@ export function ProductCard({ product, onOpen }: ProductCardProps) {
         </span>
 
         <div className="space-y-3">
-          <h2 className="font-heading text-xl font-bold leading-6 text-primary sm:text-2xl sm:leading-7 xl:text-[1.85rem] xl:leading-8">
+          <Heading className="font-heading text-xl font-bold leading-6 text-primary sm:text-2xl sm:leading-7 xl:text-[1.85rem] xl:leading-8">
             {product.name}
-          </h2>
+          </Heading>
 
           <div className="flex min-w-0 items-center gap-3">
             {hasProviderLogo ? (

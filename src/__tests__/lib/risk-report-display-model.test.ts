@@ -30,6 +30,10 @@ describe('risk report display model', () => {
       scoreText: 'Income stability: 72 out of 100',
     });
     expect(model.advice).toEqual(mockAssessmentResponse.recommendations);
+    expect(model.insights.sections.map((section) => section.title)).toEqual([
+      'PERSONALIZED INSIGHTS',
+      'RISK FACTORS',
+    ]);
   });
 
   it('preserves long authored insight text and degrades malformed markdown to readable content', () => {
@@ -42,6 +46,12 @@ describe('risk report display model', () => {
     expect(model.insights.rawText).toBe(longText);
     expect(model.insights.blocks.length).toBeGreaterThan(0);
     expect(JSON.stringify(model.insights.blocks)).toContain('A'.repeat(100));
+  });
+
+  it('represents empty insight text without manufacturing an insight section', () => {
+    const model = createRiskReportDisplayModel({ ...mockAssessmentResponse, ai_insights: '' });
+
+    expect(model.insights).toEqual({ rawText: '', blocks: [], sections: [] });
   });
 
   it('contains no unsupported report metrics or derived exposure classifications', () => {

@@ -153,9 +153,17 @@ export const riskQuestionsResponseSchema = z
     }
   });
 
+export const riskCategoryMetadataSchema = z.strictObject({
+  category: nonEmptyString,
+  title: nonEmptyString.optional(),
+  description: z.string().optional(),
+  total_questions: z.number().int().nonnegative().optional(),
+  total_steps: z.number().int().nonnegative().optional(),
+});
+
 export const riskCategorySchema = z.union([
   nonEmptyString,
-  z.strictObject({ category: nonEmptyString }),
+  riskCategoryMetadataSchema,
 ]);
 
 export const riskCategoriesResponseSchema = z.array(riskCategorySchema).min(1);

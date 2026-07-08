@@ -31,7 +31,7 @@ export default function ConsentGate({ step }: Props) {
       <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm">
         {/* Lock icon */}
         <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-[#004E4C]/20 bg-[#004E4C]/5 mb-5">
-          <Lock className="h-5 w-5 text-[#004E4C]" />
+          <Lock aria-hidden="true" className="h-5 w-5 text-[#004E4C]" />
         </div>
 
         <h3 className="font-heading text-[18px] font-bold text-[#0F172A] mb-2">
@@ -55,9 +55,9 @@ export default function ConsentGate({ step }: Props) {
               checked={checked}
               onChange={(e) => setChecked(e.target.checked)}
             />
-            <div className="h-5 w-5 rounded border-2 border-gray-300 peer-checked:border-[#004E4C] peer-checked:bg-[#004E4C] flex items-center justify-center transition-all duration-150">
+            <div className="flex h-5 w-5 items-center justify-center rounded border-2 border-gray-300 transition-colors duration-150 peer-checked:border-[#004E4C] peer-checked:bg-[#004E4C] peer-focus-visible:ring-2 peer-focus-visible:ring-[#004E4C] peer-focus-visible:ring-offset-2">
               {checked && (
-                <svg className="h-3 w-3 text-white" viewBox="0 0 12 12" fill="none">
+                <svg aria-hidden="true" className="h-3 w-3 text-white" viewBox="0 0 12 12" fill="none">
                   <path d="M2.5 6l3 3 4-5" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               )}
@@ -69,7 +69,7 @@ export default function ConsentGate({ step }: Props) {
         </label>
 
         {/* Buttons */}
-        <div className="flex gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row">
           <button
             type="button"
             onClick={prevStep}

@@ -1,9 +1,6 @@
 import { Document, Page, Text, View, StyleSheet, Svg, Circle, Path } from '@react-pdf/renderer';
-import type { AssessmentResponse, PillarScores } from '@/types/api';
-import type { InsightBlock } from '../../_lib/parseInsights';
 import { reportColors } from '@/lib/report-theme';
-import { getRiskScorePresentation } from '../../_lib/getRiskLevel';
-import { RISK_PILLAR_LABELS } from '@/lib/risk/report-display-model';
+import type { RiskReportDisplayModel } from '@/lib/risk/report-display-model';
 
 function getPdfInsightIcon(label: string) {
   const l = label.toLowerCase();
@@ -144,7 +141,7 @@ const styles = StyleSheet.create({
   },
   pillarHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
   pillarName: { fontSize: 10, fontWeight: 'bold', color: reportColors.text.body },
-  pillarBadge: { fontSize: 8, fontWeight: 'bold', paddingVertical: 3, paddingHorizontal: 6, borderRadius: 10 },
+  pillarScore: { fontSize: 8, fontWeight: 'bold', color: reportColors.primary },
   barTrack: { height: 6, backgroundColor: '#F1F5F9', borderRadius: 3, overflow: 'hidden' },
   barFill: { height: '100%', borderRadius: 3 },
   scoreText: { fontSize: 9, color: reportColors.text.light, marginTop: 6 },
@@ -155,17 +152,13 @@ const styles = StyleSheet.create({
 });
 
 export default function RiskReportPDF({ 
-  data, 
-  parsedInsights, 
-  firstName 
+  report,
 }: { 
-  data: AssessmentResponse; 
-  parsedInsights: InsightBlock[];
-  firstName: string | null;
+  report: RiskReportDisplayModel;
 }) {
   const radius = 45;
   const circumference = 2 * Math.PI * radius;
-  const filled = (data.overall_score / 100) * circumference;
+  const filled = (report.score.raw / 100) * circumference;
 
   return (
     <Document>
@@ -174,7 +167,9 @@ export default function RiskReportPDF({
           <View style={styles.heroLeft}>
             <Text style={styles.heroPre}>Your Personalized Protection Plan</Text>
             <Text style={styles.heroTitle}>
-              {firstName ? `${firstName}, here's your protection plan` : "Here's your protection plan"}
+              {report.applicant.firstName
+                ? `${report.applicant.firstName}, here's your protection plan`
+                : "Here's your protection plan"}
             </Text>
           </View>
           
@@ -192,62 +187,36 @@ export default function RiskReportPDF({
               />
             </Svg>
             <View style={styles.gaugeScoreCont}>
-              <Text style={styles.gaugeScore}>{`${Math.round(data.overall_score)}%`}</Text>
+              <Text style={styles.gaugeScore}>{report.score.percentageText}</Text>
             </View>
-            <Text style={styles.riskProfile}>{data.risk_profile}</Text>
+            <Text style={styles.riskProfile}>{report.riskProfile}</Text>
           </View>
         </View>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Risk exposure breakdown</Text>
           <View style={styles.grid}>
-            {(Object.entries(data.pillar_scores) as [keyof PillarScores, number][]).map(([key, score]) => {
-              const risk = getRiskScorePresentation(score);
-              return (
-                <View key={key} style={styles.pillarCard}>
+            {report.exposures.map((exposure) => (
+                <View key={exposure.key} style={styles.pillarCard}>
                   <View style={styles.pillarHeader}>
-                    <Text style={styles.pillarName}>{RISK_PILLAR_LABELS[key]}</Text>
-                    <Text style={[styles.pillarBadge, { backgroundColor: risk.colors.bg, color: risk.colors.text }]}>
-                      {risk.label}
-                    </Text>
+                    <Text style={styles.pillarName}>{exposure.label}</Text>
+                    <Text style={styles.pillarScore}>{`${exposure.roundedScore}%`}</Text>
                   </View>
                   <View style={styles.barTrack}>
-                    <View style={[styles.barFill, { width: `${Math.min(score, 100)}%`, backgroundColor: risk.colors.bar }]} />
+                    <View style={[styles.barFill, { width: `${exposure.score}%`, backgroundColor: reportColors.primary }]} />
                   </View>
-                  <Text style={styles.scoreText}>{`${score}% risk score`}</Text>
+                  <Text style={styles.scoreText}>{exposure.scoreText}</Text>
                 </View>
-              );
-            })}
+              ))}
           </View>
         </View>
 
-        {(() => {
-          // Group blocks by section header — identical logic to the web UI
-          const sections: { header: string; blocks: typeof parsedInsights }[] = [];
-          let current: { header: string; blocks: typeof parsedInsights } = {
-            header: 'Personalized Insights',
-            blocks: [],
-          };
-          parsedInsights.forEach((block) => {
-            if (block.type === 'section-header') {
-              if (current.blocks.length > 0) {
-                sections.push(current);
-                current = { header: block.text, blocks: [] };
-              } else {
-                current.header = block.text;
-              }
-            } else {
-              current.blocks.push(block);
-            }
-          });
-          if (current.header || current.blocks.length > 0) sections.push(current);
-
-          return sections.map((section, sIdx) => (
+        {report.insights.sections.map((section, sIdx) => (
             // Each section is its own atomic View — wrap={false} here means
             // the ENTIRE section (header + all blocks) shifts to the next page
             // rather than being split at a page boundary.
             <View key={sIdx} style={[styles.section, { marginBottom: 20 }]} wrap={false}>
-              <Text style={styles.sectionTitle}>{section.header.toLowerCase()}</Text>
+              <Text style={styles.sectionTitle}>{section.title}</Text>
 
               {section.blocks.map((block, idx) => {
                 if (block.type === 'list') {
@@ -320,13 +289,12 @@ export default function RiskReportPDF({
                 return <Text key={idx} style={styles.insightPara}>{block.text}</Text>;
               })}
             </View>
-          ));
-        })()}
+          ))}
 
-        {data.recommendations.length > 0 && (
+        {report.advice.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Recommendations</Text>
-            {data.recommendations.map((rec, idx) => (
+            {report.advice.map((rec, idx) => (
               <View key={idx} style={styles.recRow}>
                 <View style={styles.recBullet}>
                   <Svg width="14" height="14" viewBox="0 0 24 24" fill="none">

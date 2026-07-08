@@ -112,14 +112,29 @@ describe('risk validators', () => {
     expect(riskQuestionsResponseSchema.safeParse(value).success).toBe(false);
   });
 
-  it('accepts only the narrow category shapes already consumed by the wizard', () => {
+  it('accepts category strings and richer category metadata objects', () => {
     expect(riskCategoriesResponseSchema.parse([
       'tech_freelancer',
-      { category: 'creative_freelancer' },
-    ])).toEqual(['tech_freelancer', { category: 'creative_freelancer' }]);
+      {
+        category: 'creative_freelancer',
+        title: 'Creative Freelancer',
+        description: 'Coverage questions for independent creatives.',
+        total_questions: 18,
+        total_steps: 5,
+      },
+    ])).toEqual([
+      'tech_freelancer',
+      {
+        category: 'creative_freelancer',
+        title: 'Creative Freelancer',
+        description: 'Coverage questions for independent creatives.',
+        total_questions: 18,
+        total_steps: 5,
+      },
+    ]);
 
     expect(riskCategoriesResponseSchema.safeParse([
-      { id: 'cat-1', name: 'Tech', slug: 'tech_freelancer' },
+      { title: 'Tech Freelancer', description: 'Missing canonical category slug.' },
     ]).success).toBe(false);
   });
 

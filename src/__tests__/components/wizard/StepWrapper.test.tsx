@@ -72,7 +72,7 @@ describe('StepWrapper', () => {
 
   it('disables Next when isSubmitting=true', () => {
     renderStep(<StepWrapper {...defaultProps} isLastStep={true} isSubmitting={true} />);
-    const submitBtn = screen.getByText('Analyzing...').closest('button');
+    const submitBtn = screen.getByText('Analyzing…').closest('button');
     expect(submitBtn).toBeDisabled();
   });
 

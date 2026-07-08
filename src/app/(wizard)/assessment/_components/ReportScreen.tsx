@@ -2,22 +2,15 @@
 
 import { useEffect, useRef } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { pdf } from '@react-pdf/renderer';
-import type { AssessmentResponse, PillarScores } from '@/types/api';
+import type { AssessmentResponse } from '@/types/api';
 import { useAuthStore } from '@/store/auth-store';
-import { Check, CreditCard, AlertTriangle, Users, Clock, Heart, Info, Download} from 'lucide-react';
-import RiskReportPDF from './report/RiskReportPDF';
+import { Check, CreditCard, AlertTriangle, Users, Clock, Heart, Info } from 'lucide-react';
 import { reportColors } from '@/lib/report-theme';
-import { RISK_PILLAR_LABELS } from '@/lib/risk/report-display-model';
-import { parseInsights, type InsightBlock } from '../_lib/parseInsights';
+import { createRiskReportDisplayModel } from '@/lib/risk/report-display-model';
+import { ReportActions } from '@/components/risk-assessment/report/report-actions';
 import { getRiskScorePresentation } from '../_lib/getRiskLevel';
 import { renderInlineBold } from '../_lib/renderInlineBold';
 import { twMerge } from 'tailwind-merge';
-
-type InsightSection = {
-  header: string;
-  blocks: InsightBlock[];
-};
 
 function getInsightIcon(label: string) {
   const l = label.toLowerCase();
@@ -73,33 +66,22 @@ export default function ReportScreen({ data }: Props) {
   const firstName = useAuthStore((s) => s.firstName);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const reduceMotion = useReducedMotion();
-  // const [copied, setCopied] = useState(false);
-
-  const parsedInsights = parseInsights(data.ai_insights);
+  const report = createRiskReportDisplayModel(data);
+  const displayFirstName = firstName ?? report.applicant.firstName;
+  const downloadReport = displayFirstName === report.applicant.firstName
+    ? report
+    : {
+        ...report,
+        applicant: {
+          ...report.applicant,
+          firstName: displayFirstName ?? '',
+          fullName: [displayFirstName, report.applicant.lastName].filter(Boolean).join(' '),
+        },
+      };
 
   useEffect(() => {
     headingRef.current?.focus();
   }, []);
-
-  
-  const handleDownload = async () => {
-    const blob = await pdf(<RiskReportPDF data={data} parsedInsights={parsedInsights} firstName={firstName} />).toBlob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'gigsecure-risk-report.pdf';
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  // const handleShare = async () => {
-  //   await navigator.clipboard.writeText(window.location.href);
-  //   setCopied(true);
-  //   setTimeout(() => setCopied(false), 2500);
-  // };
-  
-
-  const pillarEntries = Object.entries(data.pillar_scores) as [keyof PillarScores, number][];
 
   return (
     <motion.div
@@ -124,12 +106,12 @@ export default function ReportScreen({ data }: Props) {
             tabIndex={-1}
             className="text-white font-heading text-[32px] font-bold leading-tight mb-2 outline-none"
           >
-            {firstName ? `${firstName}, here's your protection plan` : "Here's your protection plan"}
+            {displayFirstName ? `${displayFirstName}, here's your protection plan` : "Here's your protection plan"}
           </h2>
         </div>
         <CircularGauge
-          score={Math.round(data.overall_score)}
-          profile={data.risk_profile}
+          score={report.score.rounded}
+          profile={report.riskProfile}
         />
       </div>
 
@@ -139,18 +121,17 @@ export default function ReportScreen({ data }: Props) {
           Risk exposure breakdown
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {pillarEntries.map(([key, score]) => {
-            const risk = getRiskScorePresentation(score);
-            const label = RISK_PILLAR_LABELS[key];
-            const barWidth = `${Math.min(score, 100)}%`;
+          {report.exposures.map((exposure) => {
+            const risk = getRiskScorePresentation(exposure.score);
+            const barWidth = `${exposure.score}%`;
             return (
               <motion.div 
                 whileHover={reduceMotion ? undefined : { y: -4, boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.05)' }}
-                key={key} 
+                key={exposure.key}
                 className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm flex flex-col justify-between h-[130px] transition-all"
               >
                 <div className="flex items-start justify-between gap-2 mb-3">
-                  <span className="font-body text-[14px] font-bold text-slate-800 leading-snug pr-2">{label}</span>
+                  <span className="font-body text-[14px] font-bold text-slate-800 leading-snug pr-2">{exposure.label}</span>
                   <span 
                     className="font-body text-[11px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap"
                     style={{ backgroundColor: risk.colors.bg, color: risk.colors.text }}
@@ -165,7 +146,7 @@ export default function ReportScreen({ data }: Props) {
                       style={{ width: barWidth, backgroundColor: risk.colors.bar }}
                     />
                   </div>
-                  <p className="font-body text-[12px] text-slate-500 font-medium">{Math.round(score)}% risk score</p>
+                  <p className="font-body text-[12px] text-slate-500 font-medium">{exposure.roundedScore}% risk score</p>
                 </div>
               </motion.div>
             );
@@ -175,28 +156,10 @@ export default function ReportScreen({ data }: Props) {
 
       {/* ─── 2. Insight Sections (Grouped by Header) ─────────────────── */}
       <div className="flex flex-col gap-6 mb-6">
-        {(() => {
-          const sections: InsightSection[] = [];
-          let current: InsightSection = { header: 'Personalized Insights', blocks: [] };
-
-          parsedInsights.forEach((block) => {
-            if (block.type === 'section-header') {
-              if (current.blocks.length > 0) {
-                sections.push(current);
-                current = { header: block.text, blocks: [] };
-              } else {
-                current.header = block.text;
-              }
-            } else {
-              current.blocks.push(block);
-            }
-          });
-          if (current.header || current.blocks.length > 0) sections.push(current);
-
-          return sections.map((section, sIdx) => (
+        {report.insights.sections.map((section, sIdx) => (
             <div key={sIdx} className="bg-white rounded-2xl border border-gray-100 p-6 sm:p-8 shadow-sm">
               <h3 className="font-heading text-xl font-bold text-slate-900 mb-6 capitalize leading-snug">
-                {section.header.toLowerCase()}
+                {section.title}
               </h3>
               
               <div className="flex flex-col gap-4">
@@ -299,18 +262,17 @@ export default function ReportScreen({ data }: Props) {
                 })}
               </div>
             </div>
-          ));
-        })()}
+          ))}
       </div>
 
       {/* ─── 3. Recommendations ────────────────────────────────────── */}
-      {data.recommendations.length > 0 && (
+      {report.advice.length > 0 && (
         <div className="bg-white rounded-2xl border border-gray-100 p-6 sm:p-8 mb-8 shadow-sm">
           <h3 className="font-heading text-xl font-bold text-slate-900 mb-6">
             Recommendations
           </h3>
           <ul className="flex flex-col gap-4">
-            {data.recommendations.map((rec: string, i: number) => (
+            {report.advice.map((rec: string, i: number) => (
               <li key={i} className="flex items-start gap-4">
                 <div className="flex-shrink-0 h-6 w-6 rounded-full bg-slate-100 flex items-center justify-center mt-0.5">
                   <Check className="h-[14px] w-[14px] text-teal-600" strokeWidth={3} />
@@ -321,38 +283,6 @@ export default function ReportScreen({ data }: Props) {
           </ul>
         </div>
       )}
-
-
-
-      {/* ─── 5. Save / Share ─────────────────────────────────────────── */}
-      
-      {/* <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 mb-12">
-        <div className="text-center md:text-left">
-          <h3 className="font-heading text-lg font-bold text-slate-900 mb-1">Save your risk summary</h3>
-          <p className="font-body text-[14px] text-slate-500">
-            Download a PDF of your full risk profile.
-          </p>
-        </div>
-        <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-          <button
-            type="button"
-            onClick={handleDownload}
-            className="flex items-center justify-center gap-2 h-11 px-5 rounded-lg border border-slate-300 text-slate-700 font-body text-[14px] font-semibold hover:bg-slate-50 transition-colors w-full sm:w-auto"
-          >
-            <Download className="h-4 w-4" />
-            Download PDF
-          </button>
-          <button
-            type="button"
-            onClick={handleShare}
-            className="flex items-center justify-center gap-2 h-11 px-5 rounded-lg border border-slate-800 text-slate-800 font-body text-[14px] font-semibold hover:bg-slate-50 transition-colors w-full sm:w-auto"
-          >
-            <Share2 className="h-4 w-4" />
-            {copied ? 'Copied!' : 'Share Link'}
-          </button>
-        </div>
-      </div> */}
-     
 
       </div> {/* end of max-w-3xl */}
 
@@ -367,14 +297,7 @@ export default function ReportScreen({ data }: Props) {
               Be the first to compare prices, activate coverage, and access exclusive launch benefits.
             </p>
           </div>
-          <button
-            type="button"
-            onClick={handleDownload}
-            className="flex items-center justify-center gap-2 h-12 px-8 rounded-lg bg-[#FFE419] text-[#004E4C] font-body text-[15px] font-bold hover:bg-[#EBD001] transition-colors flex-shrink-0 cursor-pointer"
-          >
-            <Download className="h-4 w-4" />
-            Download PDF
-          </button>
+          <ReportActions report={downloadReport} tone="accent" />
         </div>
       </footer>
     </motion.div>

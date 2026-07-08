@@ -2,15 +2,16 @@
 
 import Link from 'next/link';
 import { BadgeCheck } from 'lucide-react';
-import { useKycGate } from '@/hooks/kyc/useKycGate';
 import { DEFAULT_AUTHENTICATED_PATH } from '@/lib/auth/redirects';
 
 const KYC_DASHBOARD_HREF = `/kyc?redirect=${encodeURIComponent(DEFAULT_AUTHENTICATED_PATH)}`;
 
-export function KycDashboardBanner() {
-  const { kycVerified } = useKycGate();
+type KycDashboardBannerProps = {
+  isKycVerified: boolean;
+};
 
-  if (kycVerified !== false) return null;
+export function KycDashboardBanner({ isKycVerified }: KycDashboardBannerProps) {
+  if (isKycVerified) return null;
 
   return (
     <section

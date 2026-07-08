@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useForm, type FieldErrors } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useWizardStore } from '@/store/wizard-store';
@@ -8,12 +9,14 @@ import QuestionRenderer from '../questions/QuestionRenderer';
 import StepWrapper from './StepWrapper';
 import type { AssessmentStep } from '@/types/risk-assessment';
 import { useWizardNavigation } from '@/components/risk-assessment/wizard/risk-assessment-wizard-context';
+import type { ApiFieldErrors } from '@/types/api';
 
 type AssessmentQuestionStepProps = {
   step: AssessmentStep;
   isLastStep?: boolean;
   isSubmitting?: boolean;
   onSubmit?: (values: Record<string, unknown>) => void;
+  serverFieldErrors?: ApiFieldErrors;
 };
 
 export default function AssessmentQuestionStep({
@@ -21,6 +24,7 @@ export default function AssessmentQuestionStep({
   isLastStep = false,
   isSubmitting = false,
   onSubmit,
+  serverFieldErrors = {},
 }: AssessmentQuestionStepProps) {
   const answers = useWizardStore((state) => state.answers);
   const setStepAnswers = useWizardStore((state) => state.setStepAnswers);
@@ -37,6 +41,13 @@ export default function AssessmentQuestionStep({
       step.questions.map((question) => [question.id, answers[question.id] ?? undefined]),
     ),
   });
+
+  useEffect(() => {
+    for (const question of step.questions) {
+      const message = serverFieldErrors[question.id]?.[0];
+      if (message) form.setError(question.id, { type: 'server', message });
+    }
+  }, [form, serverFieldErrors, step.questions]);
 
   const focusFirstInvalidQuestion = (errors: FieldErrors<Record<string, unknown>>) => {
     const firstInvalidQuestion = step.questions.find((question) => errors[question.id]);

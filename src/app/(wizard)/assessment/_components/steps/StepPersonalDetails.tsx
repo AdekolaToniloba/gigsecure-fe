@@ -13,6 +13,7 @@ import {
   type WizardPersonalDetailsDefaults,
 } from '@/lib/risk/profile-to-wizard-defaults';
 import type { RiskCategory } from '@/types/risk-assessment';
+import type { ApiFieldErrors } from '@/types/api';
 import {
   getCitiesByState,
   getStateNames,
@@ -65,6 +66,7 @@ type StepPersonalDetailsProps = {
   initialDefaults?: Partial<WizardPersonalDetailsDefaults>;
   categories?: RiskCategory[];
   isCategoriesLoading?: boolean;
+  serverFieldErrors?: ApiFieldErrors;
 };
 
 const PERSONAL_DETAIL_FIELDS = [
@@ -82,6 +84,7 @@ export default function StepPersonalDetails({
   initialDefaults = {},
   categories = [],
   isCategoriesLoading = false,
+  serverFieldErrors = {},
 }: StepPersonalDetailsProps) {
   const answers = useWizardStore((state) => state.answers);
   const setStepAnswers = useWizardStore((state) => state.setStepAnswers);
@@ -108,6 +111,13 @@ export default function StepPersonalDetails({
       marital_status: getAllowedValue(defaults.marital_status, MARITAL_STATUS_VALUES),
     },
   });
+
+  useEffect(() => {
+    for (const field of PERSONAL_DETAIL_FIELDS) {
+      const message = serverFieldErrors[field]?.[0];
+      if (message) form.setError(field, { type: 'server', message });
+    }
+  }, [form, serverFieldErrors]);
 
   useEffect(() => {
     for (const field of PERSONAL_DETAIL_FIELDS) {
@@ -174,14 +184,15 @@ export default function StepPersonalDetails({
             <input
               id="first_name"
               type="text"
-              placeholder="Enter your full name"
+              autoComplete="given-name"
+              placeholder="Enter your first name"
               {...form.register('first_name')}
               aria-invalid={form.formState.errors.first_name ? true : undefined}
               aria-describedby={form.formState.errors.first_name ? 'first_name-error' : undefined}
               className={inputClassName}
             />
             <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
-              <User size={18} />
+              <User aria-hidden="true" size={18} />
             </div>
           </div>
           {form.formState.errors.first_name && <p id="first_name-error" className="mt-1.5 text-xs text-red-500">{form.formState.errors.first_name.message}</p>}
@@ -194,14 +205,15 @@ export default function StepPersonalDetails({
             <input
               id="last_name"
               type="text"
-              placeholder="Enter your full name"
+              autoComplete="family-name"
+              placeholder="Enter your last name"
               {...form.register('last_name')}
               aria-invalid={form.formState.errors.last_name ? true : undefined}
               aria-describedby={form.formState.errors.last_name ? 'last_name-error' : undefined}
               className={inputClassName}
             />
             <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
-              <User size={18} />
+              <User aria-hidden="true" size={18} />
             </div>
           </div>
           {form.formState.errors.last_name && <p id="last_name-error" className="mt-1.5 text-xs text-red-500">{form.formState.errors.last_name.message}</p>}
@@ -276,7 +288,7 @@ export default function StepPersonalDetails({
                 }}
                 onBlur={field.onBlur}
                 placeholder="Select your state"
-                searchPlaceholder="Search state..."
+                searchPlaceholder="Search state…"
                 hasError={!!form.formState.errors.state}
                 ariaDescribedBy={form.formState.errors.state ? 'state-error' : undefined}
               />
@@ -320,8 +332,14 @@ export default function StepPersonalDetails({
                 id="occupation"
                 name={field.name}
                 options={(categories || []).map((cat) => {
-                  const val = typeof cat === 'string' ? cat : cat.category;
-                  return { value: val, label: val };
+                  if (typeof cat === 'string') {
+                    return { value: cat, label: cat };
+                  }
+
+                  return {
+                    value: cat.category,
+                    label: cat.title ?? cat.category,
+                  };
                 })}
                 value={field.value}
                 onChange={field.onChange}

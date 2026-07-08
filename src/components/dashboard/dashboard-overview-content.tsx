@@ -64,7 +64,7 @@ export function DashboardOverviewContent({
 
   return (
     <div className="mx-auto w-full max-w-7xl min-w-0" data-dashboard-state={isAssessed ? 'assessed' : 'unassessed'}>
-      <KycDashboardBanner />
+      <KycDashboardBanner isKycVerified={kycVerified} />
 
       <header className="mb-5 flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">

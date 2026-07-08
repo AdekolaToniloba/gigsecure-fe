@@ -17,6 +17,7 @@ import StepSafetyNet from '@/app/(wizard)/assessment/_components/steps/StepSafet
 import { ReportSkeleton, SidebarSkeleton, StepSkeleton } from '@/app/(wizard)/assessment/_components/skeletons/Skeletons';
 import { WizardNavigationProvider } from './risk-assessment-wizard-context';
 import type { AssessmentStep } from '@/types/risk-assessment';
+import type { ApiFieldErrors } from '@/types/api';
 import type { RiskAssessmentWizardProps } from './risk-assessment-wizard.types';
 
 const FALLBACK_STEPS: AssessmentStep[] = [
@@ -27,6 +28,11 @@ const FALLBACK_STEPS: AssessmentStep[] = [
   { step: 5, title: 'Health & lifestyle', subtitle: 'Previous coverage', questions: [] },
   { step: 6, title: 'Safety net & history', subtitle: 'Medical background', questions: [] },
 ];
+
+const PERSONAL_DETAIL_FIELDS = new Set([
+  'first_name', 'last_name', 'date_of_birth', 'gender', 'state', 'city',
+  'occupation', 'marital_status',
+]);
 
 function classes(fallback: string, override?: string) {
   return override ?? fallback;
@@ -50,6 +56,7 @@ function RiskAssessmentWizardSession({
   const selectedCategory = useWizardStore((state) => state.selectedCategory);
   const healthConsent = useWizardStore((state) => state.healthConsent);
   const setMode = useWizardStore((state) => state.setMode);
+  const setCurrentStep = useWizardStore((state) => state.setCurrentStep);
   const reset = useWizardStore((state) => state.reset);
   const reduceMotion = useReducedMotion();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -59,6 +66,8 @@ function RiskAssessmentWizardSession({
     () => useWizardStore.getState().progressByMode[mode].currentStep > 0,
   );
   const [submitError, setSubmitError] = useState('');
+  const [serverFieldErrors, setServerFieldErrors] = useState<ApiFieldErrors>({});
+  const [serverErrorField, setServerErrorField] = useState<string | null>(null);
   const isActive = activeMode === mode;
   const categoriesQuery = useRiskCategories({ enabled: isActive });
   const questionsQuery = useRiskQuestions(selectedCategory, { enabled: isActive });
@@ -74,6 +83,16 @@ function RiskAssessmentWizardSession({
     if (!isActive) return;
     rootRef.current?.querySelector<HTMLElement>('[data-step-title]')?.focus();
   }, [currentStep, isActive]);
+
+  useEffect(() => {
+    if (!serverErrorField || !isActive) return;
+    const field = Array.from(rootRef.current?.querySelectorAll<HTMLElement>('[name]') ?? [])
+      .find((element) => element.getAttribute('name') === serverErrorField);
+    const question = Array.from(
+      rootRef.current?.querySelectorAll<HTMLElement>('[data-question-id]') ?? [],
+    ).find((element) => element.dataset.questionId === serverErrorField);
+    (field ?? question)?.focus();
+  }, [currentStep, isActive, serverErrorField]);
 
   const activeQueryError = currentStep === 0
     ? categoriesQuery.parsedError
@@ -91,6 +110,8 @@ function RiskAssessmentWizardSession({
 
   const submit = async (answers: Record<string, unknown>) => {
     setSubmitError('');
+    setServerFieldErrors({});
+    setServerErrorField(null);
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
@@ -110,6 +131,19 @@ function RiskAssessmentWizardSession({
         return;
       }
       setSubmitError(parsedError.message);
+      const firstField = Object.keys(parsedError.fieldErrors)[0];
+      if (parsedError.statusCode === 422 && firstField) {
+        setServerFieldErrors(parsedError.fieldErrors);
+        setServerErrorField(firstField);
+        if (PERSONAL_DETAIL_FIELDS.has(firstField)) {
+          setCurrentStep(0);
+        } else {
+          const questionStep = questionsQuery.data?.steps.findIndex((step) =>
+            step.questions.some((question) => question.id === firstField),
+          );
+          if (questionStep !== undefined && questionStep >= 0) setCurrentStep(questionStep + 1);
+        }
+      }
     }
   };
 
@@ -120,6 +154,7 @@ function RiskAssessmentWizardSession({
   if (submitMutation.isPending) {
     return (
       <div className={classes('min-h-[calc(100vh-4rem)] bg-gray-50 px-6 py-10', shell?.loadingClassName)} aria-busy="true">
+        <p className="sr-only" role="status">Analyzing assessment…</p>
         <div className="max-w-3xl mx-auto"><ReportSkeleton /></div>
       </div>
     );
@@ -129,7 +164,10 @@ function RiskAssessmentWizardSession({
   if (isLoading && (currentStep === 0 || selectedCategory)) {
     return (
       <div className={classes('min-h-[calc(100vh-4rem)] bg-gray-50 px-6 py-10', shell?.loadingClassName)} aria-busy="true">
-        <div className="max-w-5xl mx-auto flex gap-8"><SidebarSkeleton /><div className="flex-1"><StepSkeleton /></div></div>
+        <div className="mx-auto flex max-w-5xl min-w-0 flex-col gap-6 lg:flex-row lg:gap-8">
+          <SidebarSkeleton />
+          <div className="min-w-0 flex-1"><StepSkeleton /></div>
+        </div>
       </div>
     );
   }
@@ -170,13 +208,13 @@ function RiskAssessmentWizardSession({
               initial={reduceMotion ? false : { y: -56, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={reduceMotion ? undefined : { y: -56, opacity: 0 }}
-              className={classes('bg-[#004E4C]/10 border-b border-[#004E4C]/20 px-6 py-3 flex items-center justify-between w-full fixed top-16 z-50', shell?.resumeBannerClassName)}
+              className={classes('fixed top-16 z-50 flex w-full flex-col items-start gap-3 border-b border-[#004E4C]/20 bg-[#004E4C]/10 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6', shell?.resumeBannerClassName)}
               aria-live="polite"
             >
-              <p className="font-body text-[13px] text-[#004E4C]">You were on step {currentStep + 1}. <span className="font-semibold">Continue where you left off?</span></p>
-              <div className="flex gap-3">
-                <button type="button" onClick={() => setShowResumeBanner(false)} className="text-[13px] font-semibold text-[#004E4C] hover:underline">Continue</button>
-                <button type="button" onClick={() => { reset(mode); setShowResumeBanner(false); }} className="text-[13px] text-gray-500 hover:underline">Start over</button>
+              <p className="min-w-0 font-body text-[13px] leading-5 text-[#004E4C]">You were on step {currentStep + 1}. <span className="font-semibold">Continue where you left off?</span></p>
+              <div className="flex shrink-0 flex-wrap gap-2">
+                <button type="button" onClick={() => setShowResumeBanner(false)} className="inline-flex min-h-11 items-center rounded-md px-3 text-[13px] font-semibold text-[#004E4C] hover:bg-white/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004E4C]">Continue</button>
+                <button type="button" onClick={() => { reset(mode); setShowResumeBanner(false); }} className="inline-flex min-h-11 items-center rounded-md px-3 text-[13px] text-slate-600 hover:bg-white/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004E4C]">Start over</button>
               </div>
             </motion.div>
           )}
@@ -195,12 +233,12 @@ function RiskAssessmentWizardSession({
                 transition={{ duration: reduceMotion ? 0 : 0.2, ease: 'easeOut' }}
               >
                 {currentStep === 4 && !healthConsent ? <ConsentGate step={activeStep} /> :
-                  currentStep === 0 ? <StepPersonalDetails initialDefaults={initialDefaults} categories={categoriesQuery.data} isCategoriesLoading={categoriesQuery.isLoading} /> :
-                  currentStep === 1 ? <StepYourWork step={activeStep} /> :
-                  currentStep === 2 ? <StepIncomeStability step={activeStep} /> :
-                  currentStep === 3 ? <StepYourRisks step={activeStep} /> :
-                  currentStep === 4 ? <StepHealthLifestyle step={activeStep} /> :
-                  currentStep === 5 ? <StepSafetyNet step={activeStep} isSubmitting={submitMutation.isPending} onSubmit={submit} /> : null}
+                  currentStep === 0 ? <StepPersonalDetails initialDefaults={initialDefaults} categories={categoriesQuery.data} isCategoriesLoading={categoriesQuery.isLoading} serverFieldErrors={serverFieldErrors} /> :
+                  currentStep === 1 ? <StepYourWork step={activeStep} serverFieldErrors={serverFieldErrors} /> :
+                  currentStep === 2 ? <StepIncomeStability step={activeStep} serverFieldErrors={serverFieldErrors} /> :
+                  currentStep === 3 ? <StepYourRisks step={activeStep} serverFieldErrors={serverFieldErrors} /> :
+                  currentStep === 4 ? <StepHealthLifestyle step={activeStep} serverFieldErrors={serverFieldErrors} /> :
+                  currentStep === 5 ? <StepSafetyNet step={activeStep} isSubmitting={submitMutation.isPending} onSubmit={submit} serverFieldErrors={serverFieldErrors} /> : null}
               </motion.div>
             </AnimatePresence>
           </div>

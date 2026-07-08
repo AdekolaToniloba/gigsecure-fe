@@ -2,11 +2,13 @@
 
 import AssessmentQuestionStep from './AssessmentQuestionStep';
 import type { AssessmentStep } from '@/types/risk-assessment';
+import type { ApiFieldErrors } from '@/types/api';
 
 interface Props {
   step: AssessmentStep;
+  serverFieldErrors?: ApiFieldErrors;
 }
 
-export default function StepHealthLifestyle({ step }: Props) {
-  return <AssessmentQuestionStep step={step} />;
+export default function StepHealthLifestyle({ step, serverFieldErrors }: Props) {
+  return <AssessmentQuestionStep step={step} serverFieldErrors={serverFieldErrors} />;
 }

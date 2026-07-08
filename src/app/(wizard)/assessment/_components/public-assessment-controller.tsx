@@ -23,10 +23,6 @@ function getTimestampMs() {
   return performance.timeOrigin + performance.now();
 }
 
-function handlePublicSuccess() {
-  // Task 11 owns mode-specific progress and query synchronization.
-}
-
 export default function PublicAssessmentController() {
   const router = useRouter();
   const token = useAuthStore((state) => state.accessToken);
@@ -70,9 +66,12 @@ export default function PublicAssessmentController() {
   const handleAuthenticationFailure = useCallback(() => {
     isRecoveringAuthentication.current = true;
     clearAuth();
-    reset('public');
     router.replace('/waitlist?expired=true');
-  }, [clearAuth, reset, router]);
+  }, [clearAuth, router]);
+
+  const handlePublicSuccess = useCallback(() => {
+    reset('public');
+  }, [reset]);
 
   const renderSuccess = useCallback((assessment: AssessmentResponse) => (
     <div className="min-h-[calc(100vh-4rem)] bg-gray-50 px-6 py-10">

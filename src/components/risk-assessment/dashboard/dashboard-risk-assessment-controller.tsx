@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
 import { RiskAssessmentWizard } from '@/components/risk-assessment/wizard';
 import { useUserFlags } from '@/hooks/auth/useUserFlags';
 import { useSession } from '@/hooks/auth/useSession';
@@ -9,41 +10,105 @@ import { useLatestAssessment } from '@/hooks/risk/useRisk';
 import { useUserProfile } from '@/hooks/user/useUserProfile';
 import { parseApiError } from '@/lib/api/errors';
 import { QUERY_KEYS } from '@/lib/constants';
+import { buildLoginRedirect } from '@/lib/auth/redirects';
 import { profileToWizardDefaults } from '@/lib/risk/profile-to-wizard-defaults';
 import { useWizardStore } from '@/store/wizard-store';
+import { useAuthStore } from '@/store/auth-store';
 import type { AssessmentResponse } from '@/types/api';
 import { RiskAssessmentError } from './risk-assessment-error';
 import { RiskAssessmentSkeleton } from './risk-assessment-skeleton';
 import { UnassessedState } from './unassessed-state';
+import { AssessedReport } from '../report/assessed-report';
 
-type ControllerView = 'summary' | 'wizard';
-
-function noop() {}
+type ControllerView = 'summary' | 'initial-wizard' | 'reassessment-wizard' | 'completed';
 
 export function DashboardRiskAssessmentController() {
+  const router = useRouter();
   const queryClient = useQueryClient();
+  const setFlags = useAuthStore((state) => state.setFlags);
+  const clearAuth = useAuthStore((state) => state.clearAuth);
   const { hasFullSession, status } = useSession();
   const { hasResolvedFlags, riskAssessed } = useUserFlags();
+  const [view, setView] = useState<ControllerView>('summary');
   const profileQuery = useUserProfile({ enabled: hasFullSession });
-  const shouldLoadLatest = Boolean(hasFullSession && (
+  const shouldLoadLatest = Boolean(view === 'summary' && hasFullSession && (
     riskAssessed === true || profileQuery.data?.risk_assessed === true
   ));
   const latestQuery = useLatestAssessment({ enabled: shouldLoadLatest });
-  const [view, setView] = useState<ControllerView>('summary');
   const startButtonRef = useRef<HTMLButtonElement>(null);
+  const updateButtonRef = useRef<HTMLButtonElement>(null);
   const restoreStartFocus = useRef(false);
+  const restoreUpdateFocus = useRef(false);
+  const reassessmentHistoryActive = useRef(false);
 
   useEffect(() => {
-    if (view !== 'summary' || !restoreStartFocus.current) return;
-    restoreStartFocus.current = false;
-    startButtonRef.current?.focus();
+    if (view !== 'summary') return;
+    if (restoreStartFocus.current) {
+      restoreStartFocus.current = false;
+      startButtonRef.current?.focus();
+    } else if (restoreUpdateFocus.current) {
+      restoreUpdateFocus.current = false;
+      updateButtonRef.current?.focus();
+    }
   }, [view]);
 
-  const openWizard = useCallback(() => setView('wizard'), []);
-  const cancelWizard = useCallback(() => {
-    restoreStartFocus.current = true;
-    setView('summary');
+  useEffect(() => {
+    const handlePopState = () => {
+      if (!reassessmentHistoryActive.current) return;
+      reassessmentHistoryActive.current = false;
+      restoreUpdateFocus.current = true;
+      setView('summary');
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
   }, []);
+
+  const consumeReassessmentHistory = useCallback(() => {
+    if (!reassessmentHistoryActive.current) return;
+    reassessmentHistoryActive.current = false;
+    window.history.back();
+  }, []);
+
+  const openWizard = useCallback(() => setView('initial-wizard'), []);
+  const startReassessment = useCallback(() => {
+    useWizardStore.getState().reset('dashboard');
+    window.history.pushState(
+      { ...window.history.state, gigsecureReassessment: true },
+      '',
+      window.location.href,
+    );
+    reassessmentHistoryActive.current = true;
+    setView('reassessment-wizard');
+  }, []);
+  const cancelWizard = useCallback(() => {
+    if (view === 'reassessment-wizard') {
+      restoreUpdateFocus.current = true;
+      consumeReassessmentHistory();
+    } else {
+      restoreStartFocus.current = true;
+    }
+    setView('summary');
+  }, [consumeReassessmentHistory, view]);
+  const handleDashboardSuccess = useCallback((assessment: AssessmentResponse) => {
+    setFlags({ riskAssessed: true });
+    queryClient.setQueryData(QUERY_KEYS.RISK_ASSESSMENT, assessment);
+    const invalidations = [
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.USER_ME }),
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.RISK_ASSESSMENT, refetchType: 'none' }),
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.RISK_HISTORY }),
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.RISK_RECOMMENDATIONS }),
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DASHBOARD_OVERVIEW }),
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MARKETPLACE_RECOMMENDATIONS() }),
+    ];
+    useWizardStore.getState().reset('dashboard');
+    void Promise.all(invalidations);
+    if (view === 'reassessment-wizard') consumeReassessmentHistory();
+    setView('completed');
+  }, [consumeReassessmentHistory, queryClient, setFlags, view]);
+  const handleAuthenticationFailure = useCallback(() => {
+    clearAuth();
+    router.replace(buildLoginRedirect('/dashboard/risk-assessment'));
+  }, [clearAuth, router]);
 
   if (status === 'idle' || status === 'initializing' || !hasFullSession) {
     return <RiskAssessmentSkeleton />;
@@ -69,7 +134,7 @@ export function DashboardRiskAssessmentController() {
     return <RiskAssessmentSkeleton />;
   }
 
-  if (view === 'wizard') {
+  if (view === 'initial-wizard' || view === 'reassessment-wizard') {
     const initialDefaults = profileToWizardDefaults({
       mode: 'dashboard',
       profileResponse: profileQuery.data,
@@ -78,13 +143,17 @@ export function DashboardRiskAssessmentController() {
 
     return (
       <PageFrame>
+        {view === 'reassessment-wizard' ? (
+          <p role="status" className="mb-4 rounded-xl border border-primary/20 bg-app-sidebar px-4 py-3 text-sm leading-6 text-primary">
+            You&apos;re updating your assessment. Your saved report will remain unchanged until you submit.
+          </p>
+        ) : null}
         <RiskAssessmentWizard
           mode="dashboard"
           initialDefaults={initialDefaults}
           onCancel={cancelWizard}
-          onSuccess={noop}
-          onAuthenticationFailure={noop}
-          renderSuccess={(assessment) => <AssessmentSummary assessment={assessment} />}
+          onSuccess={handleDashboardSuccess}
+          onAuthenticationFailure={handleAuthenticationFailure}
           shell={{
             rootClassName: 'min-h-0 rounded-2xl border border-app-border bg-white pt-4 sm:pt-6',
             contentClassName: 'max-w-6xl px-3 pb-6 sm:px-6',
@@ -94,6 +163,23 @@ export function DashboardRiskAssessmentController() {
         />
       </PageFrame>
     );
+  }
+
+  if (view === 'completed') {
+    const completedAssessment = queryClient.getQueryData<AssessmentResponse>(
+      QUERY_KEYS.RISK_ASSESSMENT,
+    );
+    if (completedAssessment) {
+      return (
+        <PageFrame>
+          <AssessedReport
+            assessment={completedAssessment}
+            onReassess={startReassessment}
+            updateButtonRef={updateButtonRef}
+          />
+        </PageFrame>
+      );
+    }
   }
 
   if (!profileQuery.data.risk_assessed) {
@@ -132,7 +218,11 @@ export function DashboardRiskAssessmentController() {
 
   return (
     <PageFrame>
-      <AssessmentSummary assessment={latestQuery.data} />
+      <AssessedReport
+        assessment={latestQuery.data}
+        onReassess={startReassessment}
+        updateButtonRef={updateButtonRef}
+      />
     </PageFrame>
   );
 }
@@ -150,39 +240,6 @@ function PageFrame({ children }: { children: React.ReactNode }) {
         Get to know your risk profile.
       </p>
       <div className="mt-7 min-w-0">{children}</div>
-    </section>
-  );
-}
-
-function AssessmentSummary({ assessment }: { assessment: AssessmentResponse }) {
-  const applicantName = [assessment.applicant.first_name, assessment.applicant.last_name]
-    .filter(Boolean)
-    .join(' ');
-
-  return (
-    <section
-      aria-labelledby="assessment-summary-title"
-      className="min-w-0 rounded-2xl border border-app-border bg-white p-6 shadow-sm sm:p-8"
-    >
-      <p className="text-sm font-semibold uppercase tracking-wide text-primary-light">
-        Latest assessment
-      </p>
-      <h2
-        id="assessment-summary-title"
-        tabIndex={-1}
-        className="mt-2 break-words font-heading text-2xl font-bold text-primary outline-none focus-visible:ring-2 focus-visible:ring-primary"
-      >
-        {applicantName ? `${applicantName}’s risk profile` : 'Your risk profile'}
-      </h2>
-      <p className="mt-4 break-words text-base font-semibold text-slate-800">
-        {assessment.risk_profile}
-      </p>
-      <p className="mt-1 text-sm text-slate-600">
-        Overall score: {assessment.overall_score} out of 100
-      </p>
-      <p className="mt-6 max-w-2xl text-sm leading-6 text-slate-600">
-        Your assessment is complete. Your latest score and risk profile are shown above.
-      </p>
     </section>
   );
 }

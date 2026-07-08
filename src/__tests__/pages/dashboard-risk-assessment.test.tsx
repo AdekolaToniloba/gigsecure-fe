@@ -1,7 +1,10 @@
 import { act, render, screen, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import AppLayout from '@/app/(app)/layout';
+import DashboardRiskAssessmentRouteError from '@/app/(app)/dashboard/risk-assessment/error';
+import DashboardRiskAssessmentLoading from '@/app/(app)/dashboard/risk-assessment/loading';
 import DashboardRiskAssessmentPage, {
   metadata,
 } from '@/app/(app)/dashboard/risk-assessment/page';
@@ -34,6 +37,7 @@ beforeEach(() => {
 describe('dashboard risk assessment route', () => {
   it('defines route metadata', () => {
     expect(metadata.title).toBe('Risk Assessment');
+    expect(metadata.description).toMatch(/protected dashboard/i);
   });
 
   it('renders inside the authenticated shell with active navigation and no standalone header', async () => {
@@ -64,6 +68,43 @@ describe('dashboard risk assessment route', () => {
     expect(within(main).getAllByRole('heading', { level: 1 })).toHaveLength(1);
     expect(screen.queryByRole('button', { name: /cancel and return to home/i })).not.toBeInTheDocument();
     expect(navigation.replace).not.toHaveBeenCalled();
+  });
+
+  it('uses stable route loading geometry with an accessible status', () => {
+    render(<DashboardRiskAssessmentLoading />);
+
+    const loading = screen.getByRole('status', { name: 'Loading risk assessment' });
+    expect(loading).toHaveClass('max-w-7xl', 'min-w-0');
+    expect(loading).toHaveTextContent('Loading risk assessment');
+    expect(loading.lastElementChild?.lastElementChild).toHaveClass('min-h-[34rem]');
+    expect(loading.firstElementChild?.nextElementSibling).toHaveClass(
+      'motion-reduce:[&_*]:animate-none',
+    );
+  });
+
+  it('keeps unexpected route errors recoverable without exposing technical details', async () => {
+    const user = userEvent.setup();
+    const reset = vi.fn();
+
+    render(
+      <DashboardRiskAssessmentRouteError
+        error={new Error('sensitive internal stack detail')}
+        reset={reset}
+      />,
+    );
+
+    const alert = screen.getByRole('alert');
+    const retry = screen.getByRole('button', { name: 'Try again' });
+    expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Risk assessment');
+    expect(alert).toHaveTextContent('Something unexpected interrupted your risk assessment');
+    expect(alert).not.toHaveTextContent('sensitive internal stack detail');
+    expect(alert.closest('section[aria-labelledby]')).toHaveClass('max-w-7xl', 'min-w-0');
+
+    await user.tab();
+    expect(retry).toHaveFocus();
+    await user.keyboard('{Enter}');
+    expect(reset).toHaveBeenCalledTimes(1);
   });
 });
 

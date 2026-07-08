@@ -42,7 +42,7 @@ export default function RatingInput({ question, control, error }: Props) {
                   whileHover={reduceMotion ? undefined : { scale: 1.05 }}
                   whileTap={reduceMotion ? undefined : { scale: 0.95 }}
                   onClick={() => field.onChange(val)}
-                  className={`flex flex-col items-center justify-center flex-1 rounded-lg border py-3 px-1 transition-all duration-150 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[#004E4C] ${
+                  className={`flex min-h-11 flex-1 flex-col items-center justify-center rounded-lg border px-1 py-3 transition-colors duration-150 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[#004E4C] ${
                     isSelected
                       ? 'border-[#004E4C] bg-[#004E4C] text-white'
                       : 'border-gray-200 bg-white text-[#334155] hover:border-gray-300'

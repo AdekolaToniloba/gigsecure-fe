@@ -126,4 +126,25 @@ describe('StepPersonalDetails', () => {
     expect(screen.getByRole('textbox', { name: /first-name/i })).toBeEnabled();
     expect(screen.getByRole('button', { name: /occupation/i })).toBeEnabled();
   });
+
+  it('shows category titles while preserving the canonical category value', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(
+      <StepPersonalDetails
+        categories={[
+          {
+            category: 'tech_freelancer',
+            title: 'Tech Freelancer',
+            description: 'Coverage questions for independent technology professionals.',
+            total_questions: 22,
+            total_steps: 5,
+          },
+        ]}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: /occupation/i }));
+    expect(screen.getByRole('button', { name: 'Tech Freelancer' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'tech_freelancer' })).not.toBeInTheDocument();
+  });
 });

@@ -23,5 +23,7 @@ export function useMarketplaceRecommendations(perCategory = 3, enabled = true) {
     queryKey: QUERY_KEYS.MARKETPLACE_RECOMMENDATIONS(perCategory),
     queryFn: ({ signal }) => marketplaceService.getRecommendations(perCategory, signal),
     enabled,
+    staleTime: 5 * 60 * 1000,
+    retry: false,
   });
 }

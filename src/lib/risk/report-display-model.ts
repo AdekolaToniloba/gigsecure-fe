@@ -20,6 +20,11 @@ export type RiskExposureDisplay = {
   scoreText: string;
 };
 
+export type RiskInsightSection = {
+  title: string;
+  blocks: InsightBlock[];
+};
+
 export type RiskReportDisplayModel = {
   applicant: {
     firstName: string;
@@ -45,6 +50,7 @@ export type RiskReportDisplayModel = {
   insights: {
     rawText: string;
     blocks: InsightBlock[];
+    sections: RiskInsightSection[];
   };
 };
 
@@ -66,9 +72,27 @@ function parseInsightsSafely(rawText: string): InsightBlock[] {
   return fallbackText ? [{ type: 'paragraph', text: fallbackText }] : [];
 }
 
+function groupInsightBlocks(blocks: InsightBlock[]): RiskInsightSection[] {
+  const sections: RiskInsightSection[] = [];
+  let current: RiskInsightSection = { title: 'Personalized insights', blocks: [] };
+
+  for (const block of blocks) {
+    if (block.type === 'section-header') {
+      if (current.blocks.length > 0) sections.push(current);
+      current = { title: block.text, blocks: [] };
+      continue;
+    }
+    current.blocks.push(block);
+  }
+
+  if (current.blocks.length > 0) sections.push(current);
+  return sections;
+}
+
 export function createRiskReportDisplayModel(input: unknown): RiskReportDisplayModel {
   const response: AssessmentResponse = riskAssessmentResponseSchema.parse(input);
   const roundedScore = formatRiskScore(response.overall_score);
+  const insightBlocks = parseInsightsSafely(response.ai_insights);
 
   return {
     applicant: {
@@ -105,7 +129,8 @@ export function createRiskReportDisplayModel(input: unknown): RiskReportDisplayM
     recommendedCategories: [...(response.recommended_categories ?? [])],
     insights: {
       rawText: response.ai_insights,
-      blocks: parseInsightsSafely(response.ai_insights),
+      blocks: insightBlocks,
+      sections: groupInsightBlocks(insightBlocks),
     },
   };
 }

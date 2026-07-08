@@ -146,6 +146,8 @@ describe('RiskWizard', () => {
     expect(forbiddenRequests).toEqual([]);
     expect(useAuthStore.getState().hasFullSession).toBe(false);
     expect(useAuthStore.getState().riskAssessed).toBeNull();
+    expect(useWizardStore.getState().progressByMode.public.currentStep).toBe(0);
+    expect(useWizardStore.getState().progressByMode.public.answers).toEqual({});
   });
 
   it('uses public expired recovery when submission returns 401', async () => {
@@ -159,7 +161,12 @@ describe('RiskWizard', () => {
       expect(mockRouter.replace).toHaveBeenCalledWith('/waitlist?expired=true');
     });
     expect(mockRouter.push).not.toHaveBeenCalledWith('/waitlist');
-    expect(useWizardStore.getState().progressByMode.public.currentStep).toBe(0);
+    expect(useWizardStore.getState().progressByMode.public.currentStep).toBe(5);
+    expect(useWizardStore.getState().progressByMode.public.answers).toMatchObject({
+      first_name: assessmentPayloadFixture.first_name,
+      occupation: assessmentPayloadFixture.occupation,
+      protection_priority: assessmentPayloadFixture.protection_priority,
+    });
   });
 
   it('reports and consumes waitlist-to-assessment handoff timing once', async () => {

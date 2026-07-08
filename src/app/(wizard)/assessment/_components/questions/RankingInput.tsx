@@ -131,7 +131,7 @@ export default function RankingInput({ question, control, error }: Props) {
                       onClick={() => addToRanking(option)}
                       disabled={isMaxed}
                       aria-label={`Add ${option} to ranking`}
-                      className={`flex items-center gap-2 rounded-lg border px-3 py-2.5 text-left transition-all duration-150 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[#004E4C] ${
+                      className={`flex min-h-11 items-center gap-2 rounded-lg border px-3 py-2.5 text-left transition-colors duration-150 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[#004E4C] ${
                         isMaxed
                           ? 'opacity-40 cursor-not-allowed border-gray-200 bg-gray-50'
                           : 'border-gray-200 bg-white hover:border-[#004E4C]/40'

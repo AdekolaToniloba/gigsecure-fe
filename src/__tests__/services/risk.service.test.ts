@@ -56,6 +56,26 @@ describe('riskService', () => {
     },
   );
 
+  it('accepts richer category metadata responses from the categories endpoint', async () => {
+    const richCategoryResponse = [
+      {
+        category: 'tech_freelancer',
+        title: 'Tech Freelancer',
+        description: 'Coverage questions for independent technology professionals.',
+        total_questions: 22,
+        total_steps: 5,
+      },
+    ];
+
+    server.use(
+      http.get(`${baseUrl}${ENDPOINTS.RISK.CATEGORIES}`, () =>
+        HttpResponse.json(richCategoryResponse),
+      ),
+    );
+
+    await expect(riskService.getCategories()).resolves.toEqual(richCategoryResponse);
+  });
+
   it('rejects malformed category and question responses', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
     server.use(

@@ -6,6 +6,8 @@ Preserve GigSecure’s public risk-assessment acquisition funnel while adding a 
 
 This document is the implementation source of truth. Tasks must be completed in order and each completed task must append the required WAT entry to `CONTEXT.md`.
 
+Implementation status: Tasks 1–22 completed in order on 2026-07-08. The final dual-journey implementation map, verification evidence, environment-specific notes, and unresolved backend/product questions are recorded below and in `CONTEXT.md`.
+
 ## Scope Summary
 
 - Preserve `/risk-assessment` as the public informational page and `/assessment` as the waitlist-issued-Bearer acquisition wizard under `(wizard)`.
@@ -1158,6 +1160,8 @@ Run all commands, inspect public `/assessment` and `/dashboard/risk-assessment` 
 
 ### Task 22: CONTEXT.md and Epic Handoff Update
 
+Status: complete on 2026-07-08. The live implementation map, final verification evidence, route/security invariants, and unresolved backend/product questions are now recorded in this epic and `CONTEXT.md`.
+
 **Goal**
 
 Leave an accurate implementation map, decisions, results, and unresolved contracts.
@@ -1217,3 +1221,66 @@ with Files changed, Summary, Important decisions, and Known follow-ups.
 - Responsive verification covers 320, 360, 390, 768, 1024, 1280, 1440+, and the reference desktop viewport with no page overflow or clipped controls/content.
 - Performance verification confirms canonical request counts, no server data in Zustand, stable skeletons, optimized artwork, lightweight score visuals, and lazy PDF code.
 - Required commands pass or exact blockers are recorded: `npm run generate:types` when OpenAPI changes, focused Vitest suites after each task, `npm test -- --run`, `npm run lint`, `npx tsc --noEmit`, `npm run test:e2e -- --project=chromium`, `npm run build`, and `git diff --check`.
+
+## Final Implementation Handoff
+
+Status: complete on 2026-07-08. The live repository, not the original Task 1 audit snapshot, is authoritative for current route ownership, shared wizard/report composition, query/security boundaries, and test coverage.
+
+### Live implementation map
+
+Each task entry in `CONTEXT.md` records the exact file-by-file edits. The live implementation groups into the following production and verification areas:
+
+- Contracts and data boundaries:
+  - `openapi.json` and `src/types/schema.d.ts` hold the synchronized generated contract surface.
+  - `src/lib/validators/risk.ts`, `src/lib/risk/build-assessment-payload.ts`, `src/lib/risk/profile-to-wizard-defaults.ts`, and `src/lib/risk/report-display-model.ts` own runtime validation, payload construction, editable prefill, and the shared validated report display model.
+  - `src/services/risk.service.ts`, `src/hooks/risk/useRisk.ts`, `src/hooks/marketplace/useMarketplace.ts`, and `src/lib/constants.ts` own the authenticated risk and marketplace data layer through `apiClient`, canonical query keys, `AbortSignal`, runtime validation, and `parseApiError` consumers.
+  - `src/store/auth-store.ts`, `src/store/wizard-store.ts`, and `src/lib/risk/assessment-route-context.ts` preserve the memory-only access-token/full-session boundary and namespaced resumable wizard progress without copying server data into Zustand.
+
+- Route owners and controllers:
+  - `src/app/(public)/risk-assessment/page.tsx` remains the public informational route.
+  - `src/app/(wizard)/waitlist/page.tsx` remains the waitlist acquisition handoff.
+  - `src/app/(wizard)/assessment/page.tsx` and `src/app/(wizard)/assessment/_components/public-assessment-controller.tsx` remain the sole public wizard/report owner using the waitlist-issued in-memory Bearer token and `/waitlist?expired=true` recovery.
+  - `src/app/(app)/dashboard/risk-assessment/page.tsx`, `loading.tsx`, and `error.tsx` plus `src/components/risk-assessment/dashboard/dashboard-risk-assessment-controller.tsx` remain the sole authenticated risk-assessment route owner inside the existing dashboard shell.
+
+- Shared wizard, report, and PDF composition:
+  - `src/components/risk-assessment/wizard/` owns the shell-neutral `RiskAssessmentWizard`, its context, and route-mode props.
+  - `src/app/(wizard)/assessment/_components/` and `_lib/` retain the shared step controls, question renderers, consent gate, sidebar, insight parsing helpers, and public report adapter.
+  - `src/components/risk-assessment/report/` owns the authenticated assessed report, score/insight/exposure/product sections, reassessment entry point, and shared lazy PDF action.
+  - `src/app/(wizard)/assessment/_components/report/RiskReportPDF.tsx` remains the one PDF document foundation reused by both public and dashboard presentations.
+
+- Verification surface:
+  - `src/__tests__/lib/`, `src/__tests__/services/`, `src/__tests__/components/risk-assessment/`, `src/__tests__/components/wizard/`, and `src/__tests__/pages/dashboard-risk-assessment.test.tsx` cover the shared contracts, wizard behavior, public report, dashboard controller states, reassessment, products, PDF actions, route boundaries, and store invariants.
+  - `e2e/risk-assessment/helpers.ts`, `e2e/risk-assessment/public-acquisition-flow.spec.ts`, and `e2e/risk-assessment/dashboard-risk-assessment-flow.spec.ts` provide the dual-journey Chromium coverage for public acquisition, protected-route behavior, authenticated submission/reassessment, retry, and mobile overflow/navigation.
+
+### Final route and security invariants
+
+- `/risk-assessment` remains public information, `/waitlist` remains public onboarding, and `/assessment` remains the only public wizard/report route owner under `(wizard)`.
+- `/dashboard/risk-assessment` remains the only authenticated assessment route owner under `(app)` and is protected by the existing `/dashboard` middleware prefix plus `ProtectedRoute`.
+- Waitlist-issued and full-session access tokens remain memory-only. Refresh tokens remain httpOnly BFF cookies.
+- The shared `riskService` and `apiClient` send whichever in-memory Bearer token is present to `/api/v1/risk/*`; the frontend does not decode JWT scope, maintain a risk-endpoint permission matrix, or pre-reject a present token before the backend responds.
+- Public mode never starts `/users/me`, dashboard overview, KYC, or authenticated marketplace recommendation requests. Dashboard mode may start those only after refresh-backed full-session initialization.
+- React Query remains the owner of profile, assessment, history, recommendation, overview, and marketplace server data. Zustand remains limited to auth/session flags and namespaced resumable wizard progress.
+
+### Final verification evidence
+
+- Focused Task 20 Playwright coverage passed 2 files and 10 tests for the public acquisition and authenticated dashboard journeys.
+- The broader Chromium pass finished with 44 passing tests and 1 unrelated auth refresh-queue failure while all risk-assessment specs passed.
+- Task 21 production validation passed `npm test -- --run` with 112 files and 743 tests, `npx tsc --noEmit`, and `npm run lint` with 0 errors and the same 7 pre-existing unrelated warnings.
+- `npm run build` passed for the real source after the restricted-environment Google Fonts fetch issue was retried with network access; the resulting build included `/assessment`, `/dashboard/risk-assessment`, and `/risk-assessment`.
+- Public/dash route bundle inspection confirmed that the two assessment routes share most client chunks and keep the PDF renderer out of their initial client payloads.
+- Request-count verification remained within the planned boundaries: the public journey makes no full-session-only requests, the dashboard overview remains one request per entry/cache cycle, marketplace recommendations remain one request after assessed dashboard success, and latest assessment stays deferred until an assessed dashboard state needs it.
+
+### Environment-specific notes
+
+- The broader Chromium suite still has one unrelated existing failure in `e2e/auth/refresh-queue.spec.ts` (`concurrent expired authenticated requests share one refresh and retry with the new token`) returning an `AxiosError` 401.
+- Next.js still emits the existing `middleware` deprecation warning during build output; that migration remains outside this epic.
+- A fully offline production build is still blocked by `next/font` fetching `Inter` from Google Fonts. No font workaround was merged into production source during this epic.
+
+### Remaining backend and product questions
+
+- Are public assessment results persisted and later retrievable, or is the validated 201 response the only public report authority?
+- What exact response schemas and stable identifiers will `/risk/categories` and `/risk/questions` guarantee?
+- Does latest assessment need documented 404 healing semantics, timestamps, or a stable “last updated” authority?
+- What is the guaranteed ordering for `/risk/history`, and can one item be identified as the latest independently of chronology?
+- Is `risk_profile` a closed enum, and may any frontend-derived pillar/risk thresholds ever be shown beyond neutral numeric score output?
+- Will backend/product add a shareable report URL, approved benchmark/comparison fields, product-plan counts, premium estimates, or other currently omitted screenshot-only values?

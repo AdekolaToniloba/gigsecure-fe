@@ -34,8 +34,10 @@ export const QUERY_KEYS = {
   // Marketplace
   MARKETPLACE_PRODUCTS: (filters: object) => ['marketplace', 'products', filters] as const,
   MARKETPLACE_PRODUCT: (id: string) => ['marketplace', 'products', id] as const,
-  MARKETPLACE_RECOMMENDATIONS: (perCategory: number) =>
-    ['marketplace', 'recommendations', perCategory] as const,
+  MARKETPLACE_RECOMMENDATIONS: (perCategory?: number) =>
+    perCategory === undefined
+      ? ['marketplace', 'recommendations'] as const
+      : ['marketplace', 'recommendations', perCategory] as const,
 
   // Legacy products
   PRODUCTS: ['products'] as const,

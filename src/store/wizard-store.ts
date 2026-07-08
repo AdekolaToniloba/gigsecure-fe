@@ -16,6 +16,7 @@ interface WizardState extends WizardProgress {
 
 interface WizardActions {
   setMode: (mode: AssessmentMode) => void;
+  setCurrentStep: (step: number) => void;
   nextStep: () => void;
   prevStep: () => void;
   setStepAnswers: (values: Record<string, unknown>) => void;
@@ -72,6 +73,11 @@ export const useWizardStore = create<WizardStore>()(
             ...state.progressByMode[mode],
           };
         }),
+
+      setCurrentStep: (step) =>
+        set((state) => withActiveProgress(state, {
+          currentStep: Math.max(0, Math.min(step, 5)),
+        })),
 
       nextStep: () =>
         set((state) => withActiveProgress(state, {

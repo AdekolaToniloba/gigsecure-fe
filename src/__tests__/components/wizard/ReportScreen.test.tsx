@@ -10,7 +10,7 @@ const pdfMocks = vi.hoisted(() => ({
   toBlob: vi.fn(),
 }));
 
-// Mock @react-pdf/renderer since it doesn't work in jsdom
+// The renderer is imported only after the shared download action is activated.
 vi.mock('@react-pdf/renderer', async () => {
   const { MockAnimatePresence } = await import('@/__tests__/mock-components');
   return {
@@ -34,6 +34,7 @@ describe('ReportScreen', () => {
     pdfMocks.pdf.mockReturnValue({ toBlob: pdfMocks.toBlob });
     URL.createObjectURL = vi.fn(() => 'blob:risk-report');
     URL.revokeObjectURL = vi.fn();
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
   });
 
   it('renders firstName in hero heading', () => {
@@ -42,9 +43,12 @@ describe('ReportScreen', () => {
     expect(screen.getByText(/Toni, here's your protection plan/)).toBeInTheDocument();
   });
 
-  it('falls back when no firstName', () => {
-    render(<ReportScreen data={mockAssessmentResponse} />);
-    expect(screen.getByText(/Here's your protection plan/)).toBeInTheDocument();
+  it('uses the validated applicant first name when waitlist metadata is unavailable', () => {
+    render(<ReportScreen data={{
+      ...mockAssessmentResponse,
+      applicant: { ...mockAssessmentResponse.applicant, first_name: 'Amaka' },
+    }} />);
+    expect(screen.getByText(/Amaka, here's your protection plan/)).toBeInTheDocument();
   });
 
   it('displays overall score percentage', () => {
@@ -107,31 +111,11 @@ describe('ReportScreen', () => {
     expect(screen.queryByText(/Generated just now/i)).not.toBeInTheDocument();
   });
 
-  /*
-  it('"Share Link" copies URL and shows "Copied!"', async () => {
-    const user = userEvent.setup();
-    const writeTextSpy = vi.fn().mockResolvedValue(undefined);
-    Object.defineProperty(navigator, 'clipboard', {
-      value: { writeText: writeTextSpy },
-      configurable: true,
-    });
-    
-    render(<ReportScreen data={mockAssessmentResponse} />);
-
-    const shareBtn = screen.getByRole('button', { name: /share link/i });
-    await user.click(shareBtn);
-
-    expect(writeTextSpy).toHaveBeenCalled();
-    expect(screen.getByText('Copied!')).toBeInTheDocument();
-  });
-  */
-
-  /*
-  it('renders Download PDF button', () => {
+  it('renders the shared download action without an unsupported share action', () => {
     render(<ReportScreen data={mockAssessmentResponse} />);
     expect(screen.getByRole('button', { name: /download pdf/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /share/i })).not.toBeInTheDocument();
   });
-  */
 
   it('renders footer section', () => {
     render(<ReportScreen data={mockAssessmentResponse} />);
@@ -145,8 +129,9 @@ describe('ReportScreen', () => {
     expect(heading).toHaveFocus();
   });
 
-  it('keeps the existing PDF download foundation working', async () => {
+  it('uses the lazy shared PDF download path', async () => {
     render(<ReportScreen data={mockAssessmentResponse} />);
+    expect(pdfMocks.pdf).not.toHaveBeenCalled();
     await userEvent.click(screen.getByRole('button', { name: /download pdf/i }));
 
     await waitFor(() => expect(pdfMocks.toBlob).toHaveBeenCalledOnce());
