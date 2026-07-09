@@ -60,16 +60,27 @@ function getBlobContentType(blob: Blob, header: string | undefined) {
   return blob.type || header || 'application/octet-stream';
 }
 
-async function normalizeBlobError(error: unknown) {
+async function readBinaryErrorBody(data: unknown) {
+  if (data instanceof Blob) return data.text();
+  if (data instanceof ArrayBuffer) return new TextDecoder().decode(data);
+  if (ArrayBuffer.isView(data)) {
+    return new TextDecoder().decode(data);
+  }
+  return null;
+}
+
+async function normalizeBinaryError(error: unknown) {
   if (
     typeof error === 'object' &&
     error !== null &&
     'response' in error &&
     typeof (error as { response?: unknown }).response === 'object' &&
-    (error as { response?: { data?: unknown } }).response?.data instanceof Blob
+    (error as { response?: { data?: unknown } }).response?.data
   ) {
-    const response = (error as { response: { data: Blob } }).response;
-    const text = await response.data.text();
+    const response = (error as { response: { data: unknown } }).response;
+    const text = await readBinaryErrorBody(response.data);
+    if (text === null) return error;
+
     try {
       return {
         ...(error as object),
@@ -121,12 +132,15 @@ export const policiesService = {
 
   async downloadPolicyReport(id: string, signal?: AbortSignal): Promise<PolicyReportDownload> {
     try {
-      const response = await apiClient.get<Blob>(ENDPOINTS.POLICIES.REPORT(id), {
-        responseType: 'blob',
+      const response = await apiClient.get<ArrayBuffer>(ENDPOINTS.POLICIES.REPORT(id), {
+        responseType: 'arraybuffer',
         signal,
       });
-      const blob = response.data;
-      const contentType = getBlobContentType(blob, response.headers['content-type']);
+      const headerContentType = response.headers['content-type'];
+      const blob = new Blob([response.data], {
+        type: headerContentType || 'application/octet-stream',
+      });
+      const contentType = getBlobContentType(blob, headerContentType);
 
       if (!(blob instanceof Blob) || blob.size === 0) {
         throw new Error('Policy report is not available for download yet.');
@@ -142,7 +156,7 @@ export const policiesService = {
         filename: filenameFromContentDisposition(response.headers['content-disposition'], id),
       };
     } catch (error) {
-      throw await normalizeBlobError(error);
+      throw await normalizeBinaryError(error);
     }
   },
 };

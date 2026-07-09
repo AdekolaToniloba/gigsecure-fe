@@ -1,11 +1,11 @@
+import type { SVGProps } from 'react';
 import { cn } from '@/lib/utils';
 
 type SpinnerSize = 'sm' | 'md' | 'lg';
 
-interface SpinnerProps {
+interface SpinnerProps extends Omit<SVGProps<SVGSVGElement>, 'color'> {
   size?: SpinnerSize;
   color?: string;
-  className?: string;
 }
 
 const sizeMap: Record<SpinnerSize, number> = {
@@ -18,19 +18,26 @@ export default function Spinner({
   size = 'md',
   color = '#004E4C', // primary
   className,
+  role = 'status',
+  'aria-label': ariaLabel = 'Loading',
+  'aria-hidden': ariaHidden,
+  ...props
 }: SpinnerProps) {
   const dimension = sizeMap[size];
+  const isHidden = ariaHidden === true || ariaHidden === 'true';
 
   return (
     <svg
-      role="status"
-      aria-label="Loading"
+      role={isHidden ? undefined : role}
+      aria-label={isHidden ? undefined : ariaLabel}
+      aria-hidden={ariaHidden}
       width={dimension}
       height={dimension}
       viewBox="0 0 24 24"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className={cn('animate-spin', className)}
+      {...props}
     >
       <circle
         cx="12"

@@ -293,9 +293,13 @@ describe('DashboardOverviewController', () => {
       ...dashboardProfileFixtures.assessedKycUnverified,
       kyc_verified: true,
     });
+    let resolveAssessment: (() => void) | undefined;
+    const assessmentResponse = new Promise<void>((resolve) => {
+      resolveAssessment = resolve;
+    });
     server.use(
       http.get(ASSESSMENT_URL, async () => {
-        await delay(100);
+        await assessmentResponse;
         return HttpResponse.json(latestAssessmentFixture);
       }),
     );
@@ -312,6 +316,7 @@ describe('DashboardOverviewController', () => {
     expect(screen.getByRole('region', { name: 'Income Stability Pattern' })).toBeVisible();
     expect(screen.queryByRole('region', { name: 'Recommended actions' })).not.toBeInTheDocument();
 
+    resolveAssessment?.();
     expect(await screen.findByRole('img', {
       name: /Moderate Risk, score 68.5 out of 100/,
     })).toBeVisible();
