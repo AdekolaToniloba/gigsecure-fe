@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useUserFlags } from '@/hooks/auth/useUserFlags';
 import { useCurrentUser, useUpdateProfile } from '@/hooks/user/useUser';
 import { useUserProfile } from '@/hooks/user/useUserProfile';
+import { QUERY_KEYS } from '@/lib/constants';
 import { userService } from '@/services/user.service';
 import { useAuthStore } from '@/store/auth-store';
 import { ENDPOINTS } from '@/lib/api/endpoints';
@@ -26,7 +27,8 @@ describe('user profile hooks', () => {
       setFullSession();
     });
 
-    const { result } = renderHook(() => useUserProfile(), { wrapper: createWrapper() });
+    const { wrapper } = createWrapper();
+    const { result } = renderHook(() => useUserProfile(), { wrapper });
 
     await waitFor(() => {
       expect(result.current.isSuccess).toBe(true);
@@ -47,7 +49,8 @@ describe('user profile hooks', () => {
       useAuthStore.getState().setAccessToken('opaque-waitlist-token');
     });
 
-    const { result } = renderHook(() => useCurrentUser(), { wrapper: createWrapper() });
+    const { wrapper } = createWrapper();
+    const { result } = renderHook(() => useCurrentUser(), { wrapper });
 
     expect(result.current.fetchStatus).toBe('idle');
     expect(result.current.data).toBeUndefined();
@@ -88,7 +91,8 @@ describe('user profile hooks', () => {
       setFullSession();
     });
 
-    const { result } = renderHook(() => useUpdateProfile(), { wrapper: createWrapper() });
+    const { wrapper } = createWrapper();
+    const { result } = renderHook(() => useUpdateProfile(), { wrapper });
 
     await act(async () => {
       await result.current.mutateAsync({ city: 'Lagos' });
@@ -98,6 +102,73 @@ describe('user profile hooks', () => {
     expect(state.user?.email).toBe('test@gigsecure.com');
     expect(state.kycVerified).toBe(false);
     expect(state.riskAssessed).toBe(true);
+  });
+
+  it('does not retry expected profile update failures and exposes parsed errors', async () => {
+    act(() => setFullSession());
+    const updateSpy = vi
+      .spyOn(userService, 'updateProfile')
+      .mockRejectedValueOnce({ response: { status: 422, data: { detail: 'Profile update failed.' } } });
+    const { wrapper } = createWrapper();
+    const { result } = renderHook(() => useUpdateProfile(), { wrapper });
+
+    await expect(
+      act(async () => {
+        await result.current.mutateAsync({ city: 'Abuja' });
+      }),
+    ).rejects.toEqual({
+      response: { status: 422, data: { detail: 'Profile update failed.' } },
+    });
+
+    expect(updateSpy).toHaveBeenCalledTimes(1);
+    await waitFor(() => {
+      expect(result.current.parsedError?.message).toBe('Profile update failed.');
+    });
+  });
+
+  it('invalidates dependent dashboard and recommendation queries when assessment-relevant fields change', async () => {
+    act(() => setFullSession());
+    const { queryClient, wrapper } = createWrapper();
+    const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+    const { result } = renderHook(() => useUpdateProfile(), { wrapper });
+
+    await act(async () => {
+      await result.current.mutateAsync({
+        city: 'Abuja',
+        average_monthly_income: '225000',
+      });
+    });
+
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: QUERY_KEYS.USER_ME });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: QUERY_KEYS.DASHBOARD_OVERVIEW });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: QUERY_KEYS.RISK_ASSESSMENT });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: QUERY_KEYS.RISK_HISTORY });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: QUERY_KEYS.RISK_RECOMMENDATIONS });
+    expect(invalidateSpy).toHaveBeenCalledWith({
+      queryKey: QUERY_KEYS.MARKETPLACE_RECOMMENDATIONS(),
+    });
+  });
+
+  it('limits downstream invalidation to USER_ME when only non-assessment fields change', async () => {
+    act(() => setFullSession());
+    const { queryClient, wrapper } = createWrapper();
+    const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+    const { result } = renderHook(() => useUpdateProfile(), { wrapper });
+
+    await act(async () => {
+      await result.current.mutateAsync({
+        phone_number: '+2348000000000',
+      });
+    });
+
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: QUERY_KEYS.USER_ME });
+    expect(invalidateSpy).not.toHaveBeenCalledWith({ queryKey: QUERY_KEYS.DASHBOARD_OVERVIEW });
+    expect(invalidateSpy).not.toHaveBeenCalledWith({ queryKey: QUERY_KEYS.RISK_ASSESSMENT });
+    expect(invalidateSpy).not.toHaveBeenCalledWith({ queryKey: QUERY_KEYS.RISK_HISTORY });
+    expect(invalidateSpy).not.toHaveBeenCalledWith({ queryKey: QUERY_KEYS.RISK_RECOMMENDATIONS });
+    expect(invalidateSpy).not.toHaveBeenCalledWith({
+      queryKey: QUERY_KEYS.MARKETPLACE_RECOMMENDATIONS(),
+    });
   });
 
   it('deduplicates /users/me across full-session consumers', async () => {
@@ -122,9 +193,9 @@ describe('user profile hooks', () => {
       }),
     );
     act(() => setFullSession());
-    const Wrapper = createWrapper();
-    const first = renderHook(() => useCurrentUser(), { wrapper: Wrapper });
-    const second = renderHook(() => useUserProfile(), { wrapper: Wrapper });
+    const { wrapper } = createWrapper();
+    const first = renderHook(() => useCurrentUser(), { wrapper });
+    const second = renderHook(() => useUserProfile(), { wrapper });
 
     await waitFor(() => {
       expect(first.result.current.isSuccess).toBe(true);
@@ -137,8 +208,9 @@ describe('user profile hooks', () => {
   it('honors route-owned profile disablement in a full session', () => {
     act(() => setFullSession());
     const getMeSpy = vi.spyOn(userService, 'getMe');
+    const { wrapper } = createWrapper();
     const { result } = renderHook(() => useCurrentUser({ enabled: false }), {
-      wrapper: createWrapper(),
+      wrapper,
     });
 
     expect(result.current.fetchStatus).toBe('idle');
@@ -162,7 +234,10 @@ function createWrapper() {
     );
   }
 
-  return Wrapper;
+  return {
+    queryClient,
+    wrapper: Wrapper,
+  };
 }
 
 function setFullSession() {

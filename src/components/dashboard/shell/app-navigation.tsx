@@ -48,8 +48,9 @@ export const APP_NAVIGATION_ITEMS: readonly AppNavigationItem[] = [
   },
   {
     label: 'Profile',
+    href: '/dashboard/profile',
     icon: UserRound,
-    available: false,
+    available: true,
   },
   {
     label: 'Settings',
