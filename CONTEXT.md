@@ -4,6 +4,142 @@ Created: 2026-05-22 18:02 WAT
 
 This is the living context file for the authentication epic. It must be updated after every completed task with what changed, what was added, important decisions, and known follow-ups.
 
+## Dashboard Premiums Bought Epic Progress
+
+### 2026-07-09 00:54 WAT — Task 1: Premiums Audit And Contract Lock
+
+- Files changed: `CONTEXT.md`.
+- Summary: Revalidated the protected dashboard shell, sidebar/navbar, auth guard, API client, error parser, React Query setup, MSW setup, current policy domain layer, marketplace slide-over pattern, settings modal pattern, route/test conventions, `openapi.json`, and generated `src/types/schema.d.ts` before implementing Premiums Bought. The protected app layout already wraps dashboard routes in `ProtectedRoute`, `AuthenticatedAppShell`, `AppSidebar`, and `DashboardNavbar`; adding `/dashboard/premiums` will inherit the existing auth and shell behavior.
+- Current policy state: `openapi.json` and `src/types/schema.d.ts` already include `GET /api/v1/policies`, `GET /api/v1/policies/summary`, `GET /api/v1/policies/{policy_id}`, `GET /api/v1/policies/{policy_id}/report`, `PolicyOut`, `PolicyListResponse`, `PolicySummary`, and `PolicyProductSummary`. The live runtime layer is still stale: `src/lib/validators/policies.ts` expects array-shaped legacy policies with `user_id`, `product_id`, `premium`, and `currency`; `src/services/policies.service.ts` returns `Policy[]` from `/api/v1/policies/`; `src/hooks/policies/usePolicies.ts` uses non-parameterized keys and `throwOnError: true`; `src/mocks/handlers/domain.ts` still serves legacy policy fixtures.
+- Screenshot/data mapping: Premiums overview can use `PolicySummary.total_coverage`, `active_count`, and `due_soon_count`. Policy cards and detail panel can use `PolicyOut.product.name`, `product.provider_name`, `product.category`, `display_status`, `coverage_amount`, `premium_amount`, `premium_currency`, `renewal_frequency`, `purchased_at`, `start_date`, `end_date`, `created_at`, and `external_policy_id`. `DashboardOverviewResponse.premiums_bought` remains available for dashboard overview metrics, but no new navbar live-count call is required.
+- Important decisions: Use `/dashboard/premiums` and enable the existing `Premiums Bought` sidebar item only after the route exists. Keep policy summary/list/detail/report state in React Query only. Use `apiClient` for all authenticated policy calls and `parseApiError` for user-facing errors. Use documented raw `status_filter` only for server-backed active/expired list filters; due-soon UI will be driven truthfully from `display_status` unless the backend later documents a raw status/threshold. Do not render next payment, policy document URL, product description, coverage bullets, payout type, or provider logo because `PolicyOut` does not expose those fields.
+- Known API/design gaps: The report endpoint exists but generated types show `content?: never`; response content type, filename headers, and binary semantics remain under-documented. `PolicySummary.total_coverage` has no currency field, so the UI must document the app-wide NGN display assumption or avoid implying a backend-provided currency. The contract has no next-payment date, due-soon threshold, policy document URL, product description, coverage bullet list, payout type, pagination metadata, or facets.
+- Validation: No tests required for this planning-only task. Required source files were read before edits in the requested order: `RULES.md`, `DASHBOARD_PREMIUMS_EPICS.md`, `CONTEXT.md`, `src/app/globals.css`, `openapi.json`, and `src/types/schema.d.ts`.
+
+### 2026-07-09 00:56 WAT — Task 2: Policy OpenAPI Sync And Generated Types
+
+- Files changed: `CONTEXT.md`. `src/types/schema.d.ts` was regenerated with `npm run generate:types` and produced no source diff because the local generated declarations already matched `openapi.json`.
+- Summary: Confirmed the local OpenAPI contract includes authenticated policy list, summary, detail, mock pay, and report endpoints. `GET /api/v1/policies` includes optional `status_filter?: string | null`; `PolicyOut`, `PolicyListResponse`, `PolicySummary`, and `PolicyProductSummary` exist in generated types and match the Premiums Bought data model.
+- Important decisions: Did not hand-edit `src/types/schema.d.ts`. Did not alter `openapi.json` because the local backend-approved contract already contains the required premiums fields. Kept the report endpoint gap explicit: `GET /api/v1/policies/{policy_id}/report` has a documented `200` response but no response content in OpenAPI, and generated types therefore expose `content?: never`.
+- Known follow-ups: Task 3 must replace the stale legacy runtime policy validators, query keys, endpoint constants, and MSW fixtures with OpenAPI-shaped policy contracts. Task 10 must render report download as unavailable or guarded unless a usable blob/PDF response is confirmed outside the generated contract.
+- Validation: `npm run generate:types` passed. `npx tsc --noEmit` passed.
+
+### 2026-07-09 00:58 WAT — Task 3: Policy Domain Types, Validators, Endpoints, Query Keys, And MSW
+
+- Files changed: `src/types/policies.ts`, `src/lib/validators/policies.ts`, `src/lib/api/endpoints.ts`, `src/lib/constants.ts`, `src/mocks/fixtures/policies.ts`, `src/mocks/handlers/policies.ts`, `src/mocks/handlers/index.ts`, `src/mocks/handlers/domain.ts`, `src/__tests__/lib/policies-validators.test.ts`, `src/__tests__/mocks/policies-handlers.test.ts`, `CONTEXT.md`.
+- Summary: Replaced the stale runtime policy validators with OpenAPI-aligned schemas for `PolicyProductSummary`, `PolicyOut`, `PolicyListResponse`, `PolicySummary`, and `PolicyCreate`. Added generated type aliases, canonical policy endpoint constants for list/create/summary/detail/report, filtered list/summary/detail/report query keys, OpenAPI-shaped policy fixtures, and a dedicated policy MSW handler module. Removed the old legacy policy handlers from `domainHandlers` so tests cannot accidentally consume array-shaped policies with `user_id`, `product_id`, `premium`, and `currency`.
+- Important decisions: Kept decimal money values as strings at the validation boundary. Did not constrain `PolicyOut.status` to a frontend enum because OpenAPI documents it as a string. Kept due-soon represented by `display_status` in fixtures rather than inventing date-threshold logic. Removed undocumented cancel/renew constants from the active policy endpoint surface.
+- Known follow-ups: Task 4 must update `src/services/policies.service.ts` and `src/hooks/policies/usePolicies.ts`; those files still reference legacy list/detail shapes and now-obsolete cancel/renew methods until the next task replaces them. Report mocks can simulate PDF/blob success for service tests, but production UI behavior remains gated by the under-documented OpenAPI response content.
+- Validation: `npm test -- --run src/__tests__/lib/policies-validators.test.ts src/__tests__/mocks/policies-handlers.test.ts` passed with 2 files and 11 tests.
+
+### 2026-07-09 01:01 WAT — Task 4: Policy Services And React Query Hooks
+
+- Files changed: `src/services/policies.service.ts`, `src/hooks/policies/usePolicies.ts`, `src/__tests__/services/policies.service.test.ts`, `src/__tests__/hooks/policies-hooks.test.tsx`, `CONTEXT.md`.
+- Summary: Replaced the legacy policy service and hooks with authenticated `apiClient` methods for policy summary, filtered list, detail, create-policy compatibility, and report download. JSON responses are runtime-validated, list requests pass documented `status_filter` values, detail queries are disabled until an ID exists, list/summary/detail errors remain in-page, and the report action is exposed as a `retry: false` mutation rather than cached server state.
+- Important decisions: Removed undocumented cancel/renew hooks from the active policy API surface. Kept `usePolicies` and `usePolicy` as aliases for compatibility while new code should use `usePoliciesList` and `usePolicyDetail`. Report download only succeeds for a non-empty `application/pdf` blob; empty or unsupported response content throws a truthful unavailable error, preserving the OpenAPI content gap instead of fabricating a download. User-facing display code must still run errors through `parseApiError`.
+- Known follow-ups: Task 5 must wire UI primitives to these hooks and decide where the report action is shown as unavailable by default. Task 10 must add browser download orchestration and object URL cleanup if a usable PDF/blob response is confirmed for the UI path.
+- Validation: `npm test -- --run src/__tests__/lib/policies-validators.test.ts src/__tests__/mocks/policies-handlers.test.ts src/__tests__/services/policies.service.test.ts src/__tests__/hooks/policies-hooks.test.tsx` passed with 4 files and 21 tests. `npx tsc --noEmit` passed.
+
+### 2026-07-09 01:05 WAT — Task 5: Shared Premiums UI Primitives
+
+- Files changed: `src/components/dashboard/premiums/premiums-formatters.ts`, `src/components/dashboard/premiums/policy-status-badge.tsx`, `src/components/dashboard/premiums/policy-filter-chips.tsx`, `src/components/dashboard/premiums/report-download-button.tsx`, `src/components/dashboard/premiums/policy-card.tsx`, `src/components/dashboard/premiums/premiums-empty-state.tsx`, `src/components/dashboard/premiums/policy-detail-slide-over.tsx`, `src/services/policies.service.ts`, `src/__tests__/components/dashboard/premiums-primitives.test.tsx`, `CONTEXT.md`.
+- Summary: Added focused premiums UI primitives for money/date/renewal formatting, status badges, filter chips, policy cards, no-policies empty state, report download action, and a modal slide-over shell. The card renders only contracted `PolicyOut` fields and uses explicit buttons for details/report actions. The slide-over traps focus, restores focus, locks body scroll, and closes via Escape, backdrop, and close button. The empty state links to `/marketplace` and `/dashboard/risk-assessment`.
+- Important decisions: Report buttons default to unavailable with truthful copy because the OpenAPI report response content remains under-documented. When explicitly enabled for a confirmed PDF/blob response, the button uses the report mutation, creates a download link, announces success, and revokes the object URL. Blob-mode API errors are normalized in the service so `parseApiError` can still show backend `{ detail }` messages.
+- Known follow-ups: Task 6 must compose the overview summary card with loading/error/zero states. Task 9 must provide policy-specific detail content inside the slide-over shell. Task 10 must decide whether the page-level report action remains unavailable or can be enabled based on a confirmed backend PDF/blob contract.
+- Validation: `npm test -- --run src/__tests__/components/dashboard/premiums-primitives.test.tsx src/__tests__/services/policies.service.test.ts src/__tests__/hooks/policies-hooks.test.tsx` passed with 3 files and 16 tests. Vitest printed a non-fatal jsdom `Not implemented: navigation to another Document` warning when the report button test clicked a generated anchor.
+
+### 2026-07-09 01:06 WAT — Task 6: Premiums Overview Summary Card
+
+- Files changed: `src/components/dashboard/premiums/premiums-overview-card.tsx`, `src/components/dashboard/premiums/premiums-overview-skeleton.tsx`, `src/__tests__/components/dashboard/premiums-overview-card.test.tsx`, `CONTEXT.md`.
+- Summary: Added the "Your Protection Overview" card with shield treatment, contracted `PolicySummary` metrics, stable skeleton loading geometry, accessible error/retry state, and zero-safe summary rendering.
+- Important decisions: Displayed `PolicySummary.total_coverage` as NGN using the app-wide Nigerian currency assumption already present in marketplace/policy contracts, and documented that assumption in screen-reader copy because the summary contract has no currency field.
+- Known follow-ups: Task 7 must compose the policy list and filters below the overview. If backend later adds summary currency, `PremiumsOverviewCard` should use that documented field instead of the current NGN assumption.
+- Validation: `npm test -- --run src/__tests__/components/dashboard/premiums-overview-card.test.tsx src/__tests__/components/dashboard/premiums-primitives.test.tsx` passed with 2 files and 10 tests. Vitest printed the same non-fatal jsdom anchor navigation warning from the report button primitive test.
+
+### 2026-07-09 01:08 WAT — Task 7: Premiums List And Filter State
+
+- Files changed: `src/components/dashboard/premiums/premiums-list.tsx`, `src/components/dashboard/premiums/premiums-list-skeleton.tsx`, `src/__tests__/components/dashboard/premiums-list.test.tsx`, `CONTEXT.md`.
+- Summary: Added the Premiums list section with `All`, `All Active`, `Due Soon`, and `Expired` filter state, stable loading skeletons, accessible error/retry state, distinct filtered no-results state, and OpenAPI-backed policy cards.
+- Important decisions: `All Active` and `Expired` send the documented raw `status_filter=active|expired` query param. `Due Soon` does not send a server filter and instead filters the returned `PolicyOut[]` by authoritative `display_status` text; no due-date threshold or date guessing was introduced.
+- Known follow-ups: Task 9 must connect `View Details` to the detail query and render the slide-over content. If backend later documents a due-soon raw status or threshold, this component should switch to that contract.
+- Validation: `npm test -- --run src/__tests__/components/dashboard/premiums-list.test.tsx src/__tests__/components/dashboard/premiums-primitives.test.tsx` passed with 2 files and 13 tests. Vitest printed the same non-fatal jsdom anchor navigation warning from the report button primitive test.
+
+### 2026-07-09 01:08 WAT — Task 8: No-Policies Empty State
+
+- Files changed: `src/components/dashboard/premiums/premiums-empty-state.tsx`, `src/components/dashboard/premiums/premiums-list.tsx`, `src/__tests__/components/dashboard/premiums-primitives.test.tsx`, `src/__tests__/components/dashboard/premiums-list.test.tsx`, `CONTEXT.md`.
+- Summary: Composed the no-policies empty state into the list only when the unfiltered policy list succeeds with zero items. The empty panel uses the required copy direction, a decorative local icon treatment, and CTAs to `/marketplace` and `/dashboard/risk-assessment`.
+- Important decisions: Filtered empty results render a separate "No premiums match this filter" state so an account with policies is not told it has no protection plans.
+- Known follow-ups: Task 11 must ensure the overview card remains visible above this empty state when the page is composed.
+- Validation: Covered by the Task 7 list/primitive run: `npm test -- --run src/__tests__/components/dashboard/premiums-list.test.tsx src/__tests__/components/dashboard/premiums-primitives.test.tsx` passed with 2 files and 13 tests.
+
+### 2026-07-09 01:10 WAT — Task 9: Policy Detail Slide-Over Content
+
+- Files changed: `src/components/dashboard/premiums/policy-detail-content.tsx`, `src/components/dashboard/premiums/policy-detail-panel.tsx`, `src/__tests__/components/dashboard/premiums-policy-detail.test.tsx`, `CONTEXT.md`.
+- Summary: Wired `View Details` flows to a detail query through `PolicyDetailPanel`, using clicked card data as a safe fallback while the selected policy detail refreshes. The detail content renders product/provider/category identity, `display_status`, coverage, premium, coverage limit, start/end dates, renewal frequency, and report/document actions from the contracted `PolicyOut` fields.
+- Important decisions: Unsupported next payment, description, coverage bullets, view-policy document URL, and payout type are omitted or marked unavailable because the current `PolicyOut` contract does not expose those fields. The detail query remains disabled until a policy ID exists and keeps loading/error/retry states inside the panel.
+- Known follow-ups: Task 11 must compose `PolicyDetailPanel` with the full `/dashboard/premiums` page. Backend/product still needs to provide authoritative document URLs, next-payment dates, product descriptions, structured coverage benefits, and payout type before those can become real panel content.
+- Validation: `npm test -- --run src/__tests__/components/dashboard/premiums-policy-detail.test.tsx src/__tests__/components/dashboard/premiums-primitives.test.tsx` passed with 2 files and 9 tests. Vitest printed the same non-fatal jsdom anchor navigation warning from the report button primitive test.
+
+### 2026-07-09 01:11 WAT — Task 10: Report Download Integration
+
+- Files changed: `src/services/policies.service.ts`, `src/hooks/policies/usePolicies.ts`, `src/components/dashboard/premiums/report-download-button.tsx`, `src/__tests__/services/policies.service.test.ts`, `src/__tests__/hooks/policies-hooks.test.tsx`, `src/__tests__/components/dashboard/premiums-primitives.test.tsx`, `CONTEXT.md`.
+- Summary: Added authenticated report download support at the service/hook/button level for confirmed non-empty PDF blob responses. The button handles unavailable, idle, loading, success, duplicate-click prevention, and parsed error states; successful downloads use a safe filename, click a generated anchor, and revoke the object URL.
+- Important decisions: The production page keeps report actions unavailable by default because `openapi.json`/`src/types/schema.d.ts` still document `GET /api/v1/policies/{policy_id}/report` with no response content. The enabled branch is ready for a backend-approved `application/pdf`/blob response but rejects empty or unsupported content instead of inventing a file.
+- Known follow-ups: Backend must document report content type and filename semantics before page-level report buttons are enabled. JSDOM prints a non-fatal navigation warning when tests click generated download anchors; real browser Playwright should cover the unavailable page branch unless the PDF contract is confirmed.
+- Validation: `npm test -- --run src/__tests__/components/dashboard/premiums-primitives.test.tsx src/__tests__/services/policies.service.test.ts src/__tests__/hooks/policies-hooks.test.tsx` passed with 3 files and 17 tests. Vitest printed non-fatal jsdom anchor navigation warnings from report download tests.
+
+### 2026-07-09 01:13 WAT — Task 11: Premiums Page Composition Under Authenticated Dashboard Route
+
+- Files changed: `src/app/(app)/dashboard/premiums/page.tsx`, `src/app/(app)/dashboard/premiums/loading.tsx`, `src/app/(app)/dashboard/premiums/error.tsx`, `src/components/dashboard/premiums/premiums-page-controller.tsx`, `src/components/dashboard/shell/app-navigation.tsx`, `src/lib/constants.ts`, `src/__tests__/pages/dashboard-premiums.test.tsx`, `src/__tests__/components/dashboard/app-navigation.test.tsx`, `CONTEXT.md`.
+- Summary: Added the protected `/dashboard/premiums` route with metadata, stable loading state, friendly route error boundary, and client controller composition for summary, list, empty state, detail panel, and unavailable report action. Enabled the existing `Premiums Bought` sidebar/mobile navigation item and active-route behavior.
+- Important decisions: Kept the App Router page as a small server boundary and all interactive server-state behavior in `PremiumsPageController`. Left the navbar `0 Premiums` placeholder unchanged because this epic did not require a live shell count and the dashboard overview already owns the broader count metric. Page-level report downloads remain unavailable by default until the backend PDF/blob contract is documented.
+- Known follow-ups: Task 12 must complete the responsive/accessibility pass. Task 14 must add Playwright coverage for the protected route and core flows.
+- Validation: `npm test -- --run src/__tests__/pages/dashboard-premiums.test.tsx src/__tests__/components/dashboard/app-navigation.test.tsx src/__tests__/components/dashboard/premiums-list.test.tsx src/__tests__/components/dashboard/premiums-policy-detail.test.tsx` passed with 4 files and 28 tests.
+
+### 2026-07-09 01:14 WAT — Task 12: Responsive And Accessibility Pass
+
+- Files changed: `src/__tests__/components/dashboard/premiums-accessibility.test.tsx`, `CONTEXT.md`.
+- Summary: Added focused accessibility/responsive-structure coverage for the composed premiums page, including one page-level `h1`, labelled filter group, async status announcements, color-independent visible status text, labelled modal semantics, close control naming, mobile/full-width panel classes, responsive card action rows, and overview metric grid structure.
+- Important decisions: Kept responsive proof at the Testing Library structural level for this task; Task 14 owns browser viewport overflow checks at real viewport sizes.
+- Known follow-ups: Add Playwright coverage for mobile/desktop overflow and main user flows in Task 14.
+- Validation: `npm test -- --run src/__tests__/components/dashboard/premiums-accessibility.test.tsx src/__tests__/pages/dashboard-premiums.test.tsx src/__tests__/components/dashboard/premiums-list.test.tsx src/__tests__/components/dashboard/premiums-policy-detail.test.tsx` passed with 4 files and 19 tests.
+
+### 2026-07-09 01:14 WAT — Task 13: Unit And Integration Test Coverage
+
+- Files changed: `CONTEXT.md`.
+- Summary: Completed the premiums-focused unit and integration coverage pass across validators, MSW handlers, services, hooks, primitives, overview, list/filter states, empty state, detail panel, accessibility assertions, page composition, and app navigation. No additional production changes were required for this task.
+- Important decisions: Kept coverage behavior-focused and reused existing MSW/React Query test utilities. The non-fatal jsdom navigation warning remains limited to generated anchor clicks in report-download tests.
+- Known follow-ups: Task 14 must add Playwright coverage for the critical browser flows and real viewport overflow checks.
+- Validation: `npm test -- --run src/__tests__/lib/policies-validators.test.ts src/__tests__/mocks/policies-handlers.test.ts src/__tests__/services/policies.service.test.ts src/__tests__/hooks/policies-hooks.test.tsx src/__tests__/components/dashboard/premiums-primitives.test.tsx src/__tests__/components/dashboard/premiums-overview-card.test.tsx src/__tests__/components/dashboard/premiums-list.test.tsx src/__tests__/components/dashboard/premiums-policy-detail.test.tsx src/__tests__/components/dashboard/premiums-accessibility.test.tsx src/__tests__/pages/dashboard-premiums.test.tsx src/__tests__/components/dashboard/app-navigation.test.tsx` passed with 11 files and 64 tests. Vitest printed two non-fatal jsdom anchor navigation warnings from report-download tests.
+
+### 2026-07-09 01:18 WAT — Task 14: E2E Coverage
+
+- Files changed: `e2e/dashboard/premiums-flow.spec.ts`, `CONTEXT.md`.
+- Summary: Added Playwright coverage for unauthenticated redirect to login, authenticated `/dashboard/premiums` render, active/due-soon/expired filtering, detail panel open/close via Escape/backdrop/close button with focus restoration, unavailable report action, empty state CTAs, and mobile/desktop horizontal overflow checks across required viewport widths.
+- Important decisions: The E2E spec uses route-level API mocks and a seeded httpOnly refresh cookie, matching existing dashboard/settings patterns. Report download is covered as unavailable because the OpenAPI report response content is still under-documented.
+- Known follow-ups: None for premiums E2E. The run still emits existing framework/environment warnings for deprecated `middleware` convention and `NO_COLOR`/`FORCE_COLOR`.
+- Validation: First sandboxed run failed because the dev server could not bind `0.0.0.0:3102` (`listen EPERM`). Escalated rerun exposed one strict locator issue for `All` vs `All Active`; after fixing the locator, `E2E_PORT=3102 npm run test:e2e -- e2e/dashboard/premiums-flow.spec.ts` passed with 3 Playwright tests.
+
+### 2026-07-09 01:31 WAT — Final Dashboard Premiums Bought Epic Summary
+
+- Files changed:
+  - Domain/API: `src/types/policies.ts`, `src/lib/validators/policies.ts`, `src/lib/api/endpoints.ts`, `src/lib/constants.ts`, `src/services/policies.service.ts`, `src/hooks/policies/usePolicies.ts`.
+  - UI/routes: `src/app/(app)/dashboard/premiums/page.tsx`, `src/app/(app)/dashboard/premiums/loading.tsx`, `src/app/(app)/dashboard/premiums/error.tsx`, `src/components/dashboard/premiums/*`, `src/components/dashboard/shell/app-navigation.tsx`.
+  - Mocks/tests: `src/mocks/fixtures/policies.ts`, `src/mocks/handlers/policies.ts`, `src/mocks/handlers/index.ts`, `src/mocks/handlers/domain.ts`, `src/__tests__/lib/policies-validators.test.ts`, `src/__tests__/mocks/policies-handlers.test.ts`, `src/__tests__/services/policies.service.test.ts`, `src/__tests__/hooks/policies-hooks.test.tsx`, `src/__tests__/components/dashboard/premiums-*.test.tsx`, `src/__tests__/pages/dashboard-premiums.test.tsx`, `src/__tests__/components/dashboard/app-navigation.test.tsx`, `e2e/dashboard/premiums-flow.spec.ts`.
+  - Documentation: `CONTEXT.md`.
+- Completed work: Implemented the full protected `/dashboard/premiums` feature in the existing authenticated dashboard shell. The page now has summary metrics, loading/error/retry/empty states, server-backed active/expired filters, safe due-soon filtering from `display_status`, policy cards, accessible detail slide-over behavior, unavailable report/document affordances where the backend contract is incomplete, dedicated policy MSW fixtures/handlers, focused unit/integration coverage, and Playwright coverage for the main browser flows and mobile/desktop overflow checks.
+- Important decisions: Kept all authenticated policy calls on `apiClient`, all user-facing errors through `parseApiError`, and all policy server state in React Query. Used only the documented policy endpoints and generated schemas from `openapi.json`/`src/types/schema.d.ts`. Kept report downloads unavailable in the production page because the report endpoint has no documented response content despite the service/button being ready for a confirmed non-empty PDF blob. Kept summary coverage displayed as NGN with screen-reader copy documenting the app-wide assumption because `PolicySummary` has no currency field.
+- Known follow-ups and unresolved API/design questions: Backend/product still need to document report response content type, filename semantics, and binary body shape before enabling real page downloads. The current contract still lacks next-payment date, due-soon threshold/raw enum, policy document URL, product description, structured coverage bullets, payout type, provider logos, pagination/facets, and summary currency. Those screenshot-like fields were not invented in UI or mocks.
+- Validation:
+  - `npm run generate:types` passed and produced no schema diff.
+  - Premiums-focused matrix passed with 11 files and 64 tests: validators, MSW handlers, services, hooks, primitives, overview, list/filter, detail panel, accessibility, page composition, and app navigation.
+  - Full unit suite: the first broad run hit an existing dashboard overview timing flake that passed when rerun; after the final test stabilization, `npm test -- --run` passed with 127 files and 821 tests. Vitest still prints non-fatal jsdom navigation warnings from download/redirect-oriented coverage.
+  - `npm run lint` passed with 0 errors and the same 7 pre-existing unrelated warnings in non-premiums files.
+  - `npx tsc --noEmit` passed.
+  - `git diff --check` passed.
+  - Relevant Playwright: initial sandboxed run failed because the dev server could not bind `0.0.0.0:3102` (`listen EPERM`); the approved escalated run `E2E_PORT=3102 npm run test:e2e -- e2e/dashboard/premiums-flow.spec.ts` passed with 3 tests after one locator exactness fix. The run still emits existing framework/environment warnings for deprecated `middleware` convention and `NO_COLOR`/`FORCE_COLOR`.
+  - `npm run build` was not run for this epic because it was not part of the user's required final verification list, and prior project context documents that local production builds can require network access for Google `Inter` font fetching.
+
 ## Dashboard Settings Epic Progress
 
 ### 2026-07-08 23:57 WAT — Task 1: Settings OpenAPI Contract And Generated Types

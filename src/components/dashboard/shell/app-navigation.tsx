@@ -42,8 +42,9 @@ export const APP_NAVIGATION_ITEMS: readonly AppNavigationItem[] = [
   },
   {
     label: 'Premiums Bought',
+    href: '/dashboard/premiums',
     icon: ReceiptText,
-    available: false,
+    available: true,
   },
   {
     label: 'Profile',

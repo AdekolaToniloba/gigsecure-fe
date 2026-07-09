@@ -5,6 +5,7 @@ export const ROUTES = {
   LOGIN: '/login',
   SIGNUP: '/signup',
   PROFILE: '/profile',
+  PREMIUMS: '/dashboard/premiums',
   SETTINGS: '/dashboard/settings',
 } as const;
 
@@ -50,7 +51,11 @@ export const QUERY_KEYS = {
 
   // Policies
   POLICIES: ['policies'] as const,
-  POLICY: (id: string) => ['policies', id] as const,
+  POLICIES_LIST: (statusFilter?: string | null) =>
+    ['policies', 'list', statusFilter ?? 'all'] as const,
+  POLICIES_SUMMARY: ['policies', 'summary'] as const,
+  POLICY: (id: string) => ['policies', 'detail', id] as const,
+  POLICY_REPORT: (id: string) => ['policies', 'report', id] as const,
 
   // Claims
   CLAIMS: ['claims'] as const,

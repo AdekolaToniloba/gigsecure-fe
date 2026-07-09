@@ -27,20 +27,6 @@ const mockProducts = [
   },
 ];
 
-const mockPolicies = [
-  {
-    id: 'pol-001',
-    user_id: '00000000-0000-0000-0000-000000000000',
-    product_id: 'prod-001',
-    status: 'active',
-    start_date: new Date().toISOString(),
-    end_date: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
-    premium: 5000,
-    currency: 'NGN',
-    created_at: new Date().toISOString(),
-  },
-];
-
 const mockClaims = [
   {
     id: 'claim-001',
@@ -67,21 +53,6 @@ export const domainHandlers = [
     if (!product) return HttpResponse.json({ error: 'Not found' }, { status: 404 });
     return HttpResponse.json(product);
   }),
-
-  // Policies
-  http.get(`${BASE}/api/v1/policies/`, () => HttpResponse.json(mockPolicies)),
-  http.get(`${BASE}/api/v1/policies/:id`, ({ params }) => {
-    const policy = mockPolicies.find((p) => p.id === params.id);
-    if (!policy) return HttpResponse.json({ error: 'Not found' }, { status: 404 });
-    return HttpResponse.json(policy);
-  }),
-  http.post(`${BASE}/api/v1/policies/`, () => HttpResponse.json(mockPolicies[0], { status: 201 })),
-  http.post(`${BASE}/api/v1/policies/:id/cancel`, ({ params }) =>
-    HttpResponse.json({ ...mockPolicies[0], id: params.id as string, status: 'cancelled' })
-  ),
-  http.post(`${BASE}/api/v1/policies/:id/renew`, ({ params }) =>
-    HttpResponse.json({ ...mockPolicies[0], id: params.id as string })
-  ),
 
   // Claims
   http.get(`${BASE}/api/v1/claims/`, () => HttpResponse.json(mockClaims)),

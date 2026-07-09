@@ -1,24 +1,111 @@
 import { apiClient } from '@/lib/api/client';
 import { ENDPOINTS } from '@/lib/api/endpoints';
 import {
-  policySchema,
   policiesListResponseSchema,
-  type Policy,
+  policySchema,
+  policySummarySchema,
   type CreatePolicyRequest,
+  type PoliciesListResponse,
+  type Policy,
+  type PolicySummary,
 } from '@/lib/validators/policies';
+import type { PolicyStatusFilter } from '@/types/policies';
 
-function parseOrThrow<T>(schema: { parse: (data: unknown) => T }, data: unknown, context: string): T {
+export type PolicyReportDownload = {
+  blob: Blob;
+  filename: string;
+  contentType: string;
+};
+
+type ListPoliciesParams = {
+  statusFilter?: PolicyStatusFilter | null;
+  signal?: AbortSignal;
+};
+
+function parseOrThrow<T>(
+  schema: { parse: (data: unknown) => T },
+  data: unknown,
+  context: string,
+): T {
   try {
     return schema.parse(data);
-  } catch (err) {
-    console.error(`[Zod] Validation failed in ${context}:`, err);
+  } catch (error) {
+    console.error(`[Zod] Validation failed in ${context}:`, error);
     throw new Error(`Invalid API response shape in ${context}`);
   }
 }
 
+function filenameFromContentDisposition(header: string | undefined, policyId: string) {
+  if (!header) return fallbackReportFilename(policyId);
+
+  const utf8Match = header.match(/filename\*=UTF-8''([^;]+)/i);
+  if (utf8Match?.[1]) return sanitizeFilename(decodeURIComponent(utf8Match[1]));
+
+  const asciiMatch = header.match(/filename="?([^";]+)"?/i);
+  if (asciiMatch?.[1]) return sanitizeFilename(asciiMatch[1]);
+
+  return fallbackReportFilename(policyId);
+}
+
+function sanitizeFilename(filename: string) {
+  const sanitized = filename.replace(/[\\/]/g, '-').trim();
+  return sanitized || 'gigsecure-policy-report.pdf';
+}
+
+function fallbackReportFilename(policyId: string) {
+  return `gigsecure-policy-${policyId}-report.pdf`;
+}
+
+function getBlobContentType(blob: Blob, header: string | undefined) {
+  return blob.type || header || 'application/octet-stream';
+}
+
+async function normalizeBlobError(error: unknown) {
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'response' in error &&
+    typeof (error as { response?: unknown }).response === 'object' &&
+    (error as { response?: { data?: unknown } }).response?.data instanceof Blob
+  ) {
+    const response = (error as { response: { data: Blob } }).response;
+    const text = await response.data.text();
+    try {
+      return {
+        ...(error as object),
+        response: {
+          ...response,
+          data: JSON.parse(text) as unknown,
+        },
+      };
+    } catch {
+      return {
+        ...(error as object),
+        response: {
+          ...response,
+          data: text,
+        },
+      };
+    }
+  }
+
+  return error;
+}
+
 export const policiesService = {
-  async listPolicies(signal?: AbortSignal): Promise<Policy[]> {
-    const { data } = await apiClient.get(ENDPOINTS.POLICIES.LIST, { signal });
+  async getSummary(signal?: AbortSignal): Promise<PolicySummary> {
+    const { data } = await apiClient.get(ENDPOINTS.POLICIES.SUMMARY, { signal });
+    return parseOrThrow(policySummarySchema, data, 'policiesService.getSummary');
+  },
+
+  async listPolicies({
+    statusFilter,
+    signal,
+  }: ListPoliciesParams = {}): Promise<PoliciesListResponse> {
+    const { data } = await apiClient.get(ENDPOINTS.POLICIES.LIST, {
+      params: statusFilter ? { status_filter: statusFilter } : undefined,
+      signal,
+    });
     return parseOrThrow(policiesListResponseSchema, data, 'policiesService.listPolicies');
   },
 
@@ -32,13 +119,30 @@ export const policiesService = {
     return parseOrThrow(policySchema, data, 'policiesService.createPolicy');
   },
 
-  async cancelPolicy(id: string, signal?: AbortSignal): Promise<Policy> {
-    const { data } = await apiClient.post(ENDPOINTS.POLICIES.CANCEL(id), {}, { signal });
-    return parseOrThrow(policySchema, data, 'policiesService.cancelPolicy');
-  },
+  async downloadPolicyReport(id: string, signal?: AbortSignal): Promise<PolicyReportDownload> {
+    try {
+      const response = await apiClient.get<Blob>(ENDPOINTS.POLICIES.REPORT(id), {
+        responseType: 'blob',
+        signal,
+      });
+      const blob = response.data;
+      const contentType = getBlobContentType(blob, response.headers['content-type']);
 
-  async renewPolicy(id: string, signal?: AbortSignal): Promise<Policy> {
-    const { data } = await apiClient.post(ENDPOINTS.POLICIES.RENEW(id), {}, { signal });
-    return parseOrThrow(policySchema, data, 'policiesService.renewPolicy');
+      if (!(blob instanceof Blob) || blob.size === 0) {
+        throw new Error('Policy report is not available for download yet.');
+      }
+
+      if (!contentType.toLowerCase().includes('application/pdf')) {
+        throw new Error('Policy report download format is not available yet.');
+      }
+
+      return {
+        blob,
+        contentType,
+        filename: filenameFromContentDisposition(response.headers['content-disposition'], id),
+      };
+    } catch (error) {
+      throw await normalizeBlobError(error);
+    }
   },
 };
