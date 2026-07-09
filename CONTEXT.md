@@ -2728,3 +2728,44 @@ Backend/product still needs to answer the previously documented questions around
 
 Validation results:
 No focused product test rerun was applicable because Task 22 only updates epic/context documentation and changes no executable source or assertions. `npx tsc --noEmit` passed. `npm run lint` passed with 0 errors and the same 7 pre-existing unrelated warnings in `src/__tests__/components/BuiltAround.test.tsx`, `src/__tests__/components/wizard/ConsentGate.test.tsx`, `src/__tests__/components/wizard/inputs/QuestionInputs.test.tsx`, `src/__tests__/mock-components.tsx`, `src/app/api/staging-auth/route.ts`, and `src/app/staging-login/page.tsx`. `git diff --check` passed after the documentation edits.
+
+### 2026-07-09 11:51 WAT
+
+Task completed: Dashboard Profile Epic — Tasks 1 through 15
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/openapi.json`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/types/schema.d.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/types/profile.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/lib/constants.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/lib/validators/user.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/hooks/user/useUser.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/shell/app-navigation.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(app)/dashboard/profile/page.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(app)/dashboard/profile/loading.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(app)/dashboard/profile/error.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/profile/`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/mocks/fixtures/profile.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/mocks/handlers/profile.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/mocks/handlers/auth.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/mocks/handlers/index.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/lib/profile-validators.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/mocks/profile-handlers.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/hooks/user-profile.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/dashboard/app-navigation.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/dashboard/profile/`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/pages/dashboard-profile.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/e2e/dashboard/profile-flow.spec.ts`
+
+Summary:
+Implemented the protected `/dashboard/profile` destination inside the existing authenticated dashboard shell and enabled the real Profile sidebar route. The page now composes three accessible tabs: Personal Information, Risk Data, and Security. Personal Information is driven by the existing authenticated `/api/v1/users/me` contract with runtime-validated form state, changed-field-only submission, success/error/status feedback, query invalidation, and session-local risk-staleness signaling. Risk Data stays read-only and truthful: it uses the latest contracted assessment summary, exposes grouped cards for the screenshot sections, explicitly marks unsupported answer-level fields as unavailable, preserves the public `/assessment` and existing dashboard wizard flow, and routes updates through the full `/dashboard/risk-assessment` reassessment path instead of inventing partial-edit APIs. Security now includes a dashboard-native password-change modal backed by the existing BFF change-password flow plus a KYC status row backed by the existing authenticated KYC status hook.
+
+Important decisions:
+Local OpenAPI drift was corrected for `PUT /api/v1/auth/change-password` by restoring the documented 422 validation response, then regenerating `src/types/schema.d.ts`. Profile form normalization preserves the backend decimal-string boundary for `average_monthly_income` while still sending only documented changed fields. React Query remains the sole owner of server state; no profile/risk Zustand store or new persistence layer was introduced. `useUpdateProfile` now uses `retry: false`, updates the existing auth-store user/flags, primes `QUERY_KEYS.USER_ME`, and invalidates overview/risk/marketplace recommendation queries only when assessment-relevant profile fields change. Stale risk insights are intentionally session-local only and are derived from successful current-session profile edits because no backend snapshot/refresh contract exists. Risk Data intentionally omits any section-level edit, draft save, saved-answer replay, generated timestamp, or “refresh insights” API behavior because those capabilities are not safely supported by the current contracts or wizard architecture.
+
+Known follow-ups:
+Backend/product still needs to define saved risk answers or section summaries if Profile should ever support section-level risk editing. Partial section update and draft-save support remain unavailable. Persistent stale-insight detection and any refresh-insights endpoint remain undefined. Password last-changed metadata is not contracted, so the Security tab cannot truthfully display it. Risk history ordering/latest-date semantics remain undocumented, so the refresh card intentionally omits a generated-at date. If the backend later adds an approved refresh endpoint or answer snapshot contract, the integration point is the existing session-local stale-insight boundary in `profile-page-controller.tsx` and `risk-data-section.tsx`.
+
+Validation results:
+`npm run generate:types` passed after the OpenAPI change. Focused validator/mock/service/hook/profile-page matrices passed, including the new navigation, profile primitive, personal-info, risk-data, stale-insight, security, and route-composition suites. The final profile-focused matrix passed 7 files and 48 tests. The full unit/integration suite passed `135` files and `867` tests. `npx tsc --noEmit` passed. `npm run lint` passed with `0` errors and 7 pre-existing unrelated warnings outside the dashboard profile scope (`src/__tests__/components/BuiltAround.test.tsx`, `src/__tests__/components/wizard/ConsentGate.test.tsx`, `src/__tests__/components/wizard/inputs/QuestionInputs.test.tsx`, `src/__tests__/mock-components.tsx`, `src/app/api/staging-auth/route.ts`, and `src/app/staging-login/page.tsx`; one warning appears twice in `mock-components.tsx`). `git diff --check` was run after implementation and again after this documentation entry. Playwright profile coverage was added in `/e2e/dashboard/profile-flow.spec.ts`, but `npm run test:e2e -- e2e/dashboard/profile-flow.spec.ts` could not complete in this environment because Playwright's configured Next web server failed to start with `Unable to acquire lock at /Users/naijaghost/Desktop/projects/gigsecure-fe/.next/dev/lock`; `lsof .next/dev/lock` showed an existing `node` process already holding that lock, and the configured `http://127.0.0.1:3100` server was not available for reuse during the run. The temporary `test-results` diffs from that blocked attempt were restored so the final working tree only reflects source, test, and documentation changes for the Profile epic.

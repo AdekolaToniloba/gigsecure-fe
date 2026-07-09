@@ -5,21 +5,6 @@ import {
   waitlistSignupFixture,
 } from '@/mocks/fixtures/risk-assessment';
 
-const BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000';
-
-const mockUser = {
-  id: '00000000-0000-0000-0000-000000000000',
-  email: 'test@gigsecure.com',
-  first_name: 'Test',
-  last_name: 'User',
-  status: 'active',
-  role: 'user',
-  email_verified: true,
-  phone_number: null,
-  last_login_at: null,
-  created_at: new Date().toISOString(),
-};
-
 const mockTokenResponse = {
   access_token: 'mock-access-token-12345',
   token_type: 'bearer',
@@ -112,30 +97,4 @@ export const authHandlers = [
   http.put('/api/auth/change-password', () =>
     HttpResponse.json({ message: 'Password changed successfully' })
   ),
-
-  // User
-  http.get(`${BASE}/api/v1/users/me`, () =>
-    HttpResponse.json({
-      user: mockUser,
-      profile: null,
-      kyc_verified: false,
-      risk_assessed: true,
-    })
-  ),
-
-  http.put(`${BASE}/api/v1/users/me`, async ({ request }) => {
-    const body = await request.json() as Record<string, unknown>;
-    const profile = {
-      ...body,
-      ...(body.average_monthly_income !== undefined
-        ? { average_monthly_income: String(body.average_monthly_income) }
-        : {}),
-    };
-    return HttpResponse.json({
-      user: mockUser,
-      profile,
-      kyc_verified: false,
-      risk_assessed: true,
-    });
-  }),
 ];

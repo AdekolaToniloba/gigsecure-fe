@@ -24,6 +24,10 @@ function unauthorizedResponse() {
   return HttpResponse.json({ detail: 'Not authenticated' }, { status: 401 });
 }
 
+function pdfReportBody(content: string) {
+  return new TextEncoder().encode(content);
+}
+
 function filteredPolicies(request: Request): PolicyListResponse {
   const url = new URL(request.url);
   const statusFilter = url.searchParams.get('status_filter');
@@ -79,13 +83,16 @@ export const policyHandlerScenarios = {
   }),
   reportSuccess: http.get(`${POLICIES_URL}/:id/report`, ({ request, params }) => {
     if (!hasBearerToken(request)) return unauthorizedResponse();
-    return new HttpResponse(`%PDF-1.4\nGigSecure policy ${String(params.id)} report\n%%EOF`, {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="gigsecure-policy-${String(params.id)}-report.pdf"`,
+    return new HttpResponse(
+      pdfReportBody(`%PDF-1.4\nGigSecure policy ${String(params.id)} report\n%%EOF`),
+      {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/pdf',
+          'Content-Disposition': `attachment; filename="gigsecure-policy-${String(params.id)}-report.pdf"`,
+        },
       },
-    });
+    );
   }),
   reportEmpty: http.get(`${POLICIES_URL}/:id/report`, ({ request }) => {
     if (!hasBearerToken(request)) return unauthorizedResponse();

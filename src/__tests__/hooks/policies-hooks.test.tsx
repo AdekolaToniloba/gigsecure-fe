@@ -18,6 +18,10 @@ import { useAuthStore } from '@/store/auth-store';
 const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000';
 const policiesUrl = `${baseUrl}${ENDPOINTS.POLICIES.LIST}`;
 
+function pdfReportBody(content: string) {
+  return new TextEncoder().encode(content);
+}
+
 beforeEach(() => {
   act(() => {
     useAuthStore.getState().setSession({
@@ -116,7 +120,7 @@ describe('policy hooks', () => {
           return HttpResponse.json({ detail: 'Not authenticated' }, { status: 401 });
         }
         await delay(80);
-        return new HttpResponse(`%PDF-1.4\n${String(params.id)}\n%%EOF`, {
+        return new HttpResponse(pdfReportBody(`%PDF-1.4\n${String(params.id)}\n%%EOF`), {
           status: 200,
           headers: { 'Content-Type': 'application/pdf' },
         });

@@ -110,7 +110,10 @@
         "summary": "Change Password",
         "operationId": "change_password_api_v1_auth_change_password_put",
         "requestBody": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ChangePasswordRequest" } } }, "required": true },
-        "responses": { "200": { "description": "Successful Response" } },
+        "responses": {
+          "200": { "description": "Successful Response" },
+          "422": { "description": "Validation Error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/HTTPValidationError" } } } }
+        },
         "security": [{ "HTTPBearer": [] }]
       }
     },

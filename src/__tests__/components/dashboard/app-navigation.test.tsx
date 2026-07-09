@@ -35,6 +35,10 @@ describe('AppNavigation', () => {
       'href',
       '/dashboard/premiums'
     );
+    expect(screen.getByRole('link', { name: 'Profile' })).toHaveAttribute(
+      'href',
+      '/dashboard/profile'
+    );
     expect(screen.getByRole('link', { name: 'Settings' })).toHaveAttribute(
       'href',
       '/dashboard/settings'
@@ -43,7 +47,7 @@ describe('AppNavigation', () => {
       'Overview',
       'Risk Assessment',
       'Premiums Bought',
-      'ProfileSoon',
+      'Profile',
       'Settings',
     ]);
   });
@@ -81,16 +85,16 @@ describe('AppNavigation', () => {
     expect(screen.getByRole('link', { name: 'Overview' })).not.toHaveAttribute('aria-current');
   });
 
-  it.each(['Profile'])(
-    'renders %s as visibly unavailable without a broken link',
-    (label) => {
-      render(<AppNavigation />);
+  it('marks Profile active on its route', () => {
+    navigation.pathname = '/dashboard/profile';
+    render(<AppNavigation />);
 
-      expect(screen.queryByRole('link', { name: label })).not.toBeInTheDocument();
-      expect(screen.getByText(label).closest('[aria-disabled="true"]')).toBeInTheDocument();
-      expect(screen.getByText(label).closest('li')).toHaveTextContent('Soon');
-    }
-  );
+    expect(screen.getByRole('link', { name: 'Profile' })).toHaveAttribute(
+      'aria-current',
+      'page'
+    );
+    expect(screen.getByRole('link', { name: 'Overview' })).not.toHaveAttribute('aria-current');
+  });
 
   it('keeps unavailable rows out of the keyboard order', async () => {
     const user = userEvent.setup();
@@ -104,6 +108,9 @@ describe('AppNavigation', () => {
 
     await user.tab();
     expect(screen.getByRole('link', { name: 'Premiums Bought' })).toHaveFocus();
+
+    await user.tab();
+    expect(screen.getByRole('link', { name: 'Profile' })).toHaveFocus();
 
     await user.tab();
     expect(screen.getByRole('link', { name: 'Settings' })).toHaveFocus();

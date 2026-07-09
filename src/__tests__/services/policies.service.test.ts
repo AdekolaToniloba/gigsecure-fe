@@ -10,6 +10,10 @@ import { useAuthStore } from '@/store/auth-store';
 const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000';
 const policiesUrl = `${baseUrl}${ENDPOINTS.POLICIES.LIST}`;
 
+function pdfReportBody(content: string) {
+  return new TextEncoder().encode(content);
+}
+
 beforeEach(() => {
   useAuthStore.getState().setSession({
     accessToken: 'policy-service-token',
@@ -83,7 +87,7 @@ describe('policies service', () => {
     server.use(
       http.get(`${policiesUrl}/:id/report`, ({ request }) => {
         expect(request.headers.get('authorization')).toBe('Bearer policy-service-token');
-        return new HttpResponse('%PDF-1.4\nfallback\n%%EOF', {
+        return new HttpResponse(pdfReportBody('%PDF-1.4\nfallback\n%%EOF'), {
           status: 200,
           headers: { 'Content-Type': 'application/pdf' },
         });

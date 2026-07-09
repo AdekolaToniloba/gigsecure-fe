@@ -22,11 +22,12 @@ describe('Button', () => {
   // ─── isLoading ───────────────────────────────────────────────────
 
   it('shows a spinner and is disabled when isLoading is true', () => {
-    render(<Button isLoading>Submit</Button>);
+    const { container } = render(<Button isLoading>Submit</Button>);
     const button = screen.getByRole('button');
     expect(button).toBeDisabled();
     expect(button).toHaveAttribute('aria-busy', 'true');
-    expect(screen.getByRole('status')).toBeInTheDocument(); // Spinner svg
+    expect(container.querySelector('svg[aria-hidden="true"]')).toBeInTheDocument();
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
 
   it('does not show a spinner when isLoading is false', () => {

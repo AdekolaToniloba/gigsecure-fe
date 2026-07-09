@@ -19,6 +19,10 @@ import type { PremiumsFilter } from '@/types/policies';
 const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000';
 const reportUrl = `${baseUrl}${ENDPOINTS.POLICIES.REPORT('pol-income-active')}`;
 
+function pdfReportBody(content: string) {
+  return new TextEncoder().encode(content);
+}
+
 beforeEach(() => {
   act(() => {
     useAuthStore.getState().setSession({
@@ -127,7 +131,7 @@ describe('premiums primitives', () => {
       http.get(reportUrl, async () => {
         requests += 1;
         await delay(80);
-        return new HttpResponse('%PDF-1.4\nreport\n%%EOF', {
+        return new HttpResponse(pdfReportBody('%PDF-1.4\nreport\n%%EOF'), {
           status: 200,
           headers: { 'Content-Type': 'application/pdf' },
         });
