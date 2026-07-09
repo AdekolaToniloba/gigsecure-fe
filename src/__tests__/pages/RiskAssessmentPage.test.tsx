@@ -1,6 +1,8 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import RiskAssessmentPage from '@/app/(public)/risk-assessment/page';
+import { mockRouter } from '../test-utils';
 
 // Mock framer-motion to bypass IntersectionObserver and render synchronously for tests
 vi.mock('framer-motion', async () => {
@@ -52,5 +54,18 @@ describe('RiskAssessmentPage Component Integrations', () => {
     
     // BuiltForPeople
     expect(screen.getByRole('heading', { name: /GigSecure is built for people/i })).toBeInTheDocument();
+  });
+
+  it('keeps hero and floating acquisition CTAs pointed at the waitlist', async () => {
+    const user = userEvent.setup();
+    render(<RiskAssessmentPage />);
+    await user.click(screen.getByRole('button', { name: /take the assessment/i }));
+    expect(mockRouter.push).toHaveBeenLastCalledWith('/waitlist');
+
+    Object.defineProperty(window, 'scrollY', { value: 500, configurable: true });
+    fireEvent.scroll(window);
+    const buttons = await screen.findAllByRole('button', { name: /take the assessment/i });
+    await user.click(buttons.at(-1)!);
+    expect(mockRouter.push).toHaveBeenLastCalledWith('/waitlist');
   });
 });

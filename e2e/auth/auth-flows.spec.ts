@@ -238,6 +238,7 @@ async function mockDashboardLanding(page: Page) {
         last_name: 'Obi',
         phone_number: null,
         status: 'active',
+        role: 'user',
         email_verified: true,
         last_login_at: null,
         created_at: '2026-05-27T08:00:00Z',

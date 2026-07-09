@@ -152,9 +152,14 @@ export function useIsAuthenticated() {
   return useAuthStore((s) => s.isAuthenticated);
 }
 
+export function useHasFullSession() {
+  return useAuthStore((s) => s.hasFullSession);
+}
+
 /** Hook to read current auth state */
 export function useAuthState() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const hasFullSession = useAuthStore((s) => s.hasFullSession);
   const user = useAuthStore((s) => s.user);
   const accessToken = useAuthStore((s) => s.accessToken);
   const firstName = useAuthStore((s) => s.firstName);
@@ -165,6 +170,7 @@ export function useAuthState() {
 
   return {
     isAuthenticated,
+    hasFullSession,
     user,
     accessToken,
     firstName,

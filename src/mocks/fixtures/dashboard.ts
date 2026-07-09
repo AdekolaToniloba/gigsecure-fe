@@ -1,9 +1,12 @@
 import type {
-  AssessmentResponse,
-  AssessmentSummary,
   UserWithProfileResponse,
 } from '@/types/api';
 import type { DashboardOverviewResponse } from '@/types/dashboard';
+
+export {
+  assessmentHistoryFixture,
+  dashboardAssessmentResponseFixture as latestAssessmentFixture,
+} from './risk-assessment';
 
 export const unassessedDashboardOverview: DashboardOverviewResponse = {
   premiums_bought: 0,
@@ -50,6 +53,7 @@ const dashboardUser = {
   first_name: 'Oluwakanyinsola',
   last_name: 'Adebayo-Akinyemi',
   status: 'active',
+  role: 'user',
   email_verified: true,
   phone_number: null,
   last_login_at: null,
@@ -70,54 +74,3 @@ export const dashboardProfileFixtures = {
     risk_assessed: true,
   },
 } satisfies Record<string, UserWithProfileResponse>;
-
-export const latestAssessmentFixture: AssessmentResponse = {
-  applicant: {
-    first_name: 'Oluwakanyinsola',
-    last_name: 'Adebayo-Akinyemi',
-    age: 31,
-    gender: 'female',
-    marital_status: 'single',
-    state: 'Lagos',
-    city: 'Ikeja',
-  },
-  category: 'tech_freelancer',
-  pillar_scores: {
-    income: 72,
-    client: 45,
-    safety: 80,
-    equipment: 35,
-    health: 55,
-  },
-  overall_score: 68.5,
-  risk_profile: 'Moderate Risk',
-  recommendations: [
-    'Build an emergency reserve that can cover at least three months of essential expenses.',
-    'Consider income protection suited to irregular freelance earnings.',
-  ],
-  recommended_categories: ['Income Protection', 'Equipment Protection'],
-  ai_insights: 'Income is moderately stable, with some exposure to client concentration.',
-};
-
-export const assessmentHistoryFixture: AssessmentSummary[] = [
-  {
-    id: 'assessment-summary-001',
-    category: 'tech_freelancer',
-    first_name: 'Oluwakanyinsola',
-    last_name: 'Adebayo-Akinyemi',
-    age: 31,
-    overall_score: 68.5,
-    risk_profile: 'Moderate Risk',
-    created_at: '2026-07-06T09:30:00Z',
-  },
-  {
-    id: 'assessment-summary-002',
-    category: 'tech_freelancer',
-    first_name: null,
-    last_name: null,
-    age: null,
-    overall_score: 54,
-    risk_profile: 'Moderate Risk',
-    created_at: '2026-04-02T13:15:00Z',
-  },
-];

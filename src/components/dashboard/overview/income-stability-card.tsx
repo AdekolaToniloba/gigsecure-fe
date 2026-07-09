@@ -56,7 +56,7 @@ export function IncomeStabilityCard({ stability, className }: IncomeStabilityCar
             icon={<ChartNoAxesCombined aria-hidden="true" className="h-6 w-6" />}
             action={(
               <Link
-                href="/assessment"
+                href="/dashboard/risk-assessment"
                 className="inline-flex min-h-11 items-center justify-center rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white outline-none transition-colors hover:bg-primary-light focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               >
                 Start assessment

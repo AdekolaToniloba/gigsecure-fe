@@ -10,11 +10,11 @@ import { buildLoginRedirect } from '@/lib/auth/redirects';
 
 export function useMarketplaceRecommendationsGate(perCategory = 3) {
   const router = useRouter();
-  const { isAuthenticated, isInitializing } = useSession();
+  const { hasFullSession, isInitializing } = useSession();
   const { isRiskAssessed, isLoading: areFlagsLoading } = useUserFlags();
   const [hasRequestedRecommendations, setHasRequestedRecommendations] = useState(false);
   const isCheckingAccess = isInitializing || areFlagsLoading;
-  const canLoadRecommendations = isAuthenticated && isRiskAssessed;
+  const canLoadRecommendations = hasFullSession && isRiskAssessed;
   const recommendations = useMarketplaceRecommendations(
     perCategory,
     hasRequestedRecommendations && canLoadRecommendations
@@ -24,13 +24,13 @@ export function useMarketplaceRecommendationsGate(perCategory = 3) {
   function requestRecommendations() {
     if (isCheckingAccess) return;
 
-    if (!isAuthenticated) {
+    if (!hasFullSession) {
       router.push(buildLoginRedirect('/marketplace'));
       return;
     }
 
     if (!isRiskAssessed) {
-      router.push('/assessment');
+      router.push('/dashboard/risk-assessment');
       return;
     }
 

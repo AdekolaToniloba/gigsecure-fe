@@ -4,7 +4,9 @@ import { useWizardStore } from '@/store/wizard-store';
 
 beforeEach(() => {
   act(() => {
-    useWizardStore.getState().reset();
+    useWizardStore.getState().reset('public');
+    useWizardStore.getState().reset('dashboard');
+    useWizardStore.getState().setMode('public');
   });
 });
 
@@ -69,5 +71,65 @@ describe('useWizardStore', () => {
     expect(state.currentStep).toBe(0);
     expect(state.answers).toEqual({});
     expect(state.healthConsent).toBe(false);
+  });
+
+  it('keeps public and dashboard progress isolated', () => {
+    act(() => {
+      useWizardStore.getState().setStepAnswers({ first_name: 'Public user' });
+      useWizardStore.getState().setSelectedCategory('public_category');
+      useWizardStore.getState().nextStep();
+      useWizardStore.getState().setMode('dashboard');
+    });
+
+    expect(useWizardStore.getState()).toMatchObject({
+      mode: 'dashboard',
+      currentStep: 0,
+      answers: {},
+      selectedCategory: null,
+    });
+
+    act(() => {
+      useWizardStore.getState().setStepAnswers({ first_name: 'Dashboard user' });
+      useWizardStore.getState().setSelectedCategory('dashboard_category');
+      useWizardStore.getState().setMode('public');
+    });
+
+    expect(useWizardStore.getState()).toMatchObject({
+      mode: 'public',
+      currentStep: 1,
+      answers: { first_name: 'Public user' },
+      selectedCategory: 'public_category',
+    });
+
+    act(() => useWizardStore.getState().setMode('dashboard'));
+    expect(useWizardStore.getState()).toMatchObject({
+      answers: { first_name: 'Dashboard user' },
+      selectedCategory: 'dashboard_category',
+    });
+  });
+
+  it('resets only the requested mode', () => {
+    act(() => {
+      useWizardStore.getState().setStepAnswers({ first_name: 'Public user' });
+      useWizardStore.getState().setMode('dashboard');
+      useWizardStore.getState().setStepAnswers({ first_name: 'Dashboard user' });
+      useWizardStore.getState().reset('public');
+    });
+
+    expect(useWizardStore.getState().answers).toEqual({ first_name: 'Dashboard user' });
+    act(() => useWizardStore.getState().setMode('public'));
+    expect(useWizardStore.getState().answers).toEqual({});
+  });
+
+  it('persists only namespaced wizard progress in session storage', () => {
+    act(() => {
+      useWizardStore.getState().setStepAnswers({ first_name: 'Public user' });
+    });
+
+    const persisted = sessionStorage.getItem('gigsecure-wizard');
+    expect(persisted).toContain('progressByMode');
+    expect(persisted).toContain('Public user');
+    expect(persisted).not.toContain('access_token');
+    expect(localStorage.getItem('gigsecure-wizard')).toBeNull();
   });
 });

@@ -6,6 +6,7 @@ import { renderWithProviders, mockRouter, mockSearchParams } from '../test-utils
 import { useAuthStore } from '@/store/auth-store';
 import { delay, http, HttpResponse } from 'msw';
 import { server } from '@/mocks/index';
+import { WAITLIST_RISK_ACCESS_TOKEN } from '@/mocks/fixtures/risk-assessment';
 
 vi.mock('next/navigation', () => ({
   useRouter: () => mockRouter,
@@ -57,7 +58,7 @@ describe('WaitlistPage', () => {
     expect(await screen.findByText('You are on the list!')).toBeInTheDocument();
     
     // Store should be updated
-    expect(useAuthStore.getState().accessToken).toBe('mock-waitlist-token');
+    expect(useAuthStore.getState().accessToken).toBe(WAITLIST_RISK_ACCESS_TOKEN);
     expect(useAuthStore.getState().firstName).toBe('John');
     
     // Wait for the 2000ms redirect
@@ -116,7 +117,13 @@ describe('WaitlistPage', () => {
     mockSearchParams.set('expired', 'true');
     renderWithProviders(<WaitlistPage />);
     
-    expect(screen.getByText(/your session expired/i)).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent(/your session expired/i);
     mockSearchParams.delete('expired'); // cleanup
+  });
+
+  it('prefetches the public assessment route without routing through login', () => {
+    renderWithProviders(<WaitlistPage />);
+    expect(mockRouter.prefetch).toHaveBeenCalledWith('/assessment');
+    expect(mockRouter.push).not.toHaveBeenCalledWith('/login');
   });
 });

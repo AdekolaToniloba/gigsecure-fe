@@ -50,9 +50,13 @@ afterEach(() => {
 });
 
 describe('DashboardOverviewController', () => {
-  it('keeps stable loading geometry while authenticated flags are unresolved and preserves focus', async () => {
+  it('keeps stable loading geometry while authenticated data resolves and preserves focus', async () => {
     act(() => {
-      useAuthStore.getState().setAccessToken(AUTHENTICATED_TOKEN);
+      useAuthStore.getState().setSession({
+        accessToken: AUTHENTICATED_TOKEN,
+        kycVerified: true,
+        riskAssessed: false,
+      });
     });
     server.use(
       http.get(PROFILE_URL, async () => {
@@ -83,7 +87,11 @@ describe('DashboardOverviewController', () => {
   it('announces an unresolved-profile failure and recovers through the keyboard retry', async () => {
     const user = userEvent.setup();
     act(() => {
-      useAuthStore.getState().setAccessToken(AUTHENTICATED_TOKEN);
+      useAuthStore.getState().setSession({
+        accessToken: AUTHENTICATED_TOKEN,
+        kycVerified: true,
+        riskAssessed: false,
+      });
     });
     server.use(
       http.get(PROFILE_URL, () =>

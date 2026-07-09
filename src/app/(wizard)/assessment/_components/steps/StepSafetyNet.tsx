@@ -1,55 +1,24 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useWizardStore } from '@/store/wizard-store';
-import { buildStepSchema } from '../../_lib/buildStepSchema';
-import QuestionRenderer from '../questions/QuestionRenderer';
-import StepWrapper from './StepWrapper';
+import AssessmentQuestionStep from './AssessmentQuestionStep';
 import type { AssessmentStep } from '@/types/risk-assessment';
+import type { ApiFieldErrors } from '@/types/api';
 
 interface Props {
   step: AssessmentStep;
   isSubmitting: boolean;
   onSubmit: (values: Record<string, unknown>) => void;
+  serverFieldErrors?: ApiFieldErrors;
 }
 
-export default function StepSafetyNet({ step, isSubmitting, onSubmit }: Props) {
-  const { answers, setStepAnswers, prevStep } = useWizardStore();
-  const schema = buildStepSchema(step.questions);
-
-  const form = useForm<Record<string, unknown>>({
-    resolver: zodResolver(schema),
-    mode: 'onChange',
-    defaultValues: Object.fromEntries(
-      step.questions.map((q) => [q.id, answers[q.id] ?? undefined])
-    ),
-  });
-
-  const handleSubmit = form.handleSubmit((values) => {
-    setStepAnswers(values);
-    onSubmit({ ...answers, ...values });
-  });
-
+export default function StepSafetyNet({ step, isSubmitting, onSubmit, serverFieldErrors }: Props) {
   return (
-    <StepWrapper
-      title={step.title}
-      subtitle={step.subtitle}
-      onNext={handleSubmit}
-      onBack={prevStep}
-      isFirstStep={false}
-      isLastStep={true}
+    <AssessmentQuestionStep
+      step={step}
+      isLastStep
       isSubmitting={isSubmitting}
-      isValid={form.formState.isValid}
-    >
-      {step.questions.map((q) => (
-        <QuestionRenderer
-          key={q.id}
-          question={q}
-          control={form.control as unknown as Parameters<typeof QuestionRenderer>[0]['control']}
-          errors={form.formState.errors}
-        />
-      ))}
-    </StepWrapper>
+      onSubmit={onSubmit}
+      serverFieldErrors={serverFieldErrors}
+    />
   );
 }

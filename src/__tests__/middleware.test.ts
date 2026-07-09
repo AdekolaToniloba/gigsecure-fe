@@ -22,6 +22,24 @@ describe('middleware auth routing', () => {
     expect(res.headers.get('location')).toBeNull();
   });
 
+  it('rejects direct dashboard risk-assessment entry without a refresh cookie', () => {
+    const res = middleware(
+      request('https://app.gigsecure.test/dashboard/risk-assessment'),
+    );
+
+    expect(res.status).toBe(307);
+    expect(res.headers.get('location')).toBe(
+      'https://app.gigsecure.test/login?redirect=%2Fdashboard%2Frisk-assessment',
+    );
+  });
+
+  it('keeps the public assessment route outside refresh-cookie protection', () => {
+    const res = middleware(request('https://app.gigsecure.test/assessment'));
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get('location')).toBeNull();
+  });
+
   it('protects the KYC route with the refresh-cookie session hint', () => {
     const withoutCookie = middleware(request('https://app.gigsecure.test/kyc'));
     const withCookie = middleware(

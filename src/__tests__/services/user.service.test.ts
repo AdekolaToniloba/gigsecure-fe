@@ -12,6 +12,7 @@ const user = {
   first_name: 'Amaka',
   last_name: 'Obi',
   status: 'active',
+  role: 'user',
   email_verified: true,
 };
 
@@ -44,6 +45,7 @@ describe('userService', () => {
     });
 
     expect(result.profile?.city).toBe('Lagos');
+    expect(result.profile?.average_monthly_income).toBe('150000');
     expect(result.kyc_verified).toBe(false);
     expect(result.risk_assessed).toBe(true);
   });

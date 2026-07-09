@@ -5,7 +5,8 @@ export const ROUTES = {
   LOGIN: '/login',
   SIGNUP: '/signup',
   PROFILE: '/profile',
-  SETTINGS: '/settings',
+  PREMIUMS: '/dashboard/premiums',
+  SETTINGS: '/dashboard/settings',
 } as const;
 
 export type Route = (typeof ROUTES)[keyof typeof ROUTES];
@@ -21,8 +22,13 @@ export const QUERY_KEYS = {
   // Dashboard
   DASHBOARD_OVERVIEW: ['dashboard', 'overview'] as const,
 
+  // Settings
+  SETTINGS_NOTIFICATIONS: ['settings', 'notifications'] as const,
+  SETTINGS_PRIVACY: ['settings', 'privacy'] as const,
+
   // Risk
-  RISK_QUESTIONS: ['risk', 'questions'] as const,
+  RISK_CATEGORIES: ['risk', 'categories'] as const,
+  RISK_QUESTIONS: (category: string) => ['risk', 'questions', category] as const,
   RISK_ASSESSMENT: ['risk', 'assessment'] as const,
   RISK_HISTORY: ['risk', 'history'] as const,
   RISK_RECOMMENDATIONS: ['risk', 'recommendations'] as const,
@@ -33,8 +39,10 @@ export const QUERY_KEYS = {
   // Marketplace
   MARKETPLACE_PRODUCTS: (filters: object) => ['marketplace', 'products', filters] as const,
   MARKETPLACE_PRODUCT: (id: string) => ['marketplace', 'products', id] as const,
-  MARKETPLACE_RECOMMENDATIONS: (perCategory: number) =>
-    ['marketplace', 'recommendations', perCategory] as const,
+  MARKETPLACE_RECOMMENDATIONS: (perCategory?: number) =>
+    perCategory === undefined
+      ? ['marketplace', 'recommendations'] as const
+      : ['marketplace', 'recommendations', perCategory] as const,
 
   // Legacy products
   PRODUCTS: ['products'] as const,
@@ -43,7 +51,11 @@ export const QUERY_KEYS = {
 
   // Policies
   POLICIES: ['policies'] as const,
-  POLICY: (id: string) => ['policies', id] as const,
+  POLICIES_LIST: (statusFilter?: string | null) =>
+    ['policies', 'list', statusFilter ?? 'all'] as const,
+  POLICIES_SUMMARY: ['policies', 'summary'] as const,
+  POLICY: (id: string) => ['policies', 'detail', id] as const,
+  POLICY_REPORT: (id: string) => ['policies', 'report', id] as const,
 
   // Claims
   CLAIMS: ['claims'] as const,

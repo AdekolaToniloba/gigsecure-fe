@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { ShieldAlert, Check, Lock, Info } from 'lucide-react';
 import { useWaitlistSignup } from '@/hooks/auth/useAuth';
 import { waitlistSignupRequestSchema, type WaitlistSignupRequest } from '@/lib/validators/auth';
@@ -28,6 +28,7 @@ export default function WaitlistPage() {
   const { mutateAsync: signup, isPending } = useWaitlistSignup();
   const [isSuccess, setIsSuccess] = useState(false);
   const [formError, setFormError] = useState('');
+  const reduceMotion = useReducedMotion();
 
   useEffect(() => {
     router.prefetch('/assessment');
@@ -111,7 +112,7 @@ export default function WaitlistPage() {
         <div className="w-full max-w-[480px]">
           {/* Session expired banner */}
           {isExpired && !isSuccess && (
-            <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg flex items-start gap-3 mb-8">
+            <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg flex items-start gap-3 mb-8" role="status">
               <Info className="h-5 w-5 text-amber-600 flex-shrink-0" />
               <p className="text-sm text-amber-800 font-body">
                 Your session expired. Please sign up to continue your assessment.
@@ -120,8 +121,9 @@ export default function WaitlistPage() {
           )}
 
           {isSuccess ? (
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95 }}
+            <motion.div
+              role="status"
+              initial={reduceMotion ? false : { opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               className="flex flex-col items-center justify-center py-12 text-center"
             >
@@ -133,7 +135,7 @@ export default function WaitlistPage() {
             </motion.div>
           ) : (
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={reduceMotion ? false : { opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
             >
               <div className="mb-8">
@@ -154,10 +156,12 @@ export default function WaitlistPage() {
                     id="email"
                     type="email"
                     {...register('email')}
+                    aria-invalid={errors.email ? true : undefined}
+                    aria-describedby={errors.email ? 'email-error' : undefined}
                     className="w-full h-[56px] rounded-lg border border-gray-200 bg-[#F8FAFC] px-4 font-body text-[16px] text-gray-900 focus:border-[#004E4C] focus:outline-none focus:ring-1 focus:ring-[#004E4C] transition-colors"
                     placeholder="hello@example.com"
                   />
-                  {errors.email && <p className="mt-1.5 text-sm text-red-500">{errors.email.message}</p>}
+                  {errors.email && <p id="email-error" className="mt-1.5 text-sm text-red-500">{errors.email.message}</p>}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -169,10 +173,12 @@ export default function WaitlistPage() {
                       id="first_name"
                       type="text"
                       {...register('first_name')}
+                      aria-invalid={errors.first_name ? true : undefined}
+                      aria-describedby={errors.first_name ? 'first-name-error' : undefined}
                       className="w-full h-[56px] rounded-lg border border-gray-200 bg-[#F8FAFC] px-4 font-body text-[16px] text-gray-900 focus:border-[#004E4C] focus:outline-none focus:ring-1 focus:ring-[#004E4C] transition-colors"
                       placeholder="John"
                     />
-                    {errors.first_name && <p className="mt-1.5 text-sm text-red-500">{errors.first_name.message}</p>}
+                    {errors.first_name && <p id="first-name-error" className="mt-1.5 text-sm text-red-500">{errors.first_name.message}</p>}
                   </div>
                   <div>
                     <label htmlFor="last_name" className="block text-sm font-bold text-[#334155] mb-2 font-body">
@@ -182,23 +188,25 @@ export default function WaitlistPage() {
                       id="last_name"
                       type="text"
                       {...register('last_name')}
+                      aria-invalid={errors.last_name ? true : undefined}
+                      aria-describedby={errors.last_name ? 'last-name-error' : undefined}
                       className="w-full h-[56px] rounded-lg border border-gray-200 bg-[#F8FAFC] px-4 font-body text-[16px] text-gray-900 focus:border-[#004E4C] focus:outline-none focus:ring-1 focus:ring-[#004E4C] transition-colors"
                       placeholder="Doe"
                     />
-                    {errors.last_name && <p className="mt-1.5 text-sm text-red-500">{errors.last_name.message}</p>}
+                    {errors.last_name && <p id="last-name-error" className="mt-1.5 text-sm text-red-500">{errors.last_name.message}</p>}
                   </div>
                 </div>
                 
                 {formError && (
-                  <div className="p-4 bg-red-50 text-red-600 border border-red-100 rounded-lg text-sm flex items-start gap-3">
+                  <div className="p-4 bg-red-50 text-red-600 border border-red-100 rounded-lg text-sm flex items-start gap-3" role="alert">
                     <Info className="w-5 h-5 flex-shrink-0" />
                     <span>{formError}</span>
                   </div>
                 )}
 
                 <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                  whileHover={reduceMotion ? undefined : { scale: 1.02 }}
+                  whileTap={reduceMotion ? undefined : { scale: 0.98 }}
                   disabled={isPending}
                   type="submit"
                   className="w-full h-[60px] rounded-lg bg-[#FFE419] font-body text-[18px] font-bold text-[#004E4C] shadow-sm transition-colors hover:bg-[#EBD001] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004E4C] disabled:opacity-70 disabled:cursor-not-allowed mt-4 cursor-pointer flex justify-center items-center"

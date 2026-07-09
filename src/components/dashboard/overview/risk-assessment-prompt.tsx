@@ -42,7 +42,7 @@ export function RiskAssessmentPrompt({
 
       <div className="mt-auto flex w-full min-w-0 flex-col items-stretch gap-3 pt-6">
         <Link
-          href="/assessment"
+          href="/dashboard/risk-assessment"
           className="inline-flex min-h-11 min-w-0 touch-manipulation items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-primary-light focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
         >
           Generate Risk Score

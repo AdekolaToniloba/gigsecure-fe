@@ -13,19 +13,19 @@ export function AuthRedirectGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { isAuthenticated, status, isInitializing } = useSession();
+  const { hasFullSession, status, isInitializing } = useSession();
   const isPublicOnly = isPublicOnlyAuthPath(pathname);
 
   useEffect(() => {
     if (!isPublicOnly || isInitializing || status === 'idle') return;
-    if (!isAuthenticated) return;
+    if (!hasFullSession) return;
 
     const safeRedirect =
       getSafeRedirectPath(searchParams.get('redirect')) ?? DEFAULT_AUTHENTICATED_PATH;
     router.replace(safeRedirect);
-  }, [isAuthenticated, isInitializing, isPublicOnly, pathname, router, searchParams, status]);
+  }, [hasFullSession, isInitializing, isPublicOnly, pathname, router, searchParams, status]);
 
-  if (isPublicOnly && (isInitializing || status === 'idle' || isAuthenticated)) {
+  if (isPublicOnly && (isInitializing || status === 'idle' || hasFullSession)) {
     return null;
   }
 

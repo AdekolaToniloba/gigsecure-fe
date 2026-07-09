@@ -7,6 +7,7 @@ const user = {
   first_name: 'Amaka',
   last_name: 'Obi',
   status: 'active',
+  role: 'user',
   email_verified: true,
 };
 
@@ -25,7 +26,7 @@ describe('user validators', () => {
 
     expect(result.kyc_verified).toBe(true);
     expect(result.risk_assessed).toBe(false);
-    expect(result.profile?.average_monthly_income).toBe(150000);
+    expect(result.profile?.average_monthly_income).toBe('150000');
   });
 
   it('parses null profiles and defaults missing flags to false', () => {
@@ -45,5 +46,16 @@ describe('user validators', () => {
     expect(result.profile).toBeUndefined();
     expect(result.kyc_verified).toBe(false);
     expect(result.risk_assessed).toBe(false);
+  });
+
+  it('rejects responses missing the required role or using numeric profile income', () => {
+    const userWithoutRole: Partial<typeof user> = { ...user };
+    delete userWithoutRole.role;
+
+    expect(userWithProfileResponseSchema.safeParse({ user: userWithoutRole }).success).toBe(false);
+    expect(userWithProfileResponseSchema.safeParse({
+      user,
+      profile: { average_monthly_income: 150000 },
+    }).success).toBe(false);
   });
 });

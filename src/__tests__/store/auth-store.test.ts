@@ -17,6 +17,7 @@ describe('useAuthStore', () => {
     expect(state.kycVerified).toBeNull();
     expect(state.riskAssessed).toBeNull();
     expect(state.isAuthenticated).toBe(false);
+    expect(state.hasFullSession).toBe(false);
     expect(state.status).toBe('unauthenticated');
   });
 
@@ -32,6 +33,7 @@ describe('useAuthStore', () => {
     const state = useAuthStore.getState();
     expect(state.accessToken).toBe('test-token');
     expect(state.isAuthenticated).toBe(true);
+    expect(state.hasFullSession).toBe(false);
     expect(state.status).toBe('authenticated');
     expect(state.kycVerified).toBeNull();
     expect(state.riskAssessed).toBeNull();
@@ -49,6 +51,7 @@ describe('useAuthStore', () => {
     expect(state.accessToken).toBe('session-token');
     expect(state.kycVerified).toBe(false);
     expect(state.riskAssessed).toBe(true);
+    expect(state.hasFullSession).toBe(true);
     expect(state.isAuthenticated).toBe(true);
     expect(state.status).toBe('authenticated');
   });
@@ -97,6 +100,7 @@ describe('useAuthStore', () => {
       accessToken: 'memory-only-session-token',
       kycVerified: false,
       riskAssessed: true,
+      hasFullSession: true,
     });
 
     setItemSpy.mockRestore();
@@ -107,6 +111,7 @@ describe('useAuthStore', () => {
     const state = useAuthStore.getState();
     expect(state.accessToken).toBeNull();
     expect(state.isAuthenticated).toBe(false);
+    expect(state.hasFullSession).toBe(false);
     expect(state.status).toBe('initializing');
   });
 
@@ -121,6 +126,7 @@ describe('useAuthStore', () => {
     expect(state.kycVerified).toBeNull();
     expect(state.riskAssessed).toBeNull();
     expect(state.isAuthenticated).toBe(false);
+    expect(state.hasFullSession).toBe(false);
     expect(state.status).toBe('unauthenticated');
   });
 
@@ -151,6 +157,7 @@ describe('useAuthStore', () => {
     expect(state.kycVerified).toBeNull();
     expect(state.riskAssessed).toBeNull();
     expect(state.isAuthenticated).toBe(false);
+    expect(state.hasFullSession).toBe(false);
     expect(state.status).toBe('unauthenticated');
   });
 });

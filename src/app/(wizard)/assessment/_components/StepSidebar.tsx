@@ -1,8 +1,7 @@
 'use client';
 
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Check } from 'lucide-react';
-import { useWizardStore } from '@/store/wizard-store';
 import type { AssessmentStep } from '@/types/risk-assessment';
 
 interface Props {
@@ -12,6 +11,7 @@ interface Props {
 
 export default function StepSidebar({ steps, currentStep }: Props) {
   const fullSteps = steps;
+  const reduceMotion = useReducedMotion();
 
   return (
     <aside className="w-full lg:w-[340px] flex-shrink-0">
@@ -26,7 +26,11 @@ export default function StepSidebar({ steps, currentStep }: Props) {
             const isActive = index === currentStep;
 
             return (
-              <li key={step.title} className="flex flex-shrink-0 items-center lg:items-start gap-3 lg:gap-4 lg:py-3 relative snap-start">
+              <li
+                key={step.title}
+                aria-current={isActive ? 'step' : undefined}
+                className="relative flex flex-shrink-0 snap-start items-center gap-3 lg:items-start lg:gap-4 lg:py-3"
+              >
                 {/* Connecting line for all but last item */}
                 {index < fullSteps.length - 1 && (
                   <div className="hidden lg:block absolute left-4 top-10 bottom-[-10px] w-px bg-gray-200" />
@@ -34,7 +38,7 @@ export default function StepSidebar({ steps, currentStep }: Props) {
                 
                 {/* Step circle */}
                 <div
-                  className={`h-8 w-8 rounded-full flex-shrink-0 flex items-center justify-center transition-all duration-300 relative z-10 ${
+                  className={`relative z-10 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full transition-colors duration-300 ${
                     isActive || isCompleted
                       ? 'bg-[#FFE419] text-[#004E4C] border-2 border-[#004E4C]'
                       : 'bg-gray-100 text-gray-500 border-2 border-gray-200'
@@ -44,19 +48,19 @@ export default function StepSidebar({ steps, currentStep }: Props) {
                     {isCompleted ? (
                       <motion.div
                         key="check"
-                        initial={{ scale: 0, opacity: 0 }}
+                        initial={reduceMotion ? false : { scale: 0, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
-                        exit={{ scale: 0, opacity: 0 }}
-                        transition={{ duration: 0.2 }}
+                        exit={reduceMotion ? undefined : { scale: 0, opacity: 0 }}
+                        transition={{ duration: reduceMotion ? 0 : 0.2 }}
                       >
-                        <Check className="h-4 w-4 text-[#004E4C]" strokeWidth={3} />
+                        <Check aria-hidden="true" className="h-4 w-4 text-[#004E4C]" strokeWidth={3} />
                       </motion.div>
                     ) : (
                       <motion.span
                         key="number"
-                        initial={{ scale: 0, opacity: 0 }}
+                        initial={reduceMotion ? false : { scale: 0, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
-                        exit={{ scale: 0, opacity: 0 }}
+                        exit={reduceMotion ? undefined : { scale: 0, opacity: 0 }}
                         className={`font-body text-[13px] font-bold ${isActive ? 'text-[#004E4C]' : 'text-gray-500'}`}
                       >
                         {index + 1}
@@ -73,6 +77,9 @@ export default function StepSidebar({ steps, currentStep }: Props) {
                     }`}
                   >
                     {step.title}
+                    <span className="sr-only">
+                      {isActive ? ', current step' : isCompleted ? ', completed' : ''}
+                    </span>
                   </p>
                   <p className="hidden lg:block font-body text-[11px] text-gray-400 mt-0.5 truncate">
                     {step.subtitle}
@@ -86,14 +93,14 @@ export default function StepSidebar({ steps, currentStep }: Props) {
         {/* Footer info - hidden on mobile */}
         <div className="hidden lg:block mt-6 pt-5 border-t border-gray-100 space-y-2">
           <a
-            href="#"
-            className="flex items-center gap-2 text-[12px] text-[#004E4C] font-body font-medium hover:underline"
+            href="/risk-assessment"
+            className="flex min-h-11 items-center gap-2 rounded text-[12px] text-[#004E4C] font-body font-medium hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004E4C]"
           >
             What is a risk assessment
           </a>
           <a
-            href="#"
-            className="flex items-center gap-2 text-[12px] text-[#004E4C] font-body font-medium hover:underline"
+            href="/faq"
+            className="flex min-h-11 items-center gap-2 rounded text-[12px] text-[#004E4C] font-body font-medium hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004E4C]"
           >
             FAQ&apos;s on GigSecure
           </a>
@@ -101,12 +108,12 @@ export default function StepSidebar({ steps, currentStep }: Props) {
 
         <div className="hidden lg:flex mt-5 items-center gap-2">
           <div className="h-4 w-4 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-            <Check className="h-2.5 w-2.5 text-green-600" strokeWidth={3} />
+            <Check aria-hidden="true" className="h-2.5 w-2.5 text-green-600" strokeWidth={3} />
           </div>
           <p className="font-body text-[11px] text-gray-400">Your data is secure and private.</p>
         </div>
-        <a href="#" className="hidden lg:block mt-1 font-body text-[11px] text-[#004E4C] hover:underline">
-          Need help? <span className="font-semibold">Contact Support</span>
+        <a href="/faq" className="mt-1 hidden min-h-11 items-center rounded font-body text-[11px] text-[#004E4C] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004E4C] lg:flex">
+          Need help? <span className="font-semibold">View FAQs</span>
         </a>
       </div>
     </aside>

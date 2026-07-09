@@ -46,9 +46,9 @@ describe('KycRecommendationsAction', () => {
     server.use(
       http.get(recommendationsUrl, async () => {
         await delay(100);
-        return HttpResponse.json([
-          { product_id: 'prod-slow', reason: 'Coverage fit is still being calculated' },
-        ]);
+        return HttpResponse.json({
+          recommendations: ['Coverage fit is still being calculated.'],
+        });
       })
     );
     act(() => {
@@ -64,7 +64,7 @@ describe('KycRecommendationsAction', () => {
     await user.click(screen.getByRole('button', { name: /View Recommendations/i }));
 
     expect(screen.getByRole('button', { name: /Loading plan/i })).toHaveAttribute('aria-busy', 'true');
-    expect(await screen.findByText('prod-slow')).toBeInTheDocument();
+    expect(await screen.findByText('Coverage fit is still being calculated.')).toBeInTheDocument();
   });
 
   it('shows recommendations for verified users after the endpoint succeeds', async () => {
@@ -81,8 +81,7 @@ describe('KycRecommendationsAction', () => {
 
     await user.click(screen.getByRole('button', { name: /View Recommendations/i }));
 
-    expect(await screen.findByText('prod-001')).toBeInTheDocument();
-    expect(screen.getByText(/High income volatility detected/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Diversify your client base/i)).toBeInTheDocument();
   });
 
   it('shows a parsed user-friendly error when recommendations fail', async () => {

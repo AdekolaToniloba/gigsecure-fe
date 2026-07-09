@@ -22,6 +22,7 @@ interface AuthState {
   kycVerified: boolean | null;
   riskAssessed: boolean | null;
   isAuthenticated: boolean;
+  hasFullSession: boolean;
   status: AuthStatus;
 }
 
@@ -51,6 +52,7 @@ export const useAuthStore = create<AuthStore>()((set) => ({
   kycVerified: null,
   riskAssessed: null,
   isAuthenticated: false,
+  hasFullSession: false,
   status: 'idle',
 
   // Actions
@@ -60,6 +62,7 @@ export const useAuthStore = create<AuthStore>()((set) => ({
       kycVerified: null,
       riskAssessed: null,
       isAuthenticated: true,
+      hasFullSession: false,
       status: 'authenticated',
     }),
 
@@ -69,6 +72,7 @@ export const useAuthStore = create<AuthStore>()((set) => ({
       kycVerified,
       riskAssessed,
       isAuthenticated: true,
+      hasFullSession: true,
       status: 'authenticated',
     }),
 
@@ -79,7 +83,7 @@ export const useAuthStore = create<AuthStore>()((set) => ({
     })),
 
   setAuthInitializing: () =>
-    set({ status: 'initializing', isAuthenticated: false }),
+    set({ status: 'initializing', isAuthenticated: false, hasFullSession: false }),
 
   setUnauthenticated: () =>
     set({
@@ -87,6 +91,7 @@ export const useAuthStore = create<AuthStore>()((set) => ({
       kycVerified: null,
       riskAssessed: null,
       isAuthenticated: false,
+      hasFullSession: false,
       status: 'unauthenticated',
     }),
 
@@ -103,6 +108,7 @@ export const useAuthStore = create<AuthStore>()((set) => ({
       kycVerified: null,
       riskAssessed: null,
       isAuthenticated: false,
+      hasFullSession: false,
       status: 'unauthenticated',
     }),
 }));

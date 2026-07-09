@@ -6,6 +6,7 @@ import { DashboardOverviewContent } from '@/components/dashboard/dashboard-overv
 import { DashboardErrorState } from '@/components/dashboard/overview/dashboard-error-state';
 import { DashboardSkeleton } from '@/components/dashboard/overview/dashboard-skeleton';
 import { useUserFlags } from '@/hooks/auth/useUserFlags';
+import { useSession } from '@/hooks/auth/useSession';
 import { useDashboardOverview } from '@/hooks/dashboard/useDashboard';
 import { useLatestAssessment } from '@/hooks/risk/useRisk';
 import { useUserProfile } from '@/hooks/user/useUserProfile';
@@ -24,10 +25,10 @@ export function DashboardOverviewController({ date }: DashboardOverviewControlle
     riskAssessed,
     status,
   } = useUserFlags();
-  const isAuthenticated = status === 'authenticated';
-  const profileQuery = useUserProfile();
-  const overviewQuery = useDashboardOverview({ enabled: isAuthenticated });
-  const shouldLoadAssessment = isAuthenticated && (
+  const { hasFullSession } = useSession();
+  const profileQuery = useUserProfile({ enabled: hasFullSession });
+  const overviewQuery = useDashboardOverview({ enabled: hasFullSession });
+  const shouldLoadAssessment = hasFullSession && (
     riskAssessed === true || overviewQuery.data?.has_assessment === true
   );
   const assessmentQuery = useLatestAssessment({ enabled: shouldLoadAssessment });
@@ -47,20 +48,21 @@ export function DashboardOverviewController({ date }: DashboardOverviewControlle
     void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.USER_ME });
   }, [hasPersistentAssessmentMismatch, queryClient]);
 
-  if (status === 'idle' || status === 'initializing' || !isAuthenticated) {
+  if (status === 'idle' || status === 'initializing' || !hasFullSession) {
     return <DashboardSkeleton />;
   }
 
+  if (profileQuery.isError) {
+    return (
+      <DashboardErrorState
+        title="Account details unavailable"
+        message={parseApiError(profileQuery.error).message}
+        onRetry={() => void profileQuery.refetch()}
+      />
+    );
+  }
+
   if (!hasResolvedFlags) {
-    if (profileQuery.isError) {
-      return (
-        <DashboardErrorState
-          title="Account details unavailable"
-          message={parseApiError(profileQuery.error).message}
-          onRetry={() => void profileQuery.refetch()}
-        />
-      );
-    }
     return <DashboardSkeleton />;
   }
 

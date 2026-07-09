@@ -84,15 +84,14 @@ export function KycRecommendationsAction() {
         ) : null}
 
         {recommendations.isSuccess ? (
-          recommendations.data.length > 0 ? (
+          recommendations.data.recommendations.length > 0 ? (
             <ul className="grid gap-3 sm:grid-cols-2">
-              {recommendations.data.map((item) => (
+              {recommendations.data.recommendations.map((recommendation, index) => (
                 <li
-                  key={`${item.product_id}-${item.reason}`}
+                  key={`${index}-${recommendation}`}
                   className="rounded-lg border border-primary/10 bg-white px-4 py-3 text-sm text-primary-light"
                 >
-                  <span className="font-medium text-primary">{item.product_id}</span>
-                  <span className="mt-1 block">{item.reason}</span>
+                  {recommendation}
                 </li>
               ))}
             </ul>

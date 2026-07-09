@@ -40,6 +40,7 @@ export type PillarScores = components['schemas']['PillarScores'];
 
 export type AssessmentResponse = components['schemas']['AssessmentResponse'];
 export type AssessmentSummary = components['schemas']['AssessmentSummary'];
+export type RecommendationsResponse = components['schemas']['RecommendationsResponse'];
 
 export type TechAssessmentInput = components['schemas']['TechAssessmentInput'];
 

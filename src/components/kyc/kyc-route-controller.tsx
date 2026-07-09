@@ -12,36 +12,36 @@ export function KycRouteController({ children }: { children: React.ReactNode }) 
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { isAuthenticated, status, isInitializing } = useSession();
+  const { hasFullSession, status, isInitializing } = useSession();
   const { hasResolvedFlags, isLoading: areFlagsLoading } = useKycGate();
-  const profileQuery = useUserProfile();
+  const profileQuery = useUserProfile({ enabled: hasFullSession });
 
   const search = searchParams.toString();
   const searchSuffix = search ? `?${search}` : '';
   const isProfileResolving =
-    isAuthenticated && profileQuery.isLoading && !profileQuery.data && !profileQuery.error;
+    hasFullSession && profileQuery.isLoading && !profileQuery.data && !profileQuery.error;
   const isResolving =
     status === 'idle' ||
     isInitializing ||
-    (isAuthenticated && (areFlagsLoading || !hasResolvedFlags || isProfileResolving));
+    (hasFullSession && (areFlagsLoading || !hasResolvedFlags || isProfileResolving));
 
   useEffect(() => {
     if (isResolving) return;
 
-    if (!isAuthenticated) {
+    if (!hasFullSession) {
       router.replace(buildLoginRedirect(pathname, searchSuffix));
       return;
     }
 
   }, [
-    isAuthenticated,
+    hasFullSession,
     isResolving,
     pathname,
     router,
     searchSuffix,
   ]);
 
-  if (isResolving || !isAuthenticated) {
+  if (isResolving || !hasFullSession) {
     return (
       <div
         role="status"

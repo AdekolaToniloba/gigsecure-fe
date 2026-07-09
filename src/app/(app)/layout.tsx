@@ -6,11 +6,22 @@ import { DashboardNavbar } from '@/components/dashboard/shell/dashboard-navbar';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <AuthenticatedAppShell
-      sidebar={<AppSidebar />}
-      header={<DashboardNavbar />}
+    <ProtectedRoute
+      fallback={(
+        <AuthenticatedAppShell
+          sidebar={<AppSidebar />}
+          header={<DashboardNavbar />}
+        >
+          <AppShellSkeleton />
+        </AuthenticatedAppShell>
+      )}
     >
-      <ProtectedRoute fallback={<AppShellSkeleton />}>{children}</ProtectedRoute>
-    </AuthenticatedAppShell>
+      <AuthenticatedAppShell
+        sidebar={<AppSidebar />}
+        header={<DashboardNavbar />}
+      >
+        {children}
+      </AuthenticatedAppShell>
+    </ProtectedRoute>
   );
 }

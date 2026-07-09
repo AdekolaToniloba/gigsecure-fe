@@ -1,7 +1,6 @@
 'use client';
 
-import { motion } from 'framer-motion';
-import { Check } from 'lucide-react';
+import { motion, useReducedMotion } from 'framer-motion';
 import { Controller, type Control } from 'react-hook-form';
 import type { SingleChoiceQuestion } from '@/types/risk-assessment';
 
@@ -13,6 +12,7 @@ interface Props {
 
 export default function SingleChoiceInput({ question, control, error }: Props) {
   const cols = question.options.length <= 3 ? 1 : 2;
+  const reduceMotion = useReducedMotion();
 
   return (
     <div>
@@ -34,16 +34,16 @@ export default function SingleChoiceInput({ question, control, error }: Props) {
                   type="button"
                   role="radio"
                   aria-checked={isSelected}
-                  whileTap={{ scale: 0.98 }}
+                  whileTap={reduceMotion ? undefined : { scale: 0.98 }}
                   onClick={() => field.onChange(option)}
-                  className={`flex items-center gap-3 rounded-lg border px-4 py-3.5 text-left transition-all duration-150 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[#004E4C] ${
+                  className={`flex min-h-11 items-center gap-3 rounded-lg border px-4 py-3.5 text-left transition-colors duration-150 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[#004E4C] ${
                     isSelected
                       ? 'border-[#004E4C] bg-[#004E4C]/5'
                       : 'border-gray-200 bg-white hover:border-gray-300'
                   }`}
                 >
                   <div
-                    className={`h-5 w-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all duration-150 ${
+                    className={`h-5 w-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-colors duration-150 ${
                       isSelected ? 'border-[#004E4C] bg-[#004E4C]' : 'border-gray-300'
                     }`}
                   >

@@ -12,9 +12,9 @@ beforeEach(() => {
 });
 
 describe('KycStatusGate', () => {
-  it('shows a loading state while authenticated flags are unresolved', () => {
+  it('shows a loading state while full-session initialization is unresolved', () => {
     act(() => {
-      useAuthStore.getState().setAccessToken('access-token');
+      useAuthStore.getState().setAuthInitializing();
     });
 
     render(

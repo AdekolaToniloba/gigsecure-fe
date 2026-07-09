@@ -4,6 +4,195 @@ Created: 2026-05-22 18:02 WAT
 
 This is the living context file for the authentication epic. It must be updated after every completed task with what changed, what was added, important decisions, and known follow-ups.
 
+## Dashboard Premiums Bought Epic Progress
+
+### 2026-07-09 00:54 WAT — Task 1: Premiums Audit And Contract Lock
+
+- Files changed: `CONTEXT.md`.
+- Summary: Revalidated the protected dashboard shell, sidebar/navbar, auth guard, API client, error parser, React Query setup, MSW setup, current policy domain layer, marketplace slide-over pattern, settings modal pattern, route/test conventions, `openapi.json`, and generated `src/types/schema.d.ts` before implementing Premiums Bought. The protected app layout already wraps dashboard routes in `ProtectedRoute`, `AuthenticatedAppShell`, `AppSidebar`, and `DashboardNavbar`; adding `/dashboard/premiums` will inherit the existing auth and shell behavior.
+- Current policy state: `openapi.json` and `src/types/schema.d.ts` already include `GET /api/v1/policies`, `GET /api/v1/policies/summary`, `GET /api/v1/policies/{policy_id}`, `GET /api/v1/policies/{policy_id}/report`, `PolicyOut`, `PolicyListResponse`, `PolicySummary`, and `PolicyProductSummary`. The live runtime layer is still stale: `src/lib/validators/policies.ts` expects array-shaped legacy policies with `user_id`, `product_id`, `premium`, and `currency`; `src/services/policies.service.ts` returns `Policy[]` from `/api/v1/policies/`; `src/hooks/policies/usePolicies.ts` uses non-parameterized keys and `throwOnError: true`; `src/mocks/handlers/domain.ts` still serves legacy policy fixtures.
+- Screenshot/data mapping: Premiums overview can use `PolicySummary.total_coverage`, `active_count`, and `due_soon_count`. Policy cards and detail panel can use `PolicyOut.product.name`, `product.provider_name`, `product.category`, `display_status`, `coverage_amount`, `premium_amount`, `premium_currency`, `renewal_frequency`, `purchased_at`, `start_date`, `end_date`, `created_at`, and `external_policy_id`. `DashboardOverviewResponse.premiums_bought` remains available for dashboard overview metrics, but no new navbar live-count call is required.
+- Important decisions: Use `/dashboard/premiums` and enable the existing `Premiums Bought` sidebar item only after the route exists. Keep policy summary/list/detail/report state in React Query only. Use `apiClient` for all authenticated policy calls and `parseApiError` for user-facing errors. Use documented raw `status_filter` only for server-backed active/expired list filters; due-soon UI will be driven truthfully from `display_status` unless the backend later documents a raw status/threshold. Do not render next payment, policy document URL, product description, coverage bullets, payout type, or provider logo because `PolicyOut` does not expose those fields.
+- Known API/design gaps: The report endpoint exists but generated types show `content?: never`; response content type, filename headers, and binary semantics remain under-documented. `PolicySummary.total_coverage` has no currency field, so the UI must document the app-wide NGN display assumption or avoid implying a backend-provided currency. The contract has no next-payment date, due-soon threshold, policy document URL, product description, coverage bullet list, payout type, pagination metadata, or facets.
+- Validation: No tests required for this planning-only task. Required source files were read before edits in the requested order: `RULES.md`, `DASHBOARD_PREMIUMS_EPICS.md`, `CONTEXT.md`, `src/app/globals.css`, `openapi.json`, and `src/types/schema.d.ts`.
+
+### 2026-07-09 00:56 WAT — Task 2: Policy OpenAPI Sync And Generated Types
+
+- Files changed: `CONTEXT.md`. `src/types/schema.d.ts` was regenerated with `npm run generate:types` and produced no source diff because the local generated declarations already matched `openapi.json`.
+- Summary: Confirmed the local OpenAPI contract includes authenticated policy list, summary, detail, mock pay, and report endpoints. `GET /api/v1/policies` includes optional `status_filter?: string | null`; `PolicyOut`, `PolicyListResponse`, `PolicySummary`, and `PolicyProductSummary` exist in generated types and match the Premiums Bought data model.
+- Important decisions: Did not hand-edit `src/types/schema.d.ts`. Did not alter `openapi.json` because the local backend-approved contract already contains the required premiums fields. Kept the report endpoint gap explicit: `GET /api/v1/policies/{policy_id}/report` has a documented `200` response but no response content in OpenAPI, and generated types therefore expose `content?: never`.
+- Known follow-ups: Task 3 must replace the stale legacy runtime policy validators, query keys, endpoint constants, and MSW fixtures with OpenAPI-shaped policy contracts. Task 10 must render report download as unavailable or guarded unless a usable blob/PDF response is confirmed outside the generated contract.
+- Validation: `npm run generate:types` passed. `npx tsc --noEmit` passed.
+
+### 2026-07-09 00:58 WAT — Task 3: Policy Domain Types, Validators, Endpoints, Query Keys, And MSW
+
+- Files changed: `src/types/policies.ts`, `src/lib/validators/policies.ts`, `src/lib/api/endpoints.ts`, `src/lib/constants.ts`, `src/mocks/fixtures/policies.ts`, `src/mocks/handlers/policies.ts`, `src/mocks/handlers/index.ts`, `src/mocks/handlers/domain.ts`, `src/__tests__/lib/policies-validators.test.ts`, `src/__tests__/mocks/policies-handlers.test.ts`, `CONTEXT.md`.
+- Summary: Replaced the stale runtime policy validators with OpenAPI-aligned schemas for `PolicyProductSummary`, `PolicyOut`, `PolicyListResponse`, `PolicySummary`, and `PolicyCreate`. Added generated type aliases, canonical policy endpoint constants for list/create/summary/detail/report, filtered list/summary/detail/report query keys, OpenAPI-shaped policy fixtures, and a dedicated policy MSW handler module. Removed the old legacy policy handlers from `domainHandlers` so tests cannot accidentally consume array-shaped policies with `user_id`, `product_id`, `premium`, and `currency`.
+- Important decisions: Kept decimal money values as strings at the validation boundary. Did not constrain `PolicyOut.status` to a frontend enum because OpenAPI documents it as a string. Kept due-soon represented by `display_status` in fixtures rather than inventing date-threshold logic. Removed undocumented cancel/renew constants from the active policy endpoint surface.
+- Known follow-ups: Task 4 must update `src/services/policies.service.ts` and `src/hooks/policies/usePolicies.ts`; those files still reference legacy list/detail shapes and now-obsolete cancel/renew methods until the next task replaces them. Report mocks can simulate PDF/blob success for service tests, but production UI behavior remains gated by the under-documented OpenAPI response content.
+- Validation: `npm test -- --run src/__tests__/lib/policies-validators.test.ts src/__tests__/mocks/policies-handlers.test.ts` passed with 2 files and 11 tests.
+
+### 2026-07-09 01:01 WAT — Task 4: Policy Services And React Query Hooks
+
+- Files changed: `src/services/policies.service.ts`, `src/hooks/policies/usePolicies.ts`, `src/__tests__/services/policies.service.test.ts`, `src/__tests__/hooks/policies-hooks.test.tsx`, `CONTEXT.md`.
+- Summary: Replaced the legacy policy service and hooks with authenticated `apiClient` methods for policy summary, filtered list, detail, create-policy compatibility, and report download. JSON responses are runtime-validated, list requests pass documented `status_filter` values, detail queries are disabled until an ID exists, list/summary/detail errors remain in-page, and the report action is exposed as a `retry: false` mutation rather than cached server state.
+- Important decisions: Removed undocumented cancel/renew hooks from the active policy API surface. Kept `usePolicies` and `usePolicy` as aliases for compatibility while new code should use `usePoliciesList` and `usePolicyDetail`. Report download only succeeds for a non-empty `application/pdf` blob; empty or unsupported response content throws a truthful unavailable error, preserving the OpenAPI content gap instead of fabricating a download. User-facing display code must still run errors through `parseApiError`.
+- Known follow-ups: Task 5 must wire UI primitives to these hooks and decide where the report action is shown as unavailable by default. Task 10 must add browser download orchestration and object URL cleanup if a usable PDF/blob response is confirmed for the UI path.
+- Validation: `npm test -- --run src/__tests__/lib/policies-validators.test.ts src/__tests__/mocks/policies-handlers.test.ts src/__tests__/services/policies.service.test.ts src/__tests__/hooks/policies-hooks.test.tsx` passed with 4 files and 21 tests. `npx tsc --noEmit` passed.
+
+### 2026-07-09 01:05 WAT — Task 5: Shared Premiums UI Primitives
+
+- Files changed: `src/components/dashboard/premiums/premiums-formatters.ts`, `src/components/dashboard/premiums/policy-status-badge.tsx`, `src/components/dashboard/premiums/policy-filter-chips.tsx`, `src/components/dashboard/premiums/report-download-button.tsx`, `src/components/dashboard/premiums/policy-card.tsx`, `src/components/dashboard/premiums/premiums-empty-state.tsx`, `src/components/dashboard/premiums/policy-detail-slide-over.tsx`, `src/services/policies.service.ts`, `src/__tests__/components/dashboard/premiums-primitives.test.tsx`, `CONTEXT.md`.
+- Summary: Added focused premiums UI primitives for money/date/renewal formatting, status badges, filter chips, policy cards, no-policies empty state, report download action, and a modal slide-over shell. The card renders only contracted `PolicyOut` fields and uses explicit buttons for details/report actions. The slide-over traps focus, restores focus, locks body scroll, and closes via Escape, backdrop, and close button. The empty state links to `/marketplace` and `/dashboard/risk-assessment`.
+- Important decisions: Report buttons default to unavailable with truthful copy because the OpenAPI report response content remains under-documented. When explicitly enabled for a confirmed PDF/blob response, the button uses the report mutation, creates a download link, announces success, and revokes the object URL. Blob-mode API errors are normalized in the service so `parseApiError` can still show backend `{ detail }` messages.
+- Known follow-ups: Task 6 must compose the overview summary card with loading/error/zero states. Task 9 must provide policy-specific detail content inside the slide-over shell. Task 10 must decide whether the page-level report action remains unavailable or can be enabled based on a confirmed backend PDF/blob contract.
+- Validation: `npm test -- --run src/__tests__/components/dashboard/premiums-primitives.test.tsx src/__tests__/services/policies.service.test.ts src/__tests__/hooks/policies-hooks.test.tsx` passed with 3 files and 16 tests. Vitest printed a non-fatal jsdom `Not implemented: navigation to another Document` warning when the report button test clicked a generated anchor.
+
+### 2026-07-09 01:06 WAT — Task 6: Premiums Overview Summary Card
+
+- Files changed: `src/components/dashboard/premiums/premiums-overview-card.tsx`, `src/components/dashboard/premiums/premiums-overview-skeleton.tsx`, `src/__tests__/components/dashboard/premiums-overview-card.test.tsx`, `CONTEXT.md`.
+- Summary: Added the "Your Protection Overview" card with shield treatment, contracted `PolicySummary` metrics, stable skeleton loading geometry, accessible error/retry state, and zero-safe summary rendering.
+- Important decisions: Displayed `PolicySummary.total_coverage` as NGN using the app-wide Nigerian currency assumption already present in marketplace/policy contracts, and documented that assumption in screen-reader copy because the summary contract has no currency field.
+- Known follow-ups: Task 7 must compose the policy list and filters below the overview. If backend later adds summary currency, `PremiumsOverviewCard` should use that documented field instead of the current NGN assumption.
+- Validation: `npm test -- --run src/__tests__/components/dashboard/premiums-overview-card.test.tsx src/__tests__/components/dashboard/premiums-primitives.test.tsx` passed with 2 files and 10 tests. Vitest printed the same non-fatal jsdom anchor navigation warning from the report button primitive test.
+
+### 2026-07-09 01:08 WAT — Task 7: Premiums List And Filter State
+
+- Files changed: `src/components/dashboard/premiums/premiums-list.tsx`, `src/components/dashboard/premiums/premiums-list-skeleton.tsx`, `src/__tests__/components/dashboard/premiums-list.test.tsx`, `CONTEXT.md`.
+- Summary: Added the Premiums list section with `All`, `All Active`, `Due Soon`, and `Expired` filter state, stable loading skeletons, accessible error/retry state, distinct filtered no-results state, and OpenAPI-backed policy cards.
+- Important decisions: `All Active` and `Expired` send the documented raw `status_filter=active|expired` query param. `Due Soon` does not send a server filter and instead filters the returned `PolicyOut[]` by authoritative `display_status` text; no due-date threshold or date guessing was introduced.
+- Known follow-ups: Task 9 must connect `View Details` to the detail query and render the slide-over content. If backend later documents a due-soon raw status or threshold, this component should switch to that contract.
+- Validation: `npm test -- --run src/__tests__/components/dashboard/premiums-list.test.tsx src/__tests__/components/dashboard/premiums-primitives.test.tsx` passed with 2 files and 13 tests. Vitest printed the same non-fatal jsdom anchor navigation warning from the report button primitive test.
+
+### 2026-07-09 01:08 WAT — Task 8: No-Policies Empty State
+
+- Files changed: `src/components/dashboard/premiums/premiums-empty-state.tsx`, `src/components/dashboard/premiums/premiums-list.tsx`, `src/__tests__/components/dashboard/premiums-primitives.test.tsx`, `src/__tests__/components/dashboard/premiums-list.test.tsx`, `CONTEXT.md`.
+- Summary: Composed the no-policies empty state into the list only when the unfiltered policy list succeeds with zero items. The empty panel uses the required copy direction, a decorative local icon treatment, and CTAs to `/marketplace` and `/dashboard/risk-assessment`.
+- Important decisions: Filtered empty results render a separate "No premiums match this filter" state so an account with policies is not told it has no protection plans.
+- Known follow-ups: Task 11 must ensure the overview card remains visible above this empty state when the page is composed.
+- Validation: Covered by the Task 7 list/primitive run: `npm test -- --run src/__tests__/components/dashboard/premiums-list.test.tsx src/__tests__/components/dashboard/premiums-primitives.test.tsx` passed with 2 files and 13 tests.
+
+### 2026-07-09 01:10 WAT — Task 9: Policy Detail Slide-Over Content
+
+- Files changed: `src/components/dashboard/premiums/policy-detail-content.tsx`, `src/components/dashboard/premiums/policy-detail-panel.tsx`, `src/__tests__/components/dashboard/premiums-policy-detail.test.tsx`, `CONTEXT.md`.
+- Summary: Wired `View Details` flows to a detail query through `PolicyDetailPanel`, using clicked card data as a safe fallback while the selected policy detail refreshes. The detail content renders product/provider/category identity, `display_status`, coverage, premium, coverage limit, start/end dates, renewal frequency, and report/document actions from the contracted `PolicyOut` fields.
+- Important decisions: Unsupported next payment, description, coverage bullets, view-policy document URL, and payout type are omitted or marked unavailable because the current `PolicyOut` contract does not expose those fields. The detail query remains disabled until a policy ID exists and keeps loading/error/retry states inside the panel.
+- Known follow-ups: Task 11 must compose `PolicyDetailPanel` with the full `/dashboard/premiums` page. Backend/product still needs to provide authoritative document URLs, next-payment dates, product descriptions, structured coverage benefits, and payout type before those can become real panel content.
+- Validation: `npm test -- --run src/__tests__/components/dashboard/premiums-policy-detail.test.tsx src/__tests__/components/dashboard/premiums-primitives.test.tsx` passed with 2 files and 9 tests. Vitest printed the same non-fatal jsdom anchor navigation warning from the report button primitive test.
+
+### 2026-07-09 01:11 WAT — Task 10: Report Download Integration
+
+- Files changed: `src/services/policies.service.ts`, `src/hooks/policies/usePolicies.ts`, `src/components/dashboard/premiums/report-download-button.tsx`, `src/__tests__/services/policies.service.test.ts`, `src/__tests__/hooks/policies-hooks.test.tsx`, `src/__tests__/components/dashboard/premiums-primitives.test.tsx`, `CONTEXT.md`.
+- Summary: Added authenticated report download support at the service/hook/button level for confirmed non-empty PDF blob responses. The button handles unavailable, idle, loading, success, duplicate-click prevention, and parsed error states; successful downloads use a safe filename, click a generated anchor, and revoke the object URL.
+- Important decisions: The production page keeps report actions unavailable by default because `openapi.json`/`src/types/schema.d.ts` still document `GET /api/v1/policies/{policy_id}/report` with no response content. The enabled branch is ready for a backend-approved `application/pdf`/blob response but rejects empty or unsupported content instead of inventing a file.
+- Known follow-ups: Backend must document report content type and filename semantics before page-level report buttons are enabled. JSDOM prints a non-fatal navigation warning when tests click generated download anchors; real browser Playwright should cover the unavailable page branch unless the PDF contract is confirmed.
+- Validation: `npm test -- --run src/__tests__/components/dashboard/premiums-primitives.test.tsx src/__tests__/services/policies.service.test.ts src/__tests__/hooks/policies-hooks.test.tsx` passed with 3 files and 17 tests. Vitest printed non-fatal jsdom anchor navigation warnings from report download tests.
+
+### 2026-07-09 01:13 WAT — Task 11: Premiums Page Composition Under Authenticated Dashboard Route
+
+- Files changed: `src/app/(app)/dashboard/premiums/page.tsx`, `src/app/(app)/dashboard/premiums/loading.tsx`, `src/app/(app)/dashboard/premiums/error.tsx`, `src/components/dashboard/premiums/premiums-page-controller.tsx`, `src/components/dashboard/shell/app-navigation.tsx`, `src/lib/constants.ts`, `src/__tests__/pages/dashboard-premiums.test.tsx`, `src/__tests__/components/dashboard/app-navigation.test.tsx`, `CONTEXT.md`.
+- Summary: Added the protected `/dashboard/premiums` route with metadata, stable loading state, friendly route error boundary, and client controller composition for summary, list, empty state, detail panel, and unavailable report action. Enabled the existing `Premiums Bought` sidebar/mobile navigation item and active-route behavior.
+- Important decisions: Kept the App Router page as a small server boundary and all interactive server-state behavior in `PremiumsPageController`. Left the navbar `0 Premiums` placeholder unchanged because this epic did not require a live shell count and the dashboard overview already owns the broader count metric. Page-level report downloads remain unavailable by default until the backend PDF/blob contract is documented.
+- Known follow-ups: Task 12 must complete the responsive/accessibility pass. Task 14 must add Playwright coverage for the protected route and core flows.
+- Validation: `npm test -- --run src/__tests__/pages/dashboard-premiums.test.tsx src/__tests__/components/dashboard/app-navigation.test.tsx src/__tests__/components/dashboard/premiums-list.test.tsx src/__tests__/components/dashboard/premiums-policy-detail.test.tsx` passed with 4 files and 28 tests.
+
+### 2026-07-09 01:14 WAT — Task 12: Responsive And Accessibility Pass
+
+- Files changed: `src/__tests__/components/dashboard/premiums-accessibility.test.tsx`, `CONTEXT.md`.
+- Summary: Added focused accessibility/responsive-structure coverage for the composed premiums page, including one page-level `h1`, labelled filter group, async status announcements, color-independent visible status text, labelled modal semantics, close control naming, mobile/full-width panel classes, responsive card action rows, and overview metric grid structure.
+- Important decisions: Kept responsive proof at the Testing Library structural level for this task; Task 14 owns browser viewport overflow checks at real viewport sizes.
+- Known follow-ups: Add Playwright coverage for mobile/desktop overflow and main user flows in Task 14.
+- Validation: `npm test -- --run src/__tests__/components/dashboard/premiums-accessibility.test.tsx src/__tests__/pages/dashboard-premiums.test.tsx src/__tests__/components/dashboard/premiums-list.test.tsx src/__tests__/components/dashboard/premiums-policy-detail.test.tsx` passed with 4 files and 19 tests.
+
+### 2026-07-09 01:14 WAT — Task 13: Unit And Integration Test Coverage
+
+- Files changed: `CONTEXT.md`.
+- Summary: Completed the premiums-focused unit and integration coverage pass across validators, MSW handlers, services, hooks, primitives, overview, list/filter states, empty state, detail panel, accessibility assertions, page composition, and app navigation. No additional production changes were required for this task.
+- Important decisions: Kept coverage behavior-focused and reused existing MSW/React Query test utilities. The non-fatal jsdom navigation warning remains limited to generated anchor clicks in report-download tests.
+- Known follow-ups: Task 14 must add Playwright coverage for the critical browser flows and real viewport overflow checks.
+- Validation: `npm test -- --run src/__tests__/lib/policies-validators.test.ts src/__tests__/mocks/policies-handlers.test.ts src/__tests__/services/policies.service.test.ts src/__tests__/hooks/policies-hooks.test.tsx src/__tests__/components/dashboard/premiums-primitives.test.tsx src/__tests__/components/dashboard/premiums-overview-card.test.tsx src/__tests__/components/dashboard/premiums-list.test.tsx src/__tests__/components/dashboard/premiums-policy-detail.test.tsx src/__tests__/components/dashboard/premiums-accessibility.test.tsx src/__tests__/pages/dashboard-premiums.test.tsx src/__tests__/components/dashboard/app-navigation.test.tsx` passed with 11 files and 64 tests. Vitest printed two non-fatal jsdom anchor navigation warnings from report-download tests.
+
+### 2026-07-09 01:18 WAT — Task 14: E2E Coverage
+
+- Files changed: `e2e/dashboard/premiums-flow.spec.ts`, `CONTEXT.md`.
+- Summary: Added Playwright coverage for unauthenticated redirect to login, authenticated `/dashboard/premiums` render, active/due-soon/expired filtering, detail panel open/close via Escape/backdrop/close button with focus restoration, unavailable report action, empty state CTAs, and mobile/desktop horizontal overflow checks across required viewport widths.
+- Important decisions: The E2E spec uses route-level API mocks and a seeded httpOnly refresh cookie, matching existing dashboard/settings patterns. Report download is covered as unavailable because the OpenAPI report response content is still under-documented.
+- Known follow-ups: None for premiums E2E. The run still emits existing framework/environment warnings for deprecated `middleware` convention and `NO_COLOR`/`FORCE_COLOR`.
+- Validation: First sandboxed run failed because the dev server could not bind `0.0.0.0:3102` (`listen EPERM`). Escalated rerun exposed one strict locator issue for `All` vs `All Active`; after fixing the locator, `E2E_PORT=3102 npm run test:e2e -- e2e/dashboard/premiums-flow.spec.ts` passed with 3 Playwright tests.
+
+### 2026-07-09 01:31 WAT — Final Dashboard Premiums Bought Epic Summary
+
+- Files changed:
+  - Domain/API: `src/types/policies.ts`, `src/lib/validators/policies.ts`, `src/lib/api/endpoints.ts`, `src/lib/constants.ts`, `src/services/policies.service.ts`, `src/hooks/policies/usePolicies.ts`.
+  - UI/routes: `src/app/(app)/dashboard/premiums/page.tsx`, `src/app/(app)/dashboard/premiums/loading.tsx`, `src/app/(app)/dashboard/premiums/error.tsx`, `src/components/dashboard/premiums/*`, `src/components/dashboard/shell/app-navigation.tsx`.
+  - Mocks/tests: `src/mocks/fixtures/policies.ts`, `src/mocks/handlers/policies.ts`, `src/mocks/handlers/index.ts`, `src/mocks/handlers/domain.ts`, `src/__tests__/lib/policies-validators.test.ts`, `src/__tests__/mocks/policies-handlers.test.ts`, `src/__tests__/services/policies.service.test.ts`, `src/__tests__/hooks/policies-hooks.test.tsx`, `src/__tests__/components/dashboard/premiums-*.test.tsx`, `src/__tests__/pages/dashboard-premiums.test.tsx`, `src/__tests__/components/dashboard/app-navigation.test.tsx`, `e2e/dashboard/premiums-flow.spec.ts`.
+  - Documentation: `CONTEXT.md`.
+- Completed work: Implemented the full protected `/dashboard/premiums` feature in the existing authenticated dashboard shell. The page now has summary metrics, loading/error/retry/empty states, server-backed active/expired filters, safe due-soon filtering from `display_status`, policy cards, accessible detail slide-over behavior, unavailable report/document affordances where the backend contract is incomplete, dedicated policy MSW fixtures/handlers, focused unit/integration coverage, and Playwright coverage for the main browser flows and mobile/desktop overflow checks.
+- Important decisions: Kept all authenticated policy calls on `apiClient`, all user-facing errors through `parseApiError`, and all policy server state in React Query. Used only the documented policy endpoints and generated schemas from `openapi.json`/`src/types/schema.d.ts`. Kept report downloads unavailable in the production page because the report endpoint has no documented response content despite the service/button being ready for a confirmed non-empty PDF blob. Kept summary coverage displayed as NGN with screen-reader copy documenting the app-wide assumption because `PolicySummary` has no currency field.
+- Known follow-ups and unresolved API/design questions: Backend/product still need to document report response content type, filename semantics, and binary body shape before enabling real page downloads. The current contract still lacks next-payment date, due-soon threshold/raw enum, policy document URL, product description, structured coverage bullets, payout type, provider logos, pagination/facets, and summary currency. Those screenshot-like fields were not invented in UI or mocks.
+- Validation:
+  - `npm run generate:types` passed and produced no schema diff.
+  - Premiums-focused matrix passed with 11 files and 64 tests: validators, MSW handlers, services, hooks, primitives, overview, list/filter, detail panel, accessibility, page composition, and app navigation.
+  - Full unit suite: the first broad run hit an existing dashboard overview timing flake that passed when rerun; after the final test stabilization, `npm test -- --run` passed with 127 files and 821 tests. Vitest still prints non-fatal jsdom navigation warnings from download/redirect-oriented coverage.
+  - `npm run lint` passed with 0 errors and the same 7 pre-existing unrelated warnings in non-premiums files.
+  - `npx tsc --noEmit` passed.
+  - `git diff --check` passed.
+  - Relevant Playwright: initial sandboxed run failed because the dev server could not bind `0.0.0.0:3102` (`listen EPERM`); the approved escalated run `E2E_PORT=3102 npm run test:e2e -- e2e/dashboard/premiums-flow.spec.ts` passed with 3 tests after one locator exactness fix. The run still emits existing framework/environment warnings for deprecated `middleware` convention and `NO_COLOR`/`FORCE_COLOR`.
+  - `npm run build` was not run for this epic because it was not part of the user's required final verification list, and prior project context documents that local production builds can require network access for Google `Inter` font fetching.
+
+## Dashboard Settings Epic Progress
+
+### 2026-07-08 23:57 WAT — Task 1: Settings OpenAPI Contract And Generated Types
+
+- Files changed: `openapi.json`, `src/types/schema.d.ts`.
+- Summary: Added the documented Settings privacy endpoints, account deactivation endpoint, account deletion endpoint, and the required `PrivacySettingsResponse`, `UpdatePrivacySettingsRequest`, and `DeleteAccountRequest` schemas to the local OpenAPI contract. Regenerated `src/types/schema.d.ts` with `npm run generate:types`.
+- Important decisions: Kept `src/types/schema.d.ts` generated-only and matched the epic's documented settings contracts without inventing fields.
+- Known follow-ups: Implement endpoint constants, validators, service methods, React Query hooks, MSW handlers, UI, and tests against these generated contracts.
+- Validation: `npm run generate:types` passed; `rg` confirmed the new settings paths and schemas exist in both OpenAPI and generated types.
+
+### 2026-07-09 00:00 WAT — Task 2: Settings Domain Layer
+
+- Files changed: `src/lib/api/endpoints.ts`, `src/lib/constants.ts`, `src/types/settings.ts`, `src/lib/validators/settings.ts`, `src/services/settings.service.ts`, `src/hooks/settings/useSettings.ts`, `src/mocks/fixtures/settings.ts`, `src/mocks/handlers/settings.ts`, `src/mocks/handlers/index.ts`, `src/__tests__/lib/settings-validators.test.ts`, `src/__tests__/services/settings.service.test.ts`, `src/__tests__/hooks/settings-hooks.test.tsx`.
+- Summary: Added settings endpoint constants, query keys, generated type aliases, Zod validators, authenticated `apiClient` service methods, React Query hooks with `retry: false`, optimistic toggle cache updates with rollback, account action mutations, MSW fixtures, and default handlers.
+- Important decisions: Kept settings server state in React Query only. Toggle services send only the changed documented key with a boolean value. Account actions return `void` and validate `204` responses. Wrapped the delete account mutation function so React Query mutation context is not accidentally passed as an Axios signal.
+- Known follow-ups: Build the protected settings route UI, enable sidebar navigation, add confirmation modals, wire account-action session cleanup and redirect, and cover page-level behavior.
+- Validation: `npm test -- src/__tests__/lib/settings-validators.test.ts src/__tests__/services/settings.service.test.ts src/__tests__/hooks/settings-hooks.test.tsx` passed with 15 tests.
+
+### 2026-07-09 00:06 WAT — Task 3: Protected Settings UI And Shell Integration
+
+- Files changed: `src/components/dashboard/settings/settings-page-controller.tsx`, `src/app/(app)/dashboard/settings/page.tsx`, `src/app/(app)/dashboard/settings/loading.tsx`, `src/components/dashboard/shell/app-navigation.tsx`, `src/app/(auth)/login/page.tsx`, `src/components/auth/login/login-form.tsx`, `src/__tests__/components/dashboard/settings-page-controller.test.tsx`, `src/__tests__/pages/dashboard-settings.test.tsx`, `src/__tests__/components/dashboard/app-navigation.test.tsx`, `src/__tests__/components/auth/login-form.test.tsx`.
+- Summary: Added the protected `/dashboard/settings` page in the existing authenticated shell, enabled the Settings sidebar item, built accessible keyboard tabs, notification/privacy switch rows, loading/error/retry/success states, danger-zone account actions, focus-trapped confirmation dialogs, delete password validation, session cleanup, and login success messaging for deactivation/deletion redirects.
+- Important decisions: Kept UI primitives feature-local. Used React Query data directly for preference state, with optimistic mutation cache updates and rollback handled in hooks. Account actions call the documented settings endpoint first, then call the existing BFF logout cleanup and clear memory auth state before redirecting to `/login?account=...`.
+- Known follow-ups: Add Playwright coverage for the settings flow, run full unit/lint/type/diff checks, and document any validation limitations.
+- Validation: `npm test -- src/__tests__/lib/settings-validators.test.ts src/__tests__/services/settings.service.test.ts src/__tests__/hooks/settings-hooks.test.tsx src/__tests__/components/dashboard/settings-page-controller.test.tsx src/__tests__/pages/dashboard-settings.test.tsx src/__tests__/components/dashboard/app-navigation.test.tsx src/__tests__/components/auth/login-form.test.tsx` passed with 45 tests.
+
+### 2026-07-09 00:16 WAT — Task 4: Settings Test Coverage And Browser Flow
+
+- Files changed: `e2e/dashboard/settings-flow.spec.ts`, `src/__tests__/components/dashboard/settings-page-controller.test.tsx`.
+- Summary: Added Playwright coverage for settings preference saves, documented partial update payloads, mobile overflow checks, delete password confirmation, successful deletion redirect, and deactivation confirmation redirect. Adjusted account cleanup to route to the account success URL before clearing in-memory auth so the protected-route guard does not overwrite the success redirect.
+- Important decisions: Kept the existing BFF logout as the cookie cleanup path, then clear memory auth shortly after navigation starts. This preserves the required success message URL while still clearing local session state.
+- Known follow-ups: Run full verification suite and record final validation output.
+- Validation: `npm test -- src/__tests__/components/dashboard/settings-page-controller.test.tsx` passed with 8 tests. `E2E_PORT=3101 npm run test:e2e -- e2e/dashboard/settings-flow.spec.ts` passed with 3 Playwright tests after rerunning outside the sandbox because local port binding was sandbox-restricted.
+
+### 2026-07-09 00:20 WAT — Final Dashboard Settings Epic Summary
+
+- Files changed:
+  - Contract/types: `openapi.json`, `src/types/schema.d.ts`, `src/types/settings.ts`.
+  - API/domain: `src/lib/api/endpoints.ts`, `src/lib/constants.ts`, `src/lib/validators/settings.ts`, `src/services/settings.service.ts`, `src/hooks/settings/useSettings.ts`.
+  - UI/routes: `src/app/(app)/dashboard/settings/page.tsx`, `src/app/(app)/dashboard/settings/loading.tsx`, `src/components/dashboard/settings/settings-page-controller.tsx`, `src/components/dashboard/shell/app-navigation.tsx`, `src/app/(auth)/login/page.tsx`, `src/components/auth/login/login-form.tsx`.
+  - Mocks/tests: `src/mocks/fixtures/settings.ts`, `src/mocks/handlers/settings.ts`, `src/mocks/handlers/index.ts`, `src/__tests__/lib/settings-validators.test.ts`, `src/__tests__/services/settings.service.test.ts`, `src/__tests__/hooks/settings-hooks.test.tsx`, `src/__tests__/components/dashboard/settings-page-controller.test.tsx`, `src/__tests__/pages/dashboard-settings.test.tsx`, `src/__tests__/components/dashboard/app-navigation.test.tsx`, `src/__tests__/components/auth/login-form.test.tsx`, `e2e/dashboard/settings-flow.spec.ts`.
+- Completed work: Implemented the full protected Dashboard Settings feature with Notifications, Privacy and Data, and Delete account tabs; authenticated settings API integration; runtime validation; React Query server state; mutation-backed switches with rollback; account deactivation/deletion confirmation modals; delete password confirmation; session cleanup and login success redirects; MSW handlers; unit/integration/page tests; and Playwright settings flow coverage.
+- Important decisions: Settings route is `/dashboard/settings` to inherit the existing protected dashboard shell. Settings preferences are not copied into Zustand. Toggle mutations send only the changed documented field. Account success redirects use `/login?account=deactivated` and `/login?account=deleted`; login page now renders those success messages. Memory auth is cleared shortly after the success navigation starts to avoid the protected-route guard overwriting the account success URL.
+- Known follow-ups: Backend/product still own any dedicated reactivation UX after deactivation; no reactivation endpoint is documented. If backend later makes partner data sharing required for quotes, the UI should be updated from a documented contract instead of hard-coding disabled/required behavior.
+- Validation:
+  - `npm run generate:types` passed.
+  - Focused settings/domain/UI tests passed: `npm test -- src/__tests__/lib/settings-validators.test.ts src/__tests__/services/settings.service.test.ts src/__tests__/hooks/settings-hooks.test.tsx src/__tests__/components/dashboard/settings-page-controller.test.tsx src/__tests__/pages/dashboard-settings.test.tsx src/__tests__/components/dashboard/app-navigation.test.tsx src/__tests__/components/auth/login-form.test.tsx` passed with 45 tests.
+  - Full unit suite: first run had one transient existing risk-assessment product-detail animation visibility failure; rerunning that file passed with 6 tests, and the final full run `npm test -- --run` passed with 117 files and 770 tests. The suite still prints jsdom warnings for unimplemented `scrollTo` and document navigation.
+  - `npm run lint` passed with 7 pre-existing warnings outside the settings files.
+  - `npx tsc --noEmit` passed.
+  - `git diff --check` passed.
+  - Relevant Playwright: `E2E_PORT=3101 npm run test:e2e -- e2e/dashboard/settings-flow.spec.ts` passed with 3 tests. Initial sandboxed Playwright attempts could not bind/start the dev server, so the passing run used the approved escalated e2e command on port 3101.
+
 ## Current Codebase State
 
 ### App and Routing
@@ -1939,3 +2128,603 @@ The live source tree and final handoff supersede historical statements that dash
 
 Known follow-ups:
 Backend/product still needs to define the notification feed/read contract, dashboard date/range behavior, income-stability units and x-axis semantics, tour/demo/explainer destinations, any active-policy subtitle requirement, unavailable Premiums/Profile/Settings routes, and guarantees beyond the documented score/classification contract. The workspace's exact Playwright command remains blocked by unresponsive PID 66527 holding `.next/dev/lock`, although the same source/specs passed 11/11 dashboard and 35/35 full Chromium tests in the isolated Task 21 run. The exact production build remains subject to restricted Google Fonts DNS; the documented isolated fallback compiled, typechecked, generated 36 static pages, and emitted `/dashboard` without changing the real font configuration. Task 22 verification passed with the focused dashboard/security slice (21 files, 172 tests), `npm run lint` (0 errors; the same 15 pre-existing non-dashboard warnings), `npx tsc --noEmit`, and `git diff --check`.
+
+### 2026-07-07 16:35 WAT
+
+Task completed: Task 1 — Dual-Journey Route, Bearer Authentication, Wizard, Report, and Contract Audit
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/DASHBOARD_RISK_ASSESSMENT_EPICS.md`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+
+Summary:
+Revalidated and locked the implementation plan against the live public acquisition routes, authenticated app shell, middleware and client guards, waitlist BFF/token handoff, memory-only auth store, shared Bearer-attaching `apiClient`, risk/profile/marketplace services and hooks, current wizard/report/PDF code, local and supplied OpenAPI documents, existing mocks/tests, and both supplied dashboard references. Confirmed that `/risk-assessment` remains public information, `/waitlist` remains public onboarding, and `/assessment` remains the standalone waitlist-issued-Bearer wizard outside protected middleware. The future `/dashboard/risk-assessment` belongs under `(app)/dashboard`, inherits the existing shell and `/dashboard/*` middleware prefix, and must use full-session-aware `ProtectedRoute` behavior. No production, test, generated-contract, or route code changed.
+
+Important decisions:
+All `/api/v1/risk/*` calls continue through one `riskService` and the existing `apiClient`, which forwards whichever Bearer token is in memory and lets the backend decide validity and authorization. No JWT-scope preflight, endpoint-specific risk allowlist, duplicate token-specific service, token persistence, or invented permission matrix is permitted. Public backend authentication failure recovers to `/waitlist?expired=true`; dashboard authentication failure uses refresh/logout recovery. Public mode must not call profile, dashboard, KYC, or authenticated marketplace recommendation APIs. React Query retains server-data ownership through canonical keys, requests must deduplicate, and PDF code must be lazy-loaded on user action. The 1512×1810 assessed and 1512×1133 unassessed references are visual targets only: unsupported plan/critical-gap/monthly/benchmark/timestamp/share/product values cannot be fabricated.
+
+Known follow-ups:
+Task 2 must synchronize the supplied profile/marketplace/generated contract differences while preserving the exact matching risk core. Category and question response schemas remain underspecified; the risk-recommendations validator is stale; category submission is hard-coded; latest has no timestamp or documented 404; history ordering direction and public-result persistence remain backend/product questions. Task 6 must close the confirmed security gap where a waitlist `setAccessToken` currently sets generic `isAuthenticated: true`: direct dashboard navigation is already blocked without the refresh cookie, but client-side navigation can pass the current `ProtectedRoute`. Explicit memory-only full-session provenance established by successful refresh-backed initialization must gate dashboard content and full-session-only APIs without decoding JWT scope or blocking waitlist Bearer access to risk APIs. Later tasks own shared-wizard extraction, dual-route behavior, report display-model/PDF reuse, dashboard composition, and regression coverage. Task 1 requires documentation validation only; `npx tsc --noEmit`, `npm run lint`, and runtime suites were not run because no executable source or test file changed. Validation passed with `git diff --check` and a separate `git diff --no-index --check /dev/null DASHBOARD_RISK_ASSESSMENT_EPICS.md` check for the currently untracked epic file.
+
+### 2026-07-07 21:56 WAT
+
+Task completed: Task 2 — OpenAPI Synchronization and Generated Types
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/DASHBOARD_RISK_ASSESSMENT_EPICS.md`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/openapi.json`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/types/schema.d.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/lib/validators/user.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/mocks/fixtures/dashboard.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/mocks/handlers/auth.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/lib/user-validators.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/services/user.service.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/e2e/auth/auth-flows.spec.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/e2e/dashboard/dashboard-flow.spec.ts`
+
+Summary:
+Applied only the approved semantic differences from the supplied OpenAPI to the repository contract and regenerated `src/types/schema.d.ts` through `npm run generate:types`. User/profile contracts now require `UserResponse.role`, return average monthly income as a validated decimal string, allow profile updates to send a number or decimal string, and expose optional validation-error `input`/`ctx`. Marketplace product amounts and string filter values carry the supplied decimal constraints, while profile update and marketplace list/detail/recommendation operations expose documented 422 responses. The core assessment paths and generated `TechAssessmentInput`, `AssessmentResponse`, `AssessmentSummary`, `ApplicantProfile`, `PillarScores`, and `RecommendationsResponse` remain semantically identical to the supplied source. Updated the directly affected runtime user schema and canonical MSW/E2E profile fixtures so generated and runtime contracts agree.
+
+Important decisions:
+Preserved the established marketplace security boundary: list/detail operations remain public and authenticated recommendations retain HTTP Bearer security. Supplied descriptions, titles, and unrelated endpoint domains were not copied because they do not justify semantic or scope churn. Category and question success schemas remain `{}` in both OpenAPI sources and were intentionally not invented. Generated declarations were never hand-edited. Profile response income remains a string instead of being silently coerced into a number; update requests still accept the backend-approved numeric or decimal-string forms. No route, shell, wizard, report, PDF, query key, token handling, browser storage, or UI behavior changed.
+
+Known follow-ups:
+Task 3 still owns risk request/category/question runtime validators, the pure payload builder, report display model, and removal of unsupported report derivations. Category/question response structure still needs backend confirmation. The existing risk-recommendations runtime validator remains stale, category submission remains hard-coded, latest assessment has no documented timestamp/404, and history ordering/public-result persistence remain unresolved. Task 6 still owns explicit refresh-backed full-session provenance. Validation passed with the semantic supplied/local OpenAPI assertion, two successful `npm run generate:types` runs, the focused user/marketplace/risk contract suite (5 files, 21 tests), `npx tsc --noEmit`, and `npm run lint` with 0 errors and the same 15 pre-existing warnings. Browser tests were not run because Task 2 changes no product behavior; the two E2E edits only keep existing `/users/me` fixtures contract-valid. Final whitespace checks follow this entry.
+
+### 2026-07-07 22:11 WAT
+
+Task completed: Task 3 — Runtime Risk Validators, Types, Selectors, and Field Mapping
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/DASHBOARD_RISK_ASSESSMENT_EPICS.md`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/lib/validators/risk.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/types/risk-assessment.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/types/api.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/lib/risk/build-assessment-payload.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/lib/risk/report-display-model.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_lib/buildStepSchema.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_lib/getRiskLevel.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/RiskWizard.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/ReportScreen.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/report/RiskReportPDF.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/services/risk.service.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/kyc/dashboard/kyc-recommendations-action.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/mocks/handlers/domain.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/lib/risk-validators.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/lib/buildStepSchema.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/lib/build-assessment-payload.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/lib/risk-report-display-model.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/lib/getRiskLevel.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/wizard/ReportScreen.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/services/risk.service.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/kyc/kyc-recommendations-action.test.tsx`
+
+Summary:
+Added strict runtime foundations for the established discriminated question bank, assessment steps, provisional categories, complete `TechAssessmentInput`, applicant/pillar/assessment/history responses, and textual `RecommendationsResponse`. Replaced the hand-maintained question interfaces with schema-inferred types. Added a pure payload builder that accepts the wizard's explicit boolean representation, validates every request field, rejects unknown/email fields and missing/invalid answers, and requires selected category to equal payload occupation without manufacturing empty strings, `false`, arrays, or a default health rating. Added one exhaustive five-pillar report display model with tested rounding, textual score equivalents, preserved authored advice/AI copy, and a readable insight fallback. Corrected the existing risk-recommendations service/consumer/mock from product objects to textual advice.
+
+Important decisions:
+Because category/question OpenAPI success schemas are still `{}`, validation is intentionally limited to the narrow shapes already consumed by the existing wizard and remains documented as provisional pending backend confirmation. No new OpenAPI fields, category metadata, scores, labels, thresholds, or descriptions were invented. Pillar classifications are not product-approved: the public report and PDF now use neutral numeric score presentation, while backend `risk_profile` remains the only classification authority. Removed “Generated just now,” PDF generation date, recommendation-count-as-plans, critical-gap counts, and Low/Moderate/High pillar derivations. Shared the exhaustive pillar label mapping between selectors, web report, and PDF. Both public and authenticated token/session boundaries, routes, query ownership, and browser storage behavior remain unchanged.
+
+Known follow-ups:
+Task 4 still owns comprehensive shared-Bearer risk fixtures and malformed/delay/error scenarios; the current category fixture remains deliberately provisional. Task 5 must wire category/question runtime parsing into `riskService`, use the selected category for submission instead of the still-hard-coded tech path, pass `AbortSignal` consistently, and correct canonical query/retry behavior. Tasks 6–7 own full-session provenance, mode namespacing/prefill, and shell-neutral wizard extraction. Task 12 will make both final report presentations consume the display model end to end, and Task 15 will lazy-load the PDF bundle. Latest-assessment 404/timestamp behavior, history ordering, public result persistence, and authoritative category/question schemas remain backend blockers. Validation passed with the focused validator/helper/report/service/KYC regression slice (10 files, 86 tests), `npx tsc --noEmit`, and `npm run lint` with 0 errors and 11 remaining pre-existing warnings. Browser/E2E tests were not run because this task adds no route or interaction flow; observable report and recommendation changes are covered by focused component tests. Final whitespace checks passed with `git diff --check` plus a separate no-index whitespace check for the currently untracked epic file.
+
+### 2026-07-07 22:28 WAT
+
+Task completed: Task 4 — Shared-Bearer Risk MSW Fixtures and Contract Scenarios
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/DASHBOARD_RISK_ASSESSMENT_EPICS.md`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/mocks/fixtures/risk-assessment.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/mocks/fixtures/dashboard.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/mocks/handlers/risk.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/mocks/handlers/auth.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/mocks/handlers/domain.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/mocks/handlers/index.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/mocks/handlers/marketplace.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/mocks/risk-handlers.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/pages/WaitlistPage.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/services/risk.service.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/services/marketplace.service.test.ts`
+
+Summary:
+Added deterministic, runtime-contract-checked fixtures for waitlist signup, the established risk question bank and category, valid payloads, public/dashboard assessment responses, latest/history/textual recommendations, malformed responses, long content, and empty content. Replaced the stale catch-all domain risk mocks with one dedicated shared-Bearer handler set covering no-token and backend-401 behavior; category/question success, malformed, failure, and delay states; category-dynamic 201/401/422/500 submission; latest/history/recommendation page states; and both public and dashboard completion responses. Added authenticated marketplace recommendation success, empty, malformed, failure, and delay states, plus focused MSW registration and contract tests. The full public waitlist page regression continues to store the fixture token and redirect to `/assessment`.
+
+Important decisions:
+Risk handlers accept any syntactically present Bearer token and never decode JWTs, infer scopes, or branch response authority by token type. Dedicated waitlist-issued and full-session token constants prove that the same risk endpoints accept both; explicit backend-401 overrides model expiry or invalidity. The public and dashboard 201 response scenarios are selected by the test/page state rather than by inspecting the token. Submission uses the real dynamic `:category` path, validates the existing `TechAssessmentInput`, and returns 422 when body occupation and route category differ. The waitlist fixture contains no refresh token, KYC flag, risk-assessed flag, or other full-session state. Marketplace recommendation mocks require a Bearer header but likewise do not classify its permissions; public-route orchestration remains responsible for never invoking full-session-only APIs. No route, auth store, wizard, report, PDF, query cache, production service, or browser storage behavior changed.
+
+Known follow-ups:
+Task 5 still owns wiring category/question validators into `riskService`, making submission category-dynamic in production, propagating `AbortSignal` consistently, and correcting canonical query/retry behavior. Task 6 still owns refresh-backed full-session provenance and the client/direct-navigation dashboard security regression. Authoritative category/question schemas, latest-assessment 404 semantics, history ordering, public result persistence, and timestamps remain backend/product blockers rather than mock inventions. Focused handler/validator/service verification passed (5 files, 56 tests); the full Vitest matrix passed (99 files, 640 tests); `npx tsc --noEmit` passed; `npm run lint` passed with 0 errors and the same 11 pre-existing warnings; and `git diff --check` passed after documentation. Playwright was not run because Task 4 changes test fixtures/handlers only and adds no route or browser interaction behavior.
+
+### 2026-07-07 22:36 WAT
+
+Task completed: Task 5 — Shared Risk Service and React Query Hook Corrections
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/lib/constants.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/services/risk.service.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/hooks/risk/useRisk.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/RiskWizard.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/services/risk.service.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/hooks/risk-hooks.test.tsx`
+
+Summary:
+Completed the shared risk data-layer correction without adding a route, UI, token store, or duplicate assessment implementation. `riskService` now runtime-validates category and question responses, validates the category/payload submission pair before transport, uses the selected category in the endpoint path, requires the documented 201 response, validates every returned assessment shape, and passes `AbortSignal` through all operations. Risk hooks now use canonical category/question keys, enable requests only when their route requests them and an in-memory token is present, expose `parseApiError` output beside raw React Query error state, and disable React Query retries so the existing `apiClient` remains the only network/5xx retry layer. The shared submission mutation no longer clears auth, resets wizard state, or redirects; the existing public controller retains `/waitlist?expired=true` recovery for backend 401 responses.
+
+Important decisions:
+Waitlist-issued and full-session Bearer tokens use the exact same `apiClient`, service methods, validators, and query hooks; no token decoding, scope preflight, token-type branch, endpoint permission matrix, or browser persistence was added. Query enablement is the conjunction of caller-owned route state and token presence, so public mode can enable only category/question/submission work while later dashboard controllers can independently enable latest/history/recommendation work. Category/question data remains session-stable because the OpenAPI response schemas are still underspecified; their strict runtime schemas remain the provisional Task 3 contracts. React Query owns all server data, and no response was copied into Zustand or local component state. The React/Next.js performance guidance reinforced canonical request deduplication, narrow Zustand token subscriptions, and avoiding retry/request multiplication.
+
+Known follow-ups:
+Task 6 still owns explicit refresh-backed full-session provenance, route capability adapters, profile prefill, and public/dashboard progress namespacing. Task 7 still owns shell-neutral wizard extraction, and Task 11 owns mode-specific cache seeding/invalidation after submission. Backend/product still needs to document authoritative category/question response schemas, latest-assessment 404 semantics, history ordering, public-result persistence, and report timestamps. Focused verification passed across 5 files and 66 tests, covering both Bearer fixtures, dynamic category and exact payload, 201 enforcement, malformed responses, cancellation, canonical-key deduplication, token-presence gating, parsed 401/422 errors, no shared-hook route side effects, no expected-4xx retry, and the existing public wizard regression. `npx tsc --noEmit` and whitespace checks passed. `npm run lint` passed with 0 errors and the same 11 pre-existing warnings. Browser and visual tests were not run because Task 5 changes no route composition, rendered UI, responsive layout, keyboard interaction, or screenshot-owned styling.
+
+### 2026-07-07 23:39 WAT
+
+Task completed: Task 6 — Full-Session Provenance, Route Capabilities, Mode Namespacing, and Prefill Adapters
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(app)/layout.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/RiskWizard.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/steps/StepPersonalDetails.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/auth/shared/auth-redirect-guard.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/auth/shared/protected-route.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/dashboard-overview-controller.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/kyc/kyc-route-controller.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/ui/ComboboxSelect.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/ui/Select.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/hooks/auth/useAuth.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/hooks/auth/useSession.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/hooks/auth/useUserFlags.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/hooks/marketplace/useMarketplaceRecommendationsGate.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/hooks/user/useUser.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/lib/api/client.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/lib/api/refresh-queue.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/lib/risk/assessment-route-context.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/lib/risk/profile-to-wizard-defaults.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/store/auth-store.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/store/wizard-store.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/lib/constants.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/auth/route-guards.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/dashboard/authenticated-app-shell.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/dashboard/dashboard-overview-controller.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/kyc/kyc-status-gate.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/wizard/StepPersonalDetails.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/hooks/auth-hooks.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/hooks/marketplace-recommendations-gate.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/hooks/user-profile.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/lib/api-client.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/lib/api-refresh-queue.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/lib/assessment-route-context.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/lib/auth-session.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/lib/profile-to-wizard-defaults.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/middleware.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/store/auth-store.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/store/wizard-store.test.ts`
+
+Summary:
+Added an explicit memory-only `hasFullSession` invariant: waitlist `setAccessToken` retains legacy risk authentication but leaves full-session capability false, while browser-safe login/verification/activation/refresh `setSession` calls establish it. Protected client routes, public-auth redirects, dashboard/profile/KYC orchestration, marketplace recommendation gating, and 401 refresh decisions now consume provenance instead of generic authentication or decoded JWT scope. The authenticated shell now sits inside the full-session guard, preserving its stable initialization fallback while rendering no sidebar, navbar, page content, or full-session API consumer for a waitlist-token client navigation. Direct `/dashboard/risk-assessment` entry remains rejected by the existing refresh-cookie middleware prefix.
+
+Added a pure `public | dashboard` assessment route-capability adapter with mode-owned authentication recovery and explicit profile/dashboard/KYC/marketplace permissions. Added a pure profile-to-wizard adapter with resumed-answer precedence, public waitlist-name-only defaults, dashboard mappings for supported name/DOB/gender/state/city/occupation fields, ISO-to-form DOB conversion, and no email or marital-status fabrication. `StepPersonalDetails` now disables `/users/me` in public mode, uses the canonical deduplicated profile query only in dashboard mode, applies asynchronous profile values once only into still-empty fields, preserves user edits and resumed answers, keeps all prefilled fields editable, and associates validation messages with controls. Wizard progress is session-storage-backed and independently namespaced for public and dashboard modes, including migration of the legacy single public record and mode-specific reset behavior.
+
+Important decisions:
+Backend responses remain authoritative for risk-token validity: any present token may still reach shared risk APIs, and neither risk service nor route capability code inspects JWT claims. Refresh attempts now depend solely on explicit full-session provenance, so opaque waitlist tokens receive route-owned backend-401 recovery without a futile refresh. Auth provenance, flags, users, and access tokens remain memory-only; only resumable non-sensitive wizard answers remain in `sessionStorage`. `/users/me` remains one canonical five-minute query and is not mirrored into Zustand or local component state; Zustand continues to hold only the existing hydrated user/flags and mode-specific wizard progress. The React/Next.js performance guidance informed narrow store subscriptions, canonical query deduplication, a pure O(1)-field prefill adapter, and one guarded profile initialization pass rather than an effect reset loop.
+
+Known follow-ups:
+Task 7 must pass explicit mode/callback/default contracts through the shell-neutral shared wizard and activate the dashboard namespace from its route adapter. Task 8 still owns the final public controller extraction, while Tasks 9–11 own the dashboard route, state controller, and mode-specific success synchronization. Authoritative category/question schemas, latest-assessment 404 semantics, history ordering, public-result persistence, and report timestamps remain backend/product questions. No screenshot-owned dashboard report/empty-state styling was introduced in this task.
+
+Validation results:
+The required focused matrix passed 17 files and 123 tests. The full Vitest blast-radius run passed 101 files and 673 tests after the shared auth/session changes. Coverage includes public zero-profile requests, one deduplicated full-session `/users/me`, explicit route disablement, partial/error profile behavior, editable and resumed prefill precedence, public/dashboard progress isolation, opaque waitlist risk access, no JWT-scope decoding, refresh provenance, full-only marketplace gating, direct middleware rejection, client guard rejection, no protected shell/content/API call for waitlist navigation, public wizard regression, keyboard-compatible fields, and existing dashboard loading/error/retry behavior. `npx tsc --noEmit` passed. `npm run lint` passed with 0 errors and the same 11 pre-existing warnings. `git diff --check` passed before this documentation entry. Browser/visual suites were not required because Task 6 adds no dashboard risk route or screenshot-owned layout; the affected route, keyboard, loading, error, retry, and shell visibility behaviors are covered by the integration/unit matrix above.
+
+### 2026-07-08 09:45 WAT
+
+Task completed: Task 7 — Shared Composable RiskAssessmentWizard Extraction
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/risk-assessment/wizard/index.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/risk-assessment/wizard/risk-assessment-wizard.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/risk-assessment/wizard/risk-assessment-wizard-context.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/risk-assessment/wizard/risk-assessment-wizard.types.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/RiskWizard.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/ConsentGate.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/StepSidebar.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/questions/BooleanInput.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/questions/MultiChoiceInput.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/questions/QuestionRenderer.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/questions/RankingInput.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/questions/RatingInput.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/questions/SingleChoiceInput.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/steps/AssessmentQuestionStep.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/steps/StepHealthLifestyle.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/steps/StepIncomeStability.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/steps/StepPersonalDetails.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/steps/StepSafetyNet.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/steps/StepWrapper.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/steps/StepYourRisks.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/steps/StepYourWork.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/wizard/RiskAssessmentWizard.contract.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/wizard/StepComponents.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/wizard/StepPersonalDetails.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/wizard/StepSidebar.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/wizard/StepWrapper.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/test-utils.tsx`
+
+Summary:
+Extracted one shell-neutral `RiskAssessmentWizard` that owns category/question orchestration, runtime-validated payload construction, the canonical React Query submission mutation, consent, progress, retry/loading/error/success states, resume behavior, and wizard-scoped focus. It accepts explicit public/dashboard mode, prefill defaults, shell sizing, cancel, success, authentication-failure, and success-render callbacks. The existing public `RiskWizard` is now a thin adapter retaining waitlist-token entry, no-token and backend-401 recovery, handoff analytics, public cancellation, waitlist name defaults, and the existing public report. The five API-driven steps now delegate to one shared question-step implementation, removing repeated form/schema/renderer/navigation logic, while personal details consume adapter-provided defaults and categories without calling auth, profile, or risk hooks themselves.
+
+Important decisions:
+The shared core imports no Next route API, auth/profile query, report/PDF component, dashboard shell, or global chrome. Report selection and route recovery remain adapter callbacks, so the core does not hard-code public or dashboard URLs and does not pull heavy report/PDF code into its own graph. Both modes use the Task 6 namespaced progress store and the same Task 5 hooks, `apiClient` service path, validators, payload builder, mutation, and parsed errors; server responses remain React Query/mutation data and are not copied into Zustand or local state. Invalid actions remain keyboard reachable with `aria-disabled`, then focus the first invalid question inside the current wizard root. Step progress is announced, footer links no longer use empty `#` destinations, mobile remains the existing `flex-col lg:flex-row`/horizontal-step layout, and wizard/sidebar/consent/question-control motion honors reduced-motion preference. No screenshot-owned dashboard UI was introduced; dashboard route and screenshot composition remain later tasks.
+
+Known follow-ups:
+Task 8 owns the final named public-controller/report regression boundary, Tasks 9–10 own the protected dashboard route/controller and screenshot-specific empty/assessed composition, and Task 11 owns mode-specific success cache synchronization. The shared component is exercised by a dashboard harness now but deliberately does not create the future dashboard route. Authoritative category/question schemas, latest-assessment 404 semantics, history ordering, public-result persistence, and report timestamps remain backend/product questions.
+
+Validation results:
+The focused wizard/risk matrix passed 12 files and 108 tests, including identical public/dashboard question validation and exact submission payloads, adapter-owned cancel/authentication recovery, loading, retry, success, progress, keyboard first-invalid focus, responsive class contracts, and preserved public waitlist/report behavior. The full Vitest matrix passed 102 files and 680 tests. `npx tsc --noEmit` passed. `npm run lint` passed with 0 errors and 7 pre-existing warnings (reduced from 10 by removing relevant stale imports and the React Hook Form compiler warning). `git diff --check` passed before this documentation entry. Browser/visual suites were not run because Task 7 adds no route or screenshot-owned dashboard presentation; observable UI, API, keyboard, loading/error/retry, public-flow, and mobile layout contracts are covered by the component/integration suite.
+
+### 2026-07-08 09:55 WAT
+
+Task completed: Task 8 — Public Acquisition Adapter and Report Regression
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/page.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/public-assessment-controller.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/RiskWizard.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/ReportScreen.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/_components/WizardCancelButton.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/waitlist/page.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/wizard/RiskWizard.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/wizard/ReportScreen.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/pages/WaitlistPage.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/pages/RiskAssessmentPage.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/middleware.test.ts`
+
+Summary:
+Added the named `PublicAssessmentController` as the sole public `/assessment` route adapter around the Task 7 shared wizard. It preserves absent-token routing to `/waitlist`, waitlist-issued Bearer entry without login, public-name defaults, standalone cancellation, one-time handoff analytics, backend-authentication-failure recovery through `/waitlist?expired=true`, and selection of the existing public report from the runtime-validated 201 mutation response. The legacy `RiskWizard` module now re-exports the controller for compatibility instead of retaining a second implementation. The report-containing module is dynamically loaded only after successful submission, preserving waitlist-to-wizard handoff cost and keeping future dashboard report/product code out of the public adapter graph.
+
+Important decisions:
+The adapter never decodes or pre-rejects the access token, never calls profile/latest/history/dashboard/marketplace-recommendation APIs, never sets `hasFullSession` or `riskAssessed`, and does not copy the assessment response into Zustand or component state. An authentication-recovery ref prevents the generic absent-token effect from overwriting the intentional expired-session URL after `clearAuth`. The standalone header cancel explicitly clears only public wizard progress. The existing public report/PDF content remains intact; report arrival now focuses and labels its heading as an accessible region, report and waitlist motion honor reduced-motion preference, waitlist async/error states are announced, and waitlist field errors are programmatically associated. Public informational hero and floating CTAs continue to route to `/waitlist`, while `/assessment` remains outside middleware protection. No dashboard screenshot styles or routes were introduced.
+
+Known follow-ups:
+Task 9 owns the authenticated `/dashboard/risk-assessment` route and dashboard-owned link changes. Task 11 owns mode-specific success synchronization and public-progress clearing after success. Task 15 still owns click-level lazy loading, pending/error/retry handling, and shared action extraction for the PDF renderer/document; Task 8 only defers the whole public report/PDF chunk until report presentation. Public result persistence after navigation remains an unresolved backend/product contract.
+
+Validation results:
+The required focused public/wizard/risk/security matrix passed 16 files and 143 tests. Coverage includes waitlist prefetch/signup/token handoff, no-token entry, present waitlist token, category and submission backend 401 recovery without login or redirect races, validated 201 report rendering, exact absence of `/users/me`, latest/history/risk-recommendation/dashboard/marketplace-recommendation requests, unchanged memory-only provenance flags, handoff analytics, report heading focus/announcement, PDF generation foundation, CTA destinations, `/assessment` middleware exclusion, loading, retry, keyboard, and responsive wizard/report behavior. The full Vitest matrix passed 102 files and 689 tests. `npx tsc --noEmit` passed. `npm run lint` passed with 0 errors and the same 7 pre-existing warnings. `git diff --check` passed before this documentation entry. Browser screenshots and Playwright were not run because Task 8 introduces no screenshot-owned dashboard UI and Task 20 owns the dual-journey browser suite; the existing public visuals were preserved and observable public-flow behavior is covered by MSW-backed integration tests.
+
+### 2026-07-08 10:03 WAT
+
+Task completed: Task 9 — Authenticated Dashboard Route and Shell Integration
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(app)/dashboard/risk-assessment/page.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/shell/app-navigation.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/shell/dashboard-navbar.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/lib/dashboard/actions.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/overview/unassessed-hero.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/overview/risk-assessment-prompt.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/dashboard/overview/income-stability-card.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/hooks/marketplace/useMarketplaceRecommendationsGate.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/pages/dashboard-risk-assessment.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/dashboard/app-navigation.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/dashboard/dashboard-navbar.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/dashboard/dashboard-actions.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/dashboard/unassessed-overview.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/dashboard/income-stability.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/dashboard/authenticated-app-shell.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/hooks/marketplace-recommendations-gate.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/marketplace/marketplace-recommendations-action.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/e2e/dashboard/dashboard-flow.spec.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/e2e/marketplace/marketplace-flow.spec.ts`
+
+Summary:
+Added the thin server page for `/dashboard/risk-assessment` under the existing protected `(app)/dashboard` prefix with route metadata, one page heading, and no standalone wizard chrome. Updated the shared authenticated sidebar, dashboard onboarding hero and prompt, income-stability empty action, getting-started action model, and full-session marketplace recommendation gate to use `/dashboard/risk-assessment`. The navbar now recognizes the route and replaces dashboard search with a responsive “Risk Assessment” page title while retaining the existing menu, notification, premium, and tour boundaries. Public informational, waitlist, public marketplace prompt, and public `/assessment` destinations remain unchanged.
+
+Important decisions:
+Task 9 establishes route/shell/navigation ownership only. It deliberately does not implement the Task 10 profile/latest/empty/wizard/report state controller, duplicate the shared wizard, or introduce interim API requests or fabricated state. The page automatically inherits `ProtectedRoute`, the 298px desktop sidebar, content-column navbar, skip target, mobile drawer, stable auth fallback, and `/dashboard/*` refresh-cookie middleware protection from the existing app layout. Overview navigation is now exact-match so `/dashboard/risk-assessment` marks only Risk Assessment active; nested risk paths remain supported. Full-session unassessed marketplace users now enter the authenticated route, while waitlist-token users still lack route capability and receive the safe login return path. Access/refresh token storage and scopes are unchanged.
+
+Known follow-ups:
+Task 10 owns the dashboard assessment controller, profile/default orchestration, unassessed screenshot state, and opening the shared dashboard-mode wizard. Task 11 owns dashboard submission synchronization and success recovery. Tasks 12–18 own the assessed report and screenshot-specific presentation. The new route intentionally contains no assessment API consumer until Task 10, preventing premature or duplicate profile/dashboard/risk requests.
+
+Validation results:
+The focused route/navigation/security/public-regression matrix passed 19 files and 160 tests before the final full-suite pass; the full Vitest matrix passed 103 files and 693 tests. Coverage includes metadata, one h1, app shell and skip target, active desktop/drawer navigation, navbar route title and 44px mobile menu control, dashboard action destinations, full-session marketplace gating, waitlist-token client rejection without protected content, safe login return, direct middleware rejection, public CTA/waitlist/public-assessment preservation, shared-risk access tests, and existing loading/error/retry behavior. The focused Chromium dashboard suite passed 11/11 tests, including authenticated navigation, drawer keyboard behavior, shell retention, and required-width overflow checks. The final focused Chromium marketplace suite passed 5/5 tests. Its first combined run exposed a test-only missing refresh-cookie hint for the newly protected destination; the harness now sets an httpOnly `SameSite=Strict` cookie alongside its mocked full-session refresh response, matching the production security boundary. `npx tsc --noEmit` passed. `npm run lint` passed with 0 errors and the same 7 pre-existing warnings. `git diff --check` passed before this documentation entry. No screenshot-specific Task 10 content was introduced or compared in Task 9.
+
+### 2026-07-08 10:18 WAT
+
+Task completed: Task 10 — Dashboard State Controller and Unassessed UI
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/public/assets/images/risk-assessment-empty.webp`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(app)/dashboard/risk-assessment/page.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/risk-assessment/dashboard/dashboard-risk-assessment-controller.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/risk-assessment/dashboard/unassessed-state.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/risk-assessment/dashboard/risk-assessment-skeleton.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/risk-assessment/dashboard/risk-assessment-error.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/risk-assessment/wizard/risk-assessment-wizard.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/risk-assessment/dashboard-risk-assessment-controller.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/risk-assessment/unassessed-state.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/pages/dashboard-risk-assessment.test.tsx`
+
+Summary:
+Replaced the protected risk-assessment route placeholder with a focused dashboard controller that waits for the canonical full-session profile query, branches from the runtime-validated `risk_assessed` value, skips the latest-assessment request for authoritative false, and loads the canonical latest report only for assessed users. Added stable dashboard loading and parsed retryable error states, including explicit true-flag/latest-404 reconciliation that refreshes `/users/me` without silently clearing the server flag. Added the screenshot-aligned unassessed panel with exact page heading/subtitle, fluid mobile layout, a primary assessment CTA, duration and information copy, and an owned optimized 720×480 WebP illustration. The CTA embeds the one shared wizard in dashboard mode with editable profile defaults and dashboard-namespaced resumed answers; cancel returns to the empty state and restores focus. Existing validated assessments and fresh dashboard mutation results enter a contract-backed summary boundary without mirroring server data.
+
+Important decisions:
+`/users/me` and latest assessment remain React Query-owned under `QUERY_KEYS.USER_ME` and `QUERY_KEYS.RISK_ASSESSMENT`; neither response is copied into Zustand or local component state. The only new local state is the reversible `summary | wizard` presentation mode. A resolved assessed full session starts profile and latest requests in parallel, while resolved false performs zero latest requests. The existing `apiClient`, runtime validators, `parseApiError`, full-session provenance, shared wizard, profile-default adapter, and dashboard progress namespace are reused unchanged. Dashboard authentication failures continue through the shared refresh/logout boundary and never use waitlist recovery. The shared wizard's internal nested `<main>` was changed to a neutral `<div>` so both public and dashboard adapters retain exactly one route-owned main landmark. The generated illustration is decorative because adjacent semantic copy communicates its meaning; `next/image` supplies explicit dimensions and responsive sizing. No public route, waitlist token behavior, report ownership, endpoint, metric, scoring rule, or token scope changed.
+
+Known follow-ups:
+Task 11 still owns dashboard success flag/cache synchronization, progress clearing, and mode-specific authentication/submission recovery. Tasks 12–15 own the full dashboard report, risk exposure, marketplace products, and shared click-level PDF action; Task 16 owns deliberate reassessment/update behavior. Backend still needs to document latest-assessment 404 semantics; until then, true flag plus 404 remains a visible consistency error with profile/latest retry rather than an empty state. Task 18 owns native-reference pixel comparison and the complete viewport matrix. The in-app browser could not initialize because the environment did not provide the browser sandbox-policy metadata, so no browser screenshot is claimed for this task; component contracts cover mobile wrapping/overflow, image dimensions, keyboard entry/cancel focus, and reduced-motion skeleton behavior.
+
+Validation results:
+The required focused controller, empty-state, route, shared-wizard, and public-regression suite passed 5 files and 29 tests. The final broader risk/profile/auth/store/shell regression matrix passed 19 files and 158 tests. Coverage verifies loading, authoritative empty state, zero latest requests for false, parallel profile/latest requests for true, latest success, 404 reconciliation, non-404 error/retry, profile error/retry, dashboard profile prefill, embedded wizard entry, cancel focus restoration, image/content/mobile contracts, one main/page heading, and unchanged public waitlist/report behavior. `npx tsc --noEmit` passed. `npm run lint` passed with 0 errors and the same 7 pre-existing unrelated warnings. `git diff --check` passed before this documentation entry.
+
+### 2026-07-08 14:47 WAT
+
+Task completed: Task 11 — Mode-Specific Submission Success, Synchronization, and Recovery
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/public-assessment-controller.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/risk-assessment/dashboard/dashboard-risk-assessment-controller.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/risk-assessment/wizard/risk-assessment-wizard.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/steps/AssessmentQuestionStep.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/steps/StepPersonalDetails.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/steps/StepYourWork.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/steps/StepIncomeStability.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/steps/StepYourRisks.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/steps/StepHealthLifestyle.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/steps/StepSafetyNet.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/store/wizard-store.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/risk-assessment/risk-assessment-submission.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/wizard/RiskWizard.test.tsx`
+
+Summary:
+Completed the mode-specific success boundary around the existing shared, runtime-validated submission mutation. Public completion continues rendering the validated 201 response without login or full-session requests, never changes full-session flags, and now clears only public progress. Dashboard completion sets the shared memory-only `riskAssessed` flag, seeds the canonical latest-assessment cache, invalidates profile/latest/history/risk-recommendation/dashboard/marketplace-recommendation dependencies, and clears only dashboard progress. The latest query remains disabled while the embedded wizard owns the success report, avoiding an immediate redundant request and any unassessed-state flash. Final dashboard authentication rejection clears the failed full session and uses the safe `/login?redirect=%2Fdashboard%2Frisk-assessment` recovery, while public rejection remains on `/waitlist?expired=true`; both preserve resumable answers during failure recovery.
+
+The shared wizard now announces submission pending state, prevents duplicate mutation attempts, retains answers after 422/500 responses, maps parsed 422 field paths into React Hook Form errors across personal details and every API question step, moves to the affected step, and focuses the first invalid control/question. Both public and dashboard report headings receive focus on successful transition. No endpoint, API field, token storage behavior, score, report rule, or separate wizard/report implementation was added.
+
+Important decisions:
+React Query remains the only owner of submitted/latest server data; the response is seeded with `setQueryData` and is not mirrored into Zustand or component state. Zustand continues to own only namespaced resumable form progress and the existing memory-only session flags. Dashboard invalidation uses the established canonical keys, including the marketplace-recommendation key prefix so every `per_category` variant is refreshed; latest invalidation uses `refetchType: 'none'` while the wizard success view is active. Public and dashboard non-authentication errors intentionally preserve their mode-specific progress, and authentication recovery preserves it as well so a renewed session/token can resume rather than silently discard answers. The existing API client remains responsible for the full-session refresh mutex before a terminal dashboard 401 reaches route recovery.
+
+Known follow-ups:
+Task 12 owns the shared report display model and complete dashboard score/insight presentation; Task 15 owns click-level shared PDF action behavior; Task 16 owns deliberate dashboard reassessment. Backend questions about public-result persistence, latest-assessment reconciliation semantics, and category/question schema guarantees remain unchanged. The seven repository lint warnings are pre-existing and outside Task 11.
+
+Validation results:
+The focused submission/controller/wizard/store matrix passed 5 files and 40 tests. The final broader Task 11 risk-service/hook/controller/wizard/step/store regression matrix passed 10 files and 80 tests, covering both-mode payload behavior, public no-flag success, mode-only progress clearing, dashboard flag/cache invalidation, zero redundant latest request during success, public/dashboard 401 destinations, 422 field association/focus, 500 retry, answer retention, duplicate-submit prevention, loading/success announcements, and public acquisition regression. `npx tsc --noEmit` passed. `npm run lint` passed with 0 errors and the same 7 pre-existing unrelated warnings. `git diff --check` passed before this documentation entry and was rerun after it. Browser screenshots and Playwright were not run because Task 11 changes submission transitions and error/focus behavior rather than screenshot-owned layout; Task 18 owns full visual/viewport QA and Task 20 owns dual-journey browser coverage.
+
+### 2026-07-08 14:58 WAT
+
+Task completed: Task 12 — Shared Report Display Model and Dashboard Score/Insights
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/lib/risk/report-display-model.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/ReportScreen.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/risk-assessment/dashboard/dashboard-risk-assessment-controller.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/risk-assessment/report/risk-score-card.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/risk-assessment/report/personalized-insights.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/lib/risk-report-display-model.test.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/wizard/ReportScreen.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/risk-assessment/dashboard-risk-assessment-controller.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/risk-assessment/risk-score-card.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/risk-assessment/personalized-insights.test.tsx`
+
+Summary:
+Completed one authoritative, runtime-validated report display model for applicant identity, category, rounded/raw overall score, backend risk profile, ordered pillar scores, textual advice, recommended categories, raw AI text, parsed insight blocks, and grouped insight sections. Insight parsing and grouping now occur once when the model is created, including readable malformed-markup fallback and a truthful empty representation. The public `ReportScreen` now consumes this model for applicant fallback, score/profile, ordered exposures, insight sections, recommendations, and the existing PDF input blocks instead of independently reading and regrouping raw assessment fields.
+
+Added the dashboard upper report inside the existing authenticated controller. It renders a lightweight accessible SVG score ring from the model’s validated score, exact backend-authored risk profile, validated applicant name, and a semantic personalized-insights section supporting paragraphs, labelled items, lists, callouts, and internally scrollable labelled tables. Latest-query reports and fresh Task 11 submission responses use the same composition without new requests, new state, or duplicated report-domain logic. The layout stacks in one column before a bounded wide-screen split, long authored content wraps safely, empty insights are explicit, and no chart dependency or animation was added.
+
+Important decisions:
+Public and dashboard reports remain distinct presentation adapters over the same `RiskReportDisplayModel`; the public visual hierarchy was preserved while its data selection/grouping moved to the shared model. Only `AssessmentResponse.risk_profile` supplies classification, while score geometry uses the tested rounded contract value and retains raw score data in the model. The dashboard does not display Task 13 exposure cards, Task 14 marketplace products, Task 15 shared PDF actions, or Task 16 reassessment controls early. Unsupported screenshot values—plan/gap counts, timestamps, premium estimates, benchmarks, industry comparisons, exposure narratives, share URLs, and derived labels—remain absent. React Query remains the server-data owner, Zustand remains limited to existing session/progress state, and token/session behavior is unchanged.
+
+Known follow-ups:
+Task 13 owns the five dashboard exposure cards using the model’s ordered `exposures`; Task 14 owns authenticated marketplace products; Task 15 owns the click-level lazy shared PDF action and will remove the existing JSDOM anchor-navigation notice; Task 16 owns reassessment. Task 18 still owns native screenshot/viewport comparison. The referenced `Overview (7).png` and `Overview (8).png` files are not present in the repository, so this task used the epic’s recorded 1512px visual analysis and does not claim pixel-level screenshot verification. Backend questions about public result persistence, history ordering, risk-profile enum/threshold semantics, and AI content structure remain unchanged.
+
+Validation results:
+The initial focused model/score/insight/public/dashboard/submission matrix passed 6 files and 42 tests after two legitimate presentation assertion updates. The broader Task 12 report/parser/validator/controller/public-route regression passed 10 files and 82 tests. The final corrected model/component/controller/public/page slice passed 9 files and 66 tests. Coverage includes 0/68.5/100 score boundaries, exact backend profile text, applicant fallback, long content, empty insights, malformed authored markup fallback, semantic lists/callouts/tables, keyboard-scrollable mobile table containment, responsive report stacking, latest/fresh-success dashboard rendering, public report/PDF regression, runtime rejection, and unsupported-value absence. `npx tsc --noEmit` passed. `npm run lint` passed with 0 errors and the same 7 pre-existing unrelated warnings. `git diff --check` passed before this entry and was rerun after it. Vitest prints JSDOM’s non-failing `Not implemented: navigation to another Document` notice when the existing public PDF test clicks its generated anchor; the test passes and Task 15 owns that action boundary. Playwright/browser screenshots were not run because Task 18 and Task 20 own final rendered visual and dual-journey browser QA.
+
+### 2026-07-08 15:09 WAT
+
+Task completed: Task 13 — Risk-Exposure Breakdown Components
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/risk-assessment/dashboard/dashboard-risk-assessment-controller.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/risk-assessment/report/risk-exposure-card.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/risk-assessment/report/risk-exposure-grid.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/risk-assessment/dashboard-risk-assessment-controller.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/risk-assessment/risk-exposure-grid.test.tsx`
+
+Summary:
+Added the authenticated dashboard risk-exposure section using the existing runtime-validated report display model. The section renders exactly the model's five contract-backed pillars in the established income, client, safety, equipment, and health order, with the approved display labels, visible rounded scores, and lightweight CSS progress bars backed by the exact validated API score. Integrated the section beneath the existing dashboard score and personalized-insight composition for both latest-query and fresh-submission reports without adding requests, local server-data mirrors, wizard logic, or public-flow changes.
+
+Important decisions:
+Pillar output remains deliberately neutral because classification thresholds and narrative descriptions are not contracted or product-approved. Cards expose semantic progress-bar values and visible “out of 100” text, so meaning never depends on color. The grid uses one column by default, two from the small breakpoint, and three at wide dashboard widths, with `min-w-0` containment and defensive long-label wrapping. The implementation remains static and dependency-free: no chart package, animation library, client-only state, endpoint, API field, metric, benchmark, sixth card, or duplicated pillar mapping was introduced. Public `/risk-assessment`, `/waitlist`, `/assessment`, the shared wizard/report foundations, memory-only tokens, full-session scopes, and canonical React Query ownership are unchanged.
+
+Known follow-ups:
+Task 14 owns authenticated marketplace product recommendations, Task 15 owns the shared click-level PDF action, Task 16 owns reassessment, and Task 18 owns native screenshot and full viewport QA. The `Overview (7).png` source is not present in the repository, so this task followed the epic's recorded five-card hierarchy and does not claim native pixel comparison. Product/backend approval is still required before any Low/Moderate/High pillar status, exposure narrative, comparison, or benchmark may be shown.
+
+Validation results:
+The focused Task 13/report/controller suite passed 5 files and 27 tests. Coverage verifies exact five-card ordering, 0/decimal/rounding/100 boundaries, semantic and visible numeric equivalents, approved-label policy, unsupported classification/prose absence, long-label wrapping, responsive one/two/three-column contracts, and dashboard integration. `npx tsc --noEmit` passed. `npm run lint` passed with 0 errors and the same 7 pre-existing unrelated warnings. `git diff --check` passed before this documentation entry. Loading, error, and retry remain covered by the existing dashboard controller because the static exposure components perform no asynchronous work; they introduce no interactive keyboard path beyond semantic reading. Browser screenshots and Playwright were not run because Task 18 and Task 20 own final rendered visual and dual-journey browser QA, and the required reference image is absent locally.
+
+### 2026-07-08 15:16 WAT
+
+Task completed: Task 14 — Marketplace Product Recommendation Integration
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/marketplace/product-card.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/risk-assessment/dashboard/dashboard-risk-assessment-controller.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/risk-assessment/report/recommended-products.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/hooks/marketplace/useMarketplace.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/risk-assessment/dashboard-risk-assessment-controller.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/risk-assessment/recommended-products.test.tsx`
+
+Summary:
+Added an authenticated assessed-report recommendation section backed exclusively by the existing marketplace recommendation service, canonical React Query key, runtime-validated `RecommendedProductsResponse`, and shared `apiClient` Bearer handling. The section renders isolated loading, parsed-error/retry, honest empty, and API-backed success states; reuses the existing product card and detail panel; and appears after the dashboard score, insights, and five exposure cards for both latest-query and fresh-submission reports. Product selection remains local presentation state only, while recommendation and detail responses remain React Query-owned. Product details are not requested until a user opens a returned card.
+
+Important decisions:
+The recommendation hook now explicitly uses the epic-approved five-minute stale time and disables React Query retries so the shared Axios policy is not stacked; canonical consumers deduplicate by `QUERY_KEYS.MARKETPLACE_RECOMMENDATIONS(3)`. The existing product card gained only an optional heading-level prop so the dashboard report can use valid `h3`/`h4` hierarchy without duplicating card logic or changing the public marketplace default. Textual risk advice, recommended category strings, and marketplace product cards remain separate concepts. No product, provider, premium, coverage, endpoint, purchase behavior, or scoring rule is hard-coded into production. Public catalog/detail behavior, the disabled purchase boundary, memory-only tokens, refresh-backed full-session provenance, and all public/waitlist assessment routes remain unchanged.
+
+Known follow-ups:
+Task 15 owns the shared click-level PDF action and Task 16 owns reassessment. Task 18 owns native screenshot comparison and the full viewport/reduced-motion pass. The `Overview (7).png` source is not present locally, so this task follows the epic's recorded recommendation-card hierarchy without claiming pixel-level comparison. The reused product detail panel still reflects previously documented marketplace limitations: purchase remains unavailable, and backend/product must provide structured coverage-benefit and payout fields before those areas can become contract-driven rather than the existing constrained display boundary.
+
+Validation results:
+The required recommendation/controller/marketplace integration matrix passed 6 files and 35 tests. Coverage verifies authenticated Bearer and `per_category=3` contracts, runtime-backed response rendering, canonical request deduplication, no automatic query retry, explicit retry recovery, loading, empty, success, parsed error, responsive one/two/three-column layouts, heading hierarchy, keyboard card activation, deferred detail request, dialog focus restoration, and no mixing of textual assessment advice with products. The affected public marketplace page/action regression slice passed 2 files and 9 tests. `npx tsc --noEmit` passed. `npm run lint` passed with 0 errors and the same 7 pre-existing unrelated warnings. `git diff --check` passed before this documentation entry. Browser screenshots and Playwright were not run because Task 18 and Task 20 own final rendered visual and dual-journey browser QA, and no available local screenshot can support an honest pixel comparison in this task.
+
+### 2026-07-08 15:25 WAT
+
+Task completed: Task 15 — Shared PDF Download and Share-Action Boundary
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/risk-assessment/report/report-actions.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/ReportScreen.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(wizard)/assessment/_components/report/RiskReportPDF.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/risk-assessment/dashboard/dashboard-risk-assessment-controller.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/risk-assessment/report-actions.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/wizard/ReportScreen.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/risk-assessment/dashboard-risk-assessment-controller.test.tsx`
+
+Summary:
+Added one shared PDF download action to both the public completion report and authenticated dashboard report. The action dynamically imports both `@react-pdf/renderer` and the PDF document only after activation, exposes pending, success, failure, and retry states, prevents duplicate activation while generation is pending, downloads the stable `gigsecure-risk-report.pdf` filename, and removes its temporary anchor and revokes its object URL after every successful generation. The action row wraps, retains a minimum 44px control height, and announces busy, success, and error states. The unsupported Share Link action and its stale commented clipboard behavior were removed rather than presenting fake success.
+
+Important decisions:
+`RiskReportPDF` now consumes the existing `RiskReportDisplayModel` directly. Applicant presentation, score, backend risk profile, ordered five-pillar exposure data, pre-grouped insight sections, and advice therefore use the same runtime-validated adapter as both web reports; the PDF no longer reparses or regroups assessment fields. The public report may overlay its existing in-memory waitlist first-name presentation onto that model before download, while the dashboard passes the canonical model unchanged. The PDF library remains outside the initial public and dashboard report module graphs until a user requests a download. No API endpoint, query key, server-data store, auth/session behavior, token scope, scoring rule, report metric, wizard logic, or public acquisition route changed. The React/Next.js performance guidance reinforced the click-time conditional imports and reuse of the existing display model.
+
+Known follow-ups:
+Task 16 owns deliberate authenticated reassessment. Task 18 owns native screenshot comparison and the full viewport/reduced-motion audit; the recorded `Overview (7).png` source remains unavailable locally, so Task 15 does not claim pixel-level comparison. A share action remains intentionally absent until backend/product provides a durable public report URL or another explicit sharing contract.
+
+Validation results:
+The focused public/dashboard PDF and report regression suite passed 8 files and 51 tests. Coverage verifies click-time module loading, shared model handoff, pending/busy state, stable filename, Blob download, temporary-link removal, object-URL revocation, success announcement, generation failure, explicit retry, public and dashboard integration, and absence of a share action. `npx tsc --noEmit` passed. `npm run lint` passed with 0 errors and the same 7 pre-existing unrelated warnings. `git diff --check` passed before this documentation entry. Browser and Playwright suites were not run because this task changes a report-local action boundary and Task 18/20 own rendered multi-viewport and dual-journey browser QA; applicable keyboard, loading, success, error, retry, and responsive wrapping behavior is covered by the focused component/integration matrix.
+
+### 2026-07-08 15:35 WAT
+
+Task completed: Task 16 — Reassessment and Update Flow
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/risk-assessment/dashboard/dashboard-risk-assessment-controller.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/components/risk-assessment/report/assessed-report.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/risk-assessment/dashboard-risk-assessment-controller.test.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/risk-assessment/reassessment-flow.test.tsx`
+
+Summary:
+Added a deliberate authenticated reassessment flow around the existing shared wizard and canonical report cache. Assessed users now receive a responsive 44px “Update assessment” action that opens an accessible confirmation dialog. Only confirmed starts clear the dashboard progress namespace, add a same-URL browser-history entry, hide the cached report, and mount a fresh dashboard-mode wizard with the existing editable profile defaults and cached category/question queries. The wizard shows a clear update-mode status message. Confirmation dismissal, wizard Cancel, and browser Back restore the unchanged cached report and return focus to the Update action. Successful submission seeds and displays the replacement report, synchronizes the existing memory-only flag, invalidates all established dependencies, clears completed progress, and consumes the reassessment history entry without an eager latest-assessment request.
+
+Important decisions:
+The report composition moved into `AssessedReport` so latest-query, initial-success, and reassessment-success presentations share one component and one report/PDF/product foundation. The controller stores only presentation mode and focus/history bookkeeping; assessment responses remain exclusively in the canonical React Query cache and are never copied into component state or Zustand. Reassessment uses the existing runtime-validated category submission endpoint and `apiClient` path—no update endpoint, field, score, or token rule was introduced. A confirmed reassessment pushes one same-URL history entry: browser Back cancels it; explicit Cancel or success consumes it. Forward navigation to the consumed same-URL entry does not resurrect the wizard. The confirmation dialog uses alert-dialog semantics, modal labelling, initial focus, Tab/Shift+Tab containment, Escape/backdrop/explicit dismissal, body-scroll lock, opener focus restoration, mobile stacking, and no motion that could violate reduced-motion preferences. The React/Next.js performance guidance reinforced retaining the cached report, keeping category/question queries warm, and avoiding a duplicate latest fetch.
+
+Known follow-ups:
+Task 17 owns final route loading/error composition, Task 18 owns native screenshot comparison and the full viewport/reduced-motion audit, and Task 20 owns real-browser dual-journey Back/Forward coverage. The recorded `Overview (7).png` source remains unavailable locally, so Task 16 follows its documented update-action hierarchy without claiming pixel-level comparison. Latest-assessment 404 semantics, history ordering, category/question schema guarantees, and public-result persistence remain the previously documented backend questions; none blocks reassessment through the existing submission contract.
+
+Validation results:
+The focused reassessment/controller/submission/shared-wizard/public-report/store matrix passed 8 files and 62 tests. Coverage verifies confirmation and explicit dismissal, keyboard focus trap and Escape, one-time destructive reset only after confirmation, clear update-mode announcement, responsive action classes, cached report hiding/restoration, explicit Cancel, browser `popstate` cancellation, unchanged flags/cache on cancel, retained answers and old report on API error, successful retry, replacement cache/report, canonical invalidations, completed-progress clearing, zero eager latest requests while reassessing or after success, and server-backed report loading after remount/refresh. `npx tsc --noEmit` passed. `npm run lint` passed with 0 errors and the same 7 pre-existing unrelated warnings. `git diff --check` passed before this documentation entry. Playwright and screenshots were not run because Tasks 18 and 20 own full rendered viewport and real-browser dual-journey verification; Task 16’s applicable loading, error, retry, keyboard, mobile, success, cancel, Back, cache, and refresh behavior is covered by the focused integration matrix.
+
+### 2026-07-08 15:40 WAT
+
+Task completed: Task 17 — Dashboard Page Composition, Metadata, Loading, and Error Boundaries
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(app)/dashboard/risk-assessment/loading.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/app/(app)/dashboard/risk-assessment/error.tsx`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/pages/dashboard-risk-assessment.test.tsx`
+
+Summary:
+Completed the thin authenticated risk-assessment route boundary around the existing controller. The route now has a segment loading state that reuses the stable, reduced-motion-safe risk-assessment skeleton and a resettable unexpected-error boundary that retains the page title/subtitle, one `h1`, dashboard-width containment, an accessible alert, and keyboard-operable recovery without exposing technical error details. Expanded the page-level tests to cover metadata, authenticated shell/active navigation integration, the unique app main/heading contract, stable loading geometry, reduced-motion behavior, and route-error reset behavior.
+
+Important decisions:
+The existing server `page.tsx` already met the metadata and minimal-composition requirements, so it was intentionally left unchanged. Expected profile, latest-assessment, marketplace, and PDF failures continue to render inside their established local boundaries; the new `error.tsx` handles only unexpected route rendering failures. Both route states reuse existing components rather than duplicating loading or error logic. No API service, query key, server-data state, auth/session scope, wizard, report, public route, or token-storage behavior changed. The React/Next.js performance guidance reinforced retaining the small server boundary and avoiding new serialized props or client orchestration.
+
+Known follow-ups:
+Task 18 owns native screenshot comparison, complete responsive/overflow verification at every required viewport, and the final reduced-motion/keyboard visual pass. The recorded `Overview (7).png` and `Overview (8).png` reference files remain unavailable locally, so this task does not claim fresh pixel-level comparison. Existing backend questions about category/question schemas, latest-assessment 404 semantics, history ordering, and public-result persistence remain unchanged and do not block this route boundary.
+
+Validation results:
+The focused route/controller/protected-boundary/shell matrix passed 4 files and 32 tests; the route-only suite passed 4 tests. Coverage includes metadata, one-heading and main-landmark composition, active dashboard navigation, public-wizard chrome absence, loading status and stable geometry, reduced-motion animation suppression, technical-detail omission, keyboard focus, and reset invocation. `npx tsc --noEmit` passed. `npm run lint` passed with 0 errors and the same 7 pre-existing unrelated warnings. `git diff --check` passed before this entry and was rerun afterward. Browser screenshots and Playwright were not run because Task 18 and Task 20 own complete rendered multi-viewport and dual-journey browser QA; Task 17's observable route composition and recovery behavior is covered by the focused integration matrix.
+
+### 2026-07-08 15:56 WAT
+
+Task completed: Task 19 — Dual-Journey Unit and Integration Test Completion
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/risk-assessment/dashboard-risk-assessment-controller.test.tsx`
+
+Summary:
+Completed the remaining Task 19 dual-journey test pass without changing production behavior. The dashboard risk-assessment controller suite now explicitly proves that a waitlist-issued in-memory Bearer token does not start full-session-only dashboard/profile/marketplace requests, while the shared-wizard opening assertion now waits for the animated step heading to become visible instead of racing the transition frame. This keeps the public waitlist-to-assessment funnel intact and strengthens the authenticated route guard coverage the epic requires.
+
+Important decisions:
+The fix stayed in tests only because the observed failure was timing-related, not a product regression: the shared wizard already opens correctly, but the prior assertion could capture the entering heading before Framer Motion completed the first visibility frame. Guard coverage was added at the controller boundary because that is where the dashboard assessment route decides whether profile/latest/product work may begin; risk API authorization for waitlist tokens remains covered by the shared service and hook suites. No production auth, wizard, report, React Query, token-storage, or routing code changed.
+
+Known follow-ups:
+Task 20 still owns the final Chromium E2E proof for both public acquisition and authenticated dashboard journeys, including protected-route redirects and real-browser navigation behavior. The repository still has the same 7 pre-existing lint warnings in unrelated files outside this task's scope.
+
+Validation results:
+The focused Task 19 verification matrix passed 24 files and 171 tests, covering validators, risk services, risk hooks, public waitlist and assessment flows, dashboard route/controller states, submission and reassessment orchestration, report/PDF/product behavior, API refresh queue behavior, middleware protection, navigation state, user-profile gating, and product-detail accessibility. `npx tsc --noEmit` passed. `npm run lint` passed with 0 errors and the same 7 pre-existing unrelated warnings. `git diff --check` passed before this documentation entry. Playwright was not run because Task 20 exclusively owns the dual-journey browser E2E suite.
+
+### 2026-07-08 17:27 WAT
+
+Task completed: Task 20 — Public and Dashboard Playwright E2E Coverage
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/e2e/risk-assessment/helpers.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/e2e/risk-assessment/public-acquisition-flow.spec.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/e2e/risk-assessment/dashboard-risk-assessment-flow.spec.ts`
+
+Summary:
+Added shared Playwright helpers and two new Chromium E2E specs that cover both risk-assessment journeys end to end without duplicating wizard or report logic. The public acquisition suite now proves the informational CTA handoff, waitlist signup, waitlist-token wizard submission, public report rendering, expired-token recovery back to `/waitlist?expired=true`, and the absence of full-session-only requests throughout the public flow. The dashboard suite now proves protected-route redirect behavior, waitlist-token isolation from dashboard-only APIs, full-session unassessed submission with profile prefill and refresh persistence, reassessment cancel and successful replacement report behavior, retryable latest-assessment route-local errors, and mobile navigation plus overflow stability on `/dashboard/risk-assessment`.
+
+Important decisions:
+The E2E coverage reuses the existing dashboard shell, `ProtectedRoute`, shared risk-assessment wizard, report components, memory-only auth store, and the same category/question/submission/latest/recommendation request surfaces already exercised elsewhere in the app. Shared helper routines intentionally drive the visible UI controls, including the consent label and the date picker’s accessible month/year/day controls, so the tests reflect actual user behavior instead of internal implementation shortcuts. The public contract assertion was aligned with the real validated submission payload shape already enforced by `buildAssessmentPayload`, which preserves the wizard’s `DD/MM/YYYY` date value and selected marital-status casing instead of inventing additional client-side normalization.
+
+Known follow-ups:
+The broader Chromium suite surfaced one unrelated existing failure in `/Users/naijaghost/Desktop/projects/gigsecure-fe/e2e/auth/refresh-queue.spec.ts` (`concurrent expired authenticated requests share one refresh and retry with the new token`) where the auth refresh-queue scenario returned an `AxiosError` 401. No Task 20 risk-assessment spec failed in the final focused or broad runs. The repository still has the same 7 pre-existing lint warnings in unrelated files outside this task.
+
+Validation results:
+The required focused Task 20 Playwright suite passed 2 files and 10 tests: `e2e/risk-assessment/public-acquisition-flow.spec.ts` and `e2e/risk-assessment/dashboard-risk-assessment-flow.spec.ts`. The broader Chromium Playwright pass finished with 44 passing tests and 1 unrelated failing auth refresh-queue test while all risk-assessment specs passed. `npx tsc --noEmit` passed. `npm run lint` passed with 0 errors and the same 7 pre-existing unrelated warnings. `git diff --check` passed before this documentation entry and was rerun afterward.
+
+### 2026-07-08 17:51 WAT
+
+Task completed: Task 21 — Performance, Build, and Final QA
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/next.config.ts`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/src/__tests__/components/wizard/StepWrapper.test.tsx`
+
+Summary:
+Completed the final verification and performance audit for the dual risk-assessment journeys without changing product behavior. The only source change in the shared wizard flow was a focused test expectation update so the suite matches the existing visible `Analyzing…` button label, and the only runtime change was adding `allowedDevOrigins: ['127.0.0.1']` to remove the new Next.js dev cross-origin warning emitted during Playwright runs. The production build succeeded, `/assessment` and `/dashboard/risk-assessment` remained buildable and routable, and build artifact inspection confirmed that the two assessment routes reuse most client chunks while keeping the PDF renderer out of their initial client payloads.
+
+Important decisions:
+Kept the observable UI unchanged and fixed the failing StepWrapper test to match the shipped accessible ellipsis label instead of rewriting the button copy solely for test convenience. Added the narrowest Next.js dev-origin allowlist needed for the existing Playwright host (`127.0.0.1`) after confirming the option is supported by the installed Next.js config schema. Treated the existing `middleware` deprecation warning as a documented pre-existing framework migration rather than folding an unrelated `proxy` conversion into this task. For the bundle audit, used the latest production HTML/manifests and verified that `/assessment` loads 25 static chunk references totaling 1,624,604 bytes, `/dashboard/risk-assessment` loads 27 totaling 1,700,155 bytes, and the two routes share 23 of those chunks; only two chunks are assessment-only and four are dashboard-only. Confirmed PDF laziness by checking the current built client route chunks and finding no `@react-pdf/renderer`, `react-pdf`, or `RiskReportPDF` strings in the initial client assets for either assessment route, while the public route still owns a separate dynamic loadable chunk (`static/chunks/cdd6af71df72478b.js`) for the deferred report boundary.
+
+Known follow-ups:
+The broader Chromium suite still has one unrelated existing failure in `/Users/naijaghost/Desktop/projects/gigsecure-fe/e2e/auth/refresh-queue.spec.ts` (`concurrent expired authenticated requests share one refresh and retry with the new token`) returning an `AxiosError` 401; no risk-assessment Playwright spec failed. Next.js continues to warn that the `middleware` file convention is deprecated in favor of `proxy`; that migration remains outside this task’s scope. The local production build still requires network access to fetch the Google `Inter` font through `next/font`; if a fully offline build becomes a requirement, the font strategy will need a separate follow-up.
+
+Validation results:
+`npm test -- --run` passed with 112 files and 743 tests after the focused StepWrapper expectation correction; Vitest still emits the known jsdom `Not implemented: navigation to another Document` line during redirect-oriented auth coverage, but the suite passed. `npx tsc --noEmit` passed. `npm run lint` passed with 0 errors and the same 7 pre-existing unrelated warnings in `src/__tests__/components/BuiltAround.test.tsx`, `src/__tests__/components/wizard/ConsentGate.test.tsx`, `src/__tests__/components/wizard/inputs/QuestionInputs.test.tsx`, `src/__tests__/mock-components.tsx`, `src/app/api/staging-auth/route.ts`, and `src/app/staging-login/page.tsx`. `npm run test:e2e -- --project=chromium` finished with 44 passing tests and the same single unrelated auth refresh-queue failure; all 10 public/dashboard risk-assessment E2E tests passed, and the earlier Next.js cross-origin dev warning no longer appeared after the `allowedDevOrigins` change. `npm run build` initially failed in the restricted environment because `next/font` could not fetch `Inter` from Google Fonts, then passed when rerun with network access; the build output included static `/assessment`, `/dashboard/risk-assessment`, and `/risk-assessment` routes plus the existing `middleware` deprecation warning. `git diff --check` passed after the final edits. Playwright request-count assertions and existing dashboard coverage reconfirmed the key cost boundaries: the public flow made no full-session-only requests, the dashboard overview remained single-request-per-entry, post-submit marketplace recommendations remained one request, and the latest assessment request stayed deferred until the assessed dashboard state needed it.
+
+### 2026-07-08 21:19 WAT
+
+Task completed: Task 22 — CONTEXT.md and Epic Handoff Update
+
+Files changed:
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/DASHBOARD_RISK_ASSESSMENT_EPICS.md`
+- `/Users/naijaghost/Desktop/projects/gigsecure-fe/CONTEXT.md`
+
+Summary:
+Completed the risk-assessment epic handoff without changing production or test behavior. `DASHBOARD_RISK_ASSESSMENT_EPICS.md` now marks Task 22 complete, records the final dual-journey implementation status, and adds the missing live handoff sections for the production file map, public/dashboard route ownership, shared wizard/report/PDF infrastructure, query and security invariants, final verification evidence, environment-specific build/browser notes, and the remaining backend/product contract questions. This closes the documentation gap between the already-implemented public and authenticated assessment flows and the epic source-of-truth file.
+
+Important decisions:
+The live repository now explicitly supersedes the original planning-only portions of the risk-assessment epic wherever they described future work instead of the implemented state. The handoff reaffirms that `/risk-assessment`, `/waitlist`, and public `/assessment` remain separate from protected `/dashboard/risk-assessment`; that one shared `RiskAssessmentWizard`, one shared `riskService`/`apiClient`, one shared runtime-validation layer, and one shared report/PDF foundation serve both journeys; and that waitlist and full-session access tokens remain memory-only while refresh tokens stay httpOnly. No executable source, route behavior, test behavior, API contract, scoring rule, endpoint, or screenshot-owned UI changed in this task.
+
+Known follow-ups:
+Backend/product still needs to answer the previously documented questions around public-result persistence, stable `/risk/categories` and `/risk/questions` schemas, latest-assessment 404 and timestamp semantics, `/risk/history` ordering, any approved `risk_profile` or pillar-threshold enum guarantees, and any future share/benchmark/premium-count screenshot fields. The broader Chromium suite still has the unrelated existing `e2e/auth/refresh-queue.spec.ts` failure, and fully offline production builds remain limited by Google Fonts fetching through `next/font`; both stay documented as environment or out-of-scope follow-ups rather than hidden success claims.
+
+Validation results:
+No focused product test rerun was applicable because Task 22 only updates epic/context documentation and changes no executable source or assertions. `npx tsc --noEmit` passed. `npm run lint` passed with 0 errors and the same 7 pre-existing unrelated warnings in `src/__tests__/components/BuiltAround.test.tsx`, `src/__tests__/components/wizard/ConsentGate.test.tsx`, `src/__tests__/components/wizard/inputs/QuestionInputs.test.tsx`, `src/__tests__/mock-components.tsx`, `src/app/api/staging-auth/route.ts`, and `src/app/staging-login/page.tsx`. `git diff --check` passed after the documentation edits.

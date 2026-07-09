@@ -27,13 +27,14 @@ describe('StepComponents', () => {
       renderWithProviders(<StepYourWork step={stepData} />);
       
       const nextBtn = screen.getByRole('button', { name: /next →/i });
-      expect(nextBtn).toBeDisabled();
+      expect(nextBtn).not.toBeDisabled();
+      expect(nextBtn).toHaveAttribute('aria-disabled', 'true');
       
       // Select an option
       await user.click(screen.getByText('Web Development'));
       
       // Still disabled because other fields are required
-      expect(nextBtn).toBeDisabled();
+      expect(nextBtn).toHaveAttribute('aria-disabled', 'true');
     });
 
     it('preserves previous answers as defaults', () => {

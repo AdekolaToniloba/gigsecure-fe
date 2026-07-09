@@ -29,19 +29,27 @@ describe('AppNavigation', () => {
     );
     expect(screen.getByRole('link', { name: 'Risk Assessment' })).toHaveAttribute(
       'href',
-      '/assessment'
+      '/dashboard/risk-assessment'
+    );
+    expect(screen.getByRole('link', { name: 'Premiums Bought' })).toHaveAttribute(
+      'href',
+      '/dashboard/premiums'
+    );
+    expect(screen.getByRole('link', { name: 'Settings' })).toHaveAttribute(
+      'href',
+      '/dashboard/settings'
     );
     expect(screen.getAllByRole('listitem').map((item) => item.textContent)).toEqual([
       'Overview',
       'Risk Assessment',
-      'Premiums BoughtSoon',
+      'Premiums Bought',
       'ProfileSoon',
-      'SettingsSoon',
+      'Settings',
     ]);
   });
 
   it('marks Risk Assessment active on its route', () => {
-    navigation.pathname = '/assessment';
+    navigation.pathname = '/dashboard/risk-assessment';
     render(<AppNavigation />);
 
     expect(screen.getByRole('link', { name: 'Risk Assessment' })).toHaveAttribute(
@@ -51,7 +59,29 @@ describe('AppNavigation', () => {
     expect(screen.getByRole('link', { name: 'Overview' })).not.toHaveAttribute('aria-current');
   });
 
-  it.each(['Premiums Bought', 'Profile', 'Settings'])(
+  it('marks Settings active on its route', () => {
+    navigation.pathname = '/dashboard/settings';
+    render(<AppNavigation />);
+
+    expect(screen.getByRole('link', { name: 'Settings' })).toHaveAttribute(
+      'aria-current',
+      'page'
+    );
+    expect(screen.getByRole('link', { name: 'Overview' })).not.toHaveAttribute('aria-current');
+  });
+
+  it('marks Premiums Bought active on its route', () => {
+    navigation.pathname = '/dashboard/premiums';
+    render(<AppNavigation />);
+
+    expect(screen.getByRole('link', { name: 'Premiums Bought' })).toHaveAttribute(
+      'aria-current',
+      'page'
+    );
+    expect(screen.getByRole('link', { name: 'Overview' })).not.toHaveAttribute('aria-current');
+  });
+
+  it.each(['Profile'])(
     'renders %s as visibly unavailable without a broken link',
     (label) => {
       render(<AppNavigation />);
@@ -71,6 +101,12 @@ describe('AppNavigation', () => {
 
     await user.tab();
     expect(screen.getByRole('link', { name: 'Risk Assessment' })).toHaveFocus();
+
+    await user.tab();
+    expect(screen.getByRole('link', { name: 'Premiums Bought' })).toHaveFocus();
+
+    await user.tab();
+    expect(screen.getByRole('link', { name: 'Settings' })).toHaveFocus();
   });
 });
 

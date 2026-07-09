@@ -42,6 +42,12 @@ export const ENDPOINTS = {
   DASHBOARD: {
     OVERVIEW: '/api/v1/dashboard/overview',
   },
+  SETTINGS: {
+    NOTIFICATIONS: '/api/v1/settings/notifications',
+    PRIVACY: '/api/v1/settings/privacy',
+    ACCOUNT_DEACTIVATE: '/api/v1/settings/account/deactivate',
+    ACCOUNT: '/api/v1/settings/account',
+  },
   MARKETPLACE: {
     PRODUCTS: '/api/v1/marketplace/products',
     RECOMMENDATIONS: '/api/v1/marketplace/recommendations',
@@ -53,11 +59,11 @@ export const ENDPOINTS = {
     DETAIL: (id: string) => `/api/v1/products/${id}`,
   },
   POLICIES: {
-    LIST: '/api/v1/policies/',
-    CREATE: '/api/v1/policies/',
+    LIST: '/api/v1/policies',
+    CREATE: '/api/v1/policies',
+    SUMMARY: '/api/v1/policies/summary',
     DETAIL: (id: string) => `/api/v1/policies/${id}`,
-    CANCEL: (id: string) => `/api/v1/policies/${id}/cancel`,
-    RENEW: (id: string) => `/api/v1/policies/${id}/renew`,
+    REPORT: (id: string) => `/api/v1/policies/${id}/report`,
   },
   CLAIMS: {
     LIST: '/api/v1/claims/',

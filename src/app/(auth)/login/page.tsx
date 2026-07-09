@@ -12,6 +12,7 @@ type LoginPageProps = {
   searchParams?: Promise<{
     redirect?: string | string[];
     reset?: string | string[];
+    account?: string | string[];
   }>;
 };
 
@@ -19,13 +20,24 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const params = await searchParams;
   const rawRedirect = params?.redirect;
   const rawReset = params?.reset;
+  const rawAccount = params?.account;
   const redirectValue = Array.isArray(rawRedirect) ? rawRedirect[0] : rawRedirect;
   const resetValue = Array.isArray(rawReset) ? rawReset[0] : rawReset;
+  const accountValue = Array.isArray(rawAccount) ? rawAccount[0] : rawAccount;
   const redirectTo = getSafeRedirectPath(redirectValue);
-  const successMessage =
-    resetValue === 'success'
-      ? 'Your password has been reset. Log in with your new password.'
-      : null;
+  let successMessage: string | null = null;
+  let successTitle = 'Password reset';
+
+  if (resetValue === 'success') {
+    successMessage = 'Your password has been reset. Log in with your new password.';
+  } else if (accountValue === 'deactivated') {
+    successTitle = 'Account deactivated';
+    successMessage =
+      'Your account has been deactivated. Log in again whenever you are ready to reactivate it.';
+  } else if (accountValue === 'deleted') {
+    successTitle = 'Account deleted';
+    successMessage = 'Your account has been deleted.';
+  }
 
   return (
     <AuthFormPanel
@@ -33,7 +45,11 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       subtitle="Continue managing your income, risks, and protection"
       className="max-w-[38.5rem]"
     >
-      <LoginForm redirectTo={redirectTo} successMessage={successMessage} />
+      <LoginForm
+        redirectTo={redirectTo}
+        successMessage={successMessage}
+        successTitle={successTitle}
+      />
     </AuthFormPanel>
   );
 }

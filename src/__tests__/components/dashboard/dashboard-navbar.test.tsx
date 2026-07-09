@@ -101,6 +101,15 @@ describe('DashboardNavbar', () => {
     );
   });
 
+  it('shows the route title instead of dashboard search on the risk assessment route', () => {
+    navigation.pathname = '/dashboard/risk-assessment';
+    render(<DashboardNavbar onNotificationsOpen={vi.fn()} />);
+
+    expect(screen.getByText('Risk Assessment')).toBeInTheDocument();
+    expect(screen.queryByRole('searchbox', { name: 'Search dashboard' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Open navigation menu' })).toHaveClass('h-11', 'w-11');
+  });
+
   it('prioritizes menu, search, and bell with touch-sized responsive controls', () => {
     render(<DashboardNavbar onNotificationsOpen={vi.fn()} />);
 

@@ -20,6 +20,7 @@ interface SelectProps {
   disabled?: boolean;
   className?: string;
   hasError?: boolean;
+  ariaDescribedBy?: string;
 }
 
 export default function Select({
@@ -33,6 +34,7 @@ export default function Select({
   disabled = false,
   className,
   hasError,
+  ariaDescribedBy,
 }: SelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -60,6 +62,7 @@ export default function Select({
         name={name}
         onClick={() => !disabled && setIsOpen(!isOpen)}
         onBlur={onBlur} // Trigger rhf blur when focus leaves the button naturally
+        aria-describedby={ariaDescribedBy}
         className={twMerge(
           'w-full h-[52px] rounded-lg border flex items-center justify-between px-4 transition-colors font-body text-[15px]',
           disabled ? 'opacity-60 cursor-not-allowed bg-gray-50 border-gray-200 text-gray-500' : 'bg-[#F8FAFC] cursor-pointer text-gray-900',

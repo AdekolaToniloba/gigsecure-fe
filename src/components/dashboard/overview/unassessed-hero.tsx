@@ -56,7 +56,7 @@ export function UnassessedHero({
 
         <div className="mt-7 flex min-w-0 flex-wrap gap-3">
           <Link
-            href="/assessment"
+            href="/dashboard/risk-assessment"
             className="inline-flex min-h-11 min-w-0 touch-manipulation items-center justify-center gap-2 rounded-lg bg-accent px-5 py-2 text-sm font-bold text-primary transition-colors hover:bg-accent-alt focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-primary"
           >
             Take Risk Assessment
